@@ -158,6 +158,8 @@ UPSTASH_REDIS_REST_TOKEN=...
 
 若继续用 GitHub Pages 展示前台，请把仓库变量 `VITE_AURORA_API_BASE_URL` 指向 Vercel 域名。公开目录支持跨域读取，但管理员登录仍应直接在 Vercel 同源 `/admin` 完成。
 
+GitHub Pages 的 `/admin/` 会在构建时生成一个无索引跳转页，默认安全跳转到 `https://aurora-esports-api.vercel.app/admin`。如 Vercel 项目域名改变，请设置 GitHub 仓库变量 `VITE_AURORA_ADMIN_URL`。
+
 Backend 未部署和验证前，不应宣称 Gemini AI 已在正式网站上线。
 
 ## 上线前仍需确认

@@ -22,6 +22,7 @@ import { catalogApiUrl } from "./lib/catalogClient.js";
 import "./styles/admin.css";
 
 const serviceIds = runtimeServiceIds();
+const homeHref = import.meta.env.BASE_URL || "/";
 
 async function api(path, options = {}) {
   const response = await fetch(catalogApiUrl(path), {
@@ -73,7 +74,7 @@ function Login({ configured, onAuthenticated }) {
   return (
     <main className="admin-login">
       <section className="admin-login__panel">
-        <a className="admin-brand" href="/">
+        <a className="admin-brand" href={homeHref}>
           <span>A</span>
           <div><strong>Aurora</strong><small>Esports Studio</small></div>
         </a>
@@ -269,11 +270,11 @@ function Dashboard({ onLogout }) {
   return (
     <div className="admin-dashboard">
       <header className="admin-topbar">
-        <a className="admin-brand" href="/">
+        <a className="admin-brand" href={homeHref}>
           <span>A</span><div><strong>Aurora</strong><small>Control Room</small></div>
         </a>
         <div className="admin-topbar__actions">
-          <a href="/" target="_blank" rel="noreferrer"><Eye size={16} /> 查看网站</a>
+          <a href={homeHref} target="_blank" rel="noreferrer"><Eye size={16} /> 查看网站</a>
           <button type="button" onClick={logout}><LogOut size={16} /> 退出</button>
         </div>
       </header>

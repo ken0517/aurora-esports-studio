@@ -3,7 +3,18 @@ import {
   normalizeRuntimeCatalog,
 } from "../data/runtimeCatalog.js";
 
-const apiBase = String(import.meta.env.VITE_AURORA_API_BASE_URL || "").replace(/\/$/, "");
+function resolveApiBase() {
+  const configured = String(import.meta.env.VITE_AURORA_API_BASE_URL || "").replace(/\/$/, "");
+  if (configured) return configured;
+  const quoteEndpoint = String(import.meta.env.VITE_QUOTE_AI_ENDPOINT || "");
+  try {
+    return quoteEndpoint.startsWith("http") ? new URL(quoteEndpoint).origin : "";
+  } catch {
+    return "";
+  }
+}
+
+const apiBase = resolveApiBase();
 
 export function catalogApiUrl(path = "/api/catalog") {
   return `${apiBase}${path}`;
