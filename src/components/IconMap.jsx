@@ -1,0 +1,55 @@
+import {
+  BadgeCheck,
+  Camera,
+  ChevronRight,
+  ClipboardCheck,
+  Crown,
+  ExternalLink,
+  Gamepad2,
+  GraduationCap,
+  Headphones,
+  MessageCircle,
+  MessagesSquare,
+  PackageCheck,
+  PlayCircle,
+  Send,
+  ShieldCheck,
+  ShoppingBag,
+  Swords,
+  Target,
+  UsersRound,
+  Video,
+  X,
+  Zap,
+} from "lucide-react";
+
+const icons = {
+  BadgeCheck,
+  Camera,
+  ChevronRight,
+  ClipboardCheck,
+  Crown,
+  ExternalLink,
+  Gamepad2,
+  GraduationCap,
+  Headphones,
+  Instagram: Camera,
+  MessageCircle,
+  MessagesSquare,
+  PackageCheck,
+  PlayCircle,
+  Send,
+  ShieldCheck,
+  ShoppingBag,
+  Swords,
+  Target,
+  UsersRound,
+  Video,
+  X,
+  Zap,
+};
+
+export function Icon({ name, className = "", strokeWidth = 1.8 }) {
+  const Component = icons[name] ?? Zap;
+  return <Component className={className} strokeWidth={strokeWidth} aria-hidden="true" />;
+}

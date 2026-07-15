@@ -1,0 +1,37 @@
+{
+  "name": "aurora-esports-studio",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": "24.14.0"
+  },
+  "scripts": {
+    "dev": "vite --host 0.0.0.0",
+    "start": "node server/quote-ai-server.mjs",
+    "ai:server": "node --env-file-if-exists=.env.local server/quote-ai-server.mjs",
+    "build": "vite build",
+    "lint": "eslint . --max-warnings=0",
+    "test": "node --test",
+    "preview": "vite preview --host 0.0.0.0",
+    "assets": "node scripts/generate-placeholders.mjs"
+  },
+  "dependencies": {
+    "@google/genai": "^2.11.0",
+    "framer-motion": "latest",
+    "lucide-react": "latest",
+    "react": "latest",
+    "react-dom": "latest"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@tailwindcss/vite": "latest",
+    "@vitejs/plugin-react": "latest",
+    "eslint": "^10.7.0",
+    "eslint-plugin-react-hooks": "^7.1.1",
+    "eslint-plugin-react-refresh": "^0.5.3",
+    "globals": "^17.7.0",
+    "tailwindcss": "latest",
+    "vite": "^8.1.4"
+  }
+}

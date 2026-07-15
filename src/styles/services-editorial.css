@@ -1,0 +1,320 @@
+.aurora-services {
+  --services-ivory: var(--ivory, #f4f0e7);
+  --services-paper: var(--paper, #faf7ef);
+  --services-ink: var(--charcoal, #1b1d1d);
+  --services-muted: var(--muted, #716f69);
+  --services-gold: var(--bronze, #92785a);
+  --services-line: var(--line, #d1c8b9);
+  --services-serif: var(
+    --serif,
+    Georgia,
+    "Times New Roman",
+    "Noto Serif TC",
+    "Songti TC",
+    "PMingLiU",
+    serif
+  );
+  --services-sans: var(
+    --sans,
+    "Noto Sans TC",
+    "PingFang TC",
+    "Microsoft JhengHei",
+    Inter,
+    ui-sans-serif,
+    system-ui,
+    sans-serif
+  );
+  position: relative;
+  padding: clamp(104px, 11vw, 176px) 0 clamp(92px, 10vw, 150px);
+  background: var(--services-ivory);
+  color: var(--services-ink);
+  font-family: var(--services-sans);
+}
+
+.aurora-services__shell {
+  width: min(1324px, calc(100% - 80px));
+  margin-inline: auto;
+}
+
+.aurora-services__intro {
+  max-width: 830px;
+  margin-bottom: clamp(64px, 7vw, 96px);
+}
+
+.aurora-services__eyebrow {
+  display: block;
+  margin-bottom: 26px;
+  color: var(--services-gold);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+}
+
+.aurora-services__intro h2 {
+  max-width: 800px;
+  margin: 0;
+  font-family: var(--services-serif);
+  font-size: clamp(44px, 5.1vw, 76px);
+  font-weight: 400;
+  letter-spacing: -0.035em;
+  line-height: 1.14;
+  text-wrap: balance;
+}
+
+.aurora-services__intro p {
+  max-width: 760px;
+  margin: 25px 0 0;
+  color: color-mix(in srgb, var(--services-gold) 82%, var(--services-ink));
+  font-family: var(--services-serif);
+  font-size: clamp(17px, 1.35vw, 21px);
+  line-height: 1.85;
+}
+
+.aurora-services__tabs {
+  display: flex;
+  align-items: flex-end;
+  gap: clamp(30px, 4vw, 58px);
+  margin-bottom: clamp(58px, 6vw, 80px);
+  border-bottom: 1px solid var(--services-line);
+}
+
+.aurora-services__tabs button {
+  position: relative;
+  flex: 0 0 auto;
+  min-height: 72px;
+  padding: 0 0 23px;
+  border: 0;
+  background: transparent;
+  color: color-mix(in srgb, var(--services-gold) 82%, var(--services-muted));
+  cursor: pointer;
+  font-family: var(--services-serif);
+  font-size: 17px;
+  letter-spacing: 0.08em;
+  transition: color 180ms ease;
+}
+
+.aurora-services__tabs button::after {
+  position: absolute;
+  right: 0;
+  bottom: -1px;
+  left: 0;
+  height: 1px;
+  content: "";
+  background: var(--services-ink);
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 220ms ease;
+}
+
+.aurora-services__tabs button:hover,
+.aurora-services__tabs button.is-active {
+  color: var(--services-ink);
+}
+
+.aurora-services__tabs button.is-active::after {
+  transform: scaleX(1);
+}
+
+.aurora-services__tabs button:focus-visible {
+  outline: 1px solid var(--services-gold);
+  outline-offset: 8px;
+}
+
+.aurora-services__grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  border-top: 1px solid var(--services-line);
+  border-left: 1px solid var(--services-line);
+  background: transparent;
+}
+
+.aurora-services__card {
+  min-width: 0;
+  min-height: 370px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  padding: clamp(38px, 3.25vw, 50px) clamp(34px, 3.35vw, 48px) 40px;
+  border: 0;
+  border-right: 1px solid var(--services-line);
+  border-bottom: 1px solid var(--services-line);
+  border-radius: 0;
+  background: transparent;
+  color: inherit;
+  text-align: left;
+}
+
+.aurora-services__category {
+  color: var(--services-gold);
+  font-family: var(--services-serif);
+  font-size: 15px;
+  letter-spacing: 0.22em;
+}
+
+.aurora-services__card h3 {
+  margin: 23px 0 20px;
+  font-family: var(--services-serif);
+  font-size: clamp(27px, 2.15vw, 35px);
+  font-weight: 400;
+  letter-spacing: -0.02em;
+  line-height: 1.25;
+}
+
+.aurora-services__card p {
+  max-width: 34ch;
+  margin: 0;
+  color: color-mix(in srgb, var(--services-gold) 78%, var(--services-muted));
+  font-family: var(--services-serif);
+  font-size: 17px;
+  line-height: 1.82;
+}
+
+.aurora-services__quote-button {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  min-height: 50px;
+  margin-top: auto;
+  padding: 0 18px;
+  border: 1px solid var(--services-ink);
+  border-radius: 0;
+  background: var(--services-ink);
+  color: var(--services-paper);
+  cursor: pointer;
+  font-family: var(--services-sans);
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  transition:
+    background-color 180ms ease,
+    border-color 180ms ease,
+    color 180ms ease,
+    transform 120ms ease;
+}
+
+.aurora-services__card p + .aurora-services__quote-button {
+  margin-top: auto;
+}
+
+.aurora-services__quote-button:hover {
+  border-color: var(--services-gold);
+  background: var(--services-gold);
+  color: var(--services-paper);
+}
+
+.aurora-services__quote-button:active {
+  transform: translateY(1px);
+}
+
+.aurora-services__quote-button:focus-visible {
+  outline: 2px solid var(--services-gold);
+  outline-offset: 3px;
+}
+
+.aurora-services__quote-note {
+  max-width: 720px;
+  margin: 22px 0 0;
+  color: var(--services-muted);
+  font-size: 11px;
+  letter-spacing: 0.05em;
+  line-height: 1.7;
+}
+
+@media (max-width: 1000px) {
+  .aurora-services__shell {
+    width: min(100% - 56px, 880px);
+  }
+
+  .aurora-services__card {
+    min-height: 350px;
+  }
+}
+
+@media (min-width: 681px) and (max-width: 767px) {
+  .aurora-services__grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 680px) {
+  .aurora-services {
+    padding: 82px 0 74px;
+  }
+
+  .aurora-services__shell {
+    width: calc(100% - 40px);
+  }
+
+  .aurora-services__intro {
+    margin-bottom: 52px;
+  }
+
+  .aurora-services__eyebrow {
+    margin-bottom: 20px;
+    font-size: 10px;
+  }
+
+  .aurora-services__intro h2 {
+    font-size: clamp(39px, 12vw, 54px);
+    line-height: 1.12;
+  }
+
+  .aurora-services__intro p {
+    margin-top: 20px;
+    font-size: 16px;
+    line-height: 1.75;
+  }
+
+  .aurora-services__tabs {
+    gap: 28px;
+    margin-right: -20px;
+    margin-bottom: 46px;
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    scrollbar-width: none;
+  }
+
+  .aurora-services__tabs::-webkit-scrollbar {
+    display: none;
+  }
+
+  .aurora-services__tabs button {
+    min-height: 62px;
+    padding-bottom: 19px;
+    font-size: 15px;
+    white-space: nowrap;
+  }
+
+  .aurora-services__grid {
+    grid-template-columns: 1fr;
+  }
+
+  .aurora-services__card {
+    min-height: 340px;
+    padding: 35px 30px 32px;
+  }
+
+  .aurora-services__card h3 {
+    font-size: 30px;
+  }
+
+  .aurora-services__card p {
+    font-size: 16px;
+  }
+
+  .aurora-services__quote-button {
+    min-height: 54px;
+    padding-inline: 20px;
+    font-size: 14px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .aurora-services__tabs button,
+  .aurora-services__tabs button::after,
+  .aurora-services__quote-button {
+    transition: none;
+  }
+}
