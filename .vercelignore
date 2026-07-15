@@ -6,5 +6,6 @@ dist/
 node_modules/
 *.log
 .aurora-vite.*
+.aurora-ai.*
 .vite-dev.*
 vite.*.log

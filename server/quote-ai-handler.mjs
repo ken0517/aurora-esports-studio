@@ -294,6 +294,215 @@ export function inferGameIdFromMessages(messages) {
   return strongest.gameId;
 }
 
+function latestUserMessage(messages) {
+  return [...(messages || [])]
+    .reverse()
+    .find((message) => message?.role === "user" && message.content)?.content || "";
+}
+
+function normalizedSearchText(value) {
+  return String(value || "")
+    .normalize("NFKC")
+    .toLocaleLowerCase()
+    .replace(/\s+/g, "");
+}
+
+function localizedReply(locale, replies) {
+  return replies[locale] || replies["zh-HK"] || replies.en;
+}
+
+function localizedAliases(item) {
+  return [...new Set([
+    ...(item?.aliases || []),
+    ...Object.values(item?.labels || {}),
+  ].filter(Boolean))];
+}
+
+function includesLocalizedItem(input, item) {
+  return localizedAliases(item).some((alias) => {
+    const normalizedAlias = normalizedSearchText(alias);
+    return normalizedAlias.length >= 2 && input.includes(normalizedAlias);
+  });
+}
+
+function escapeRegExp(value) {
+  return String(value).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+function extractHeroBeforeMark(source, mark) {
+  for (const alias of localizedAliases(mark).sort((left, right) => right.length - left.length)) {
+    const expression = new RegExp(
+      `(?:想做|要做|我要做|查(?:詢|询)?|want(?:to)?)([^，。！？!?\\s]{1,24})${escapeRegExp(alias)}`,
+      "iu",
+    );
+    const match = String(source || "").match(expression);
+    if (match?.[1]) return match[1].replace(/^(?:我|想|要)+/u, "").trim();
+  }
+  return "";
+}
+
+function joinChoices(values, locale) {
+  if (locale === "en") {
+    if (values.length < 2) return values[0] || "";
+    return `${values.slice(0, -1).join(", ")} or ${values.at(-1)}`;
+  }
+  if (values.length < 2) return values[0] || "";
+  return `${values.slice(0, -1).join("、")}，還是${values.at(-1)}`;
+}
+
+/**
+ * Handle a few high-confidence, incomplete Aurora intents locally so a weak or
+ * overloaded provider cannot replace the required next question with a generic
+ * greeting. This layer only asks for one missing field and never quotes money.
+ */
+export function buildDeterministicFollowUp(messages, quoteContext = {}, locale = "zh-HK") {
+  const source = latestUserMessage(messages);
+  const input = normalizedSearchText(source);
+  if (!input) return null;
+
+  let gameId = quoteContext.gameId || inferGameIdFromMessages(messages);
+  const patch = {};
+
+  const concreteMarkMatches = [];
+  for (const game of Object.values(gameConfigs)) {
+    if (gameId && game.id !== gameId) continue;
+    for (const mark of game.heroPowerMarks) {
+      if (includesLocalizedItem(input, mark)) concreteMarkMatches.push({ game, mark });
+    }
+  }
+
+  if (!gameId && concreteMarkMatches.length) {
+    const matchingGameIds = [...new Set(concreteMarkMatches.map(({ game }) => game.id))];
+    if (matchingGameIds.length === 1) gameId = matchingGameIds[0];
+  }
+
+  const game = gameId ? gameConfigs[gameId] : null;
+  const concreteMark = concreteMarkMatches.find(({ game: candidate }) => candidate.id === gameId)?.mark;
+  const ambiguousMark = game
+    ? Object.entries(game.heroPowerMarkAmbiguities || {}).find(([alias]) => {
+        const normalizedAlias = normalizedSearchText(alias);
+        return normalizedAlias && input.includes(normalizedAlias);
+      })
+    : null;
+
+  if (concreteMark || ambiguousMark) {
+    patch.serviceId = "hero-power";
+    if (gameId) patch.gameId = gameId;
+
+    if (ambiguousMark && !concreteMark) {
+      const [minorId, majorId] = ambiguousMark[1];
+      const minor = game.heroPowerMarks.find((mark) => mark.id === minorId);
+      const major = game.heroPowerMarks.find((mark) => mark.id === majorId);
+      const gameName = localizeGameValue(game.labels, locale);
+      return {
+        patch,
+        message: localizedReply(locale, {
+          "zh-HK": `收到，你想查《${gameName}》英雄戰力標。你想做${localizeGameValue(minor.labels, locale)}還是${localizeGameValue(major.labels, locale)}？`,
+          "zh-CN": `收到，您想查询《${gameName}》英雄战力标。您想做${localizeGameValue(minor.labels, locale)}还是${localizeGameValue(major.labels, locale)}？`,
+          en: `Understood — this is a hero-power mark request for ${gameName}. Do you want the ${localizeGameValue(minor.labels, locale)} or ${localizeGameValue(major.labels, locale)}?`,
+        }),
+      };
+    }
+
+    if (!game || !concreteMark) {
+      const gameNames = Object.values(gameConfigs).map((item) => localizeGameValue(item.labels, locale));
+      return {
+        patch,
+        message: localizedReply(locale, {
+          "zh-HK": `收到，你想查英雄戰力標。請問是哪款遊戲：${joinChoices(gameNames, locale)}？`,
+          "zh-CN": `收到，您想查询英雄战力标。请问是哪款游戏：${joinChoices(gameNames, locale)}？`,
+          en: `Understood — you want a hero-power mark. Which game is it: ${joinChoices(gameNames, locale)}?`,
+        }),
+      };
+    }
+
+    patch.heroPowerMarkId = concreteMark.id;
+    const hero = extractHeroBeforeMark(source, concreteMark);
+    if (hero) patch.preferredHero = hero;
+    const gameName = localizeGameValue(game.labels, locale);
+    const markName = localizeGameValue(concreteMark.labels, locale);
+    const target = `${hero || ""}${markName}`;
+    if (!quoteContext.currentRankId) {
+      return {
+        patch,
+        message: localizedReply(locale, {
+          "zh-HK": `收到，你想查《${gameName}》的${target}。請問你目前是哪個段位？`,
+          "zh-CN": `收到，您想查询《${gameName}》的${target}。请问您目前是什么段位？`,
+          en: `Understood — you want the ${target} in ${gameName}. What is your current rank?`,
+        }),
+      };
+    }
+  }
+
+  const duo = serviceDefinitions.find((service) => service.id === "duo");
+  const asksForDuo = includesLocalizedItem(input, duo);
+  const declinesVoice = /(?:不想|不要|唔想|毋須|无需|不需要|唔使)(?:開麥|开麦|開咪|开咪|語音|语音)|(?:no|without)(?:mic|voice)/iu.test(input);
+  if (asksForDuo) {
+    patch.serviceId = "duo";
+    if (gameId) patch.gameId = gameId;
+    if (!game) {
+      const gameNames = Object.values(gameConfigs).map((item) => localizeGameValue(item.labels, locale));
+      return {
+        patch,
+        message: localizedReply(locale, {
+          "zh-HK": `${declinesVoice ? "可以，陪玩帶飛不強制開麥。" : "收到，你想查陪玩帶飛。"}請問你玩${joinChoices(gameNames, locale)}？`,
+          "zh-CN": `${declinesVoice ? "可以，陪玩带飞不强制开麦。" : "收到，您想查询陪玩带飞。"}请问您玩${joinChoices(gameNames, locale)}？`,
+          en: `${declinesVoice ? "Yes, voice chat is not compulsory for duo play. " : "Understood — you want duo play. "}Which game do you play: ${joinChoices(gameNames, locale)}?`,
+        }),
+      };
+    }
+    if (!quoteContext.duoMode) {
+      const gameName = localizeGameValue(game.labels, locale);
+      const modeNames = duo.modes.map((mode) => localizeGameValue(mode.labels, locale));
+      return {
+        patch,
+        message: localizedReply(locale, {
+          "zh-HK": `${declinesVoice ? "可以，陪玩帶飛不強制開麥。" : `收到，你想查《${gameName}》陪玩帶飛。`}請問你想玩${joinChoices(modeNames, locale)}？`,
+          "zh-CN": `${declinesVoice ? "可以，陪玩带飞不强制开麦。" : `收到，您想查询《${gameName}》陪玩带飞。`}请问您想玩${joinChoices(modeNames, locale)}？`,
+          en: `${declinesVoice ? "Yes, voice chat is not compulsory for duo play. " : `Understood — you want duo play in ${gameName}. `}Do you want ${joinChoices(modeNames, locale)}?`,
+        }),
+      };
+    }
+  }
+
+  if (game && /(?:升|上到|升到|衝|冲|to)/iu.test(input)) {
+    const rankMentions = game.ranks
+      .map((rank) => {
+        const positions = localizedAliases(rank)
+          .map((alias) => input.indexOf(normalizedSearchText(alias)))
+          .filter((position) => position >= 0);
+        return positions.length ? { rank, position: Math.min(...positions) } : null;
+      })
+      .filter(Boolean)
+      .sort((left, right) => left.position - right.position);
+
+    if (rankMentions.length >= 2) {
+      const currentRank = rankMentions[0].rank;
+      const targetRank = rankMentions.at(-1).rank;
+      patch.gameId = game.id;
+      patch.serviceId = "rank";
+      patch.currentRankId = currentRank.id;
+      patch.targetRankId = targetRank.id;
+
+      if (currentRank.divisions.length && !quoteContext.currentDivision) {
+        const gameName = localizeGameValue(game.labels, locale);
+        const currentName = localizeGameValue(currentRank.labels, locale);
+        const targetName = localizeGameValue(targetRank.labels, locale);
+        return {
+          patch,
+          message: localizedReply(locale, {
+            "zh-HK": `收到，你想查《${gameName}》由${currentName}升${targetName}。請問你目前是${currentName} ${joinChoices(currentRank.divisions, locale)}？`,
+            "zh-CN": `收到，您想查询《${gameName}》从${currentName}升到${targetName}。请问您目前是${currentName} ${joinChoices(currentRank.divisions, locale)}？`,
+            en: `Understood — you want to progress from ${currentName} to ${targetName} in ${gameName}. Which ${currentName} division are you currently in: ${joinChoices(currentRank.divisions, locale)}?`,
+          }),
+        };
+      }
+    }
+  }
+
+  return null;
+}
+
 function validOptionsForGame(gameId, locale) {
   const game = gameConfigs[gameId];
   if (!game) return null;
@@ -374,6 +583,7 @@ SCOPE:
 - For unrelated requests, politely say that you mainly handle Aurora game services, quotations, and ordering.
 - Understand Traditional Chinese, Simplified Chinese, Hong Kong Cantonese, mixed English, common typos, and incomplete sentences.
 - When information is missing, ask exactly one most important follow-up question at a time.
+- Always respond to the latest customer request directly. Never replace an in-scope service or quotation question with a generic greeting.
 
 GAME DATA RULES:
 - Use only the supplied central game configuration. Never mix lanes, ranks, divisions, star ranges, or hero-power marks between games.
@@ -697,6 +907,8 @@ export function createQuoteAiHandler({
     const quoteContext = cleanQuoteContext(body.quoteContext, locale);
     const inferredGameId = inferGameIdFromMessages(messages);
     if (inferredGameId) quoteContext.gameId = inferredGameId;
+    const deterministicFollowUp = buildDeterministicFollowUp(messages, quoteContext, locale);
+    if (deterministicFollowUp?.patch) Object.assign(quoteContext, deterministicFollowUp.patch);
     let quoteResult = calculateAuthoritativeQuote(quoteContext, {
       calculateQuoteFn,
       validateQuoteDraftFn,
@@ -708,6 +920,21 @@ export function createQuoteAiHandler({
         200,
         {
           message: scopeReply(locale),
+          responseId: null,
+          model: settings.model,
+          pricingStatus: quoteResult.status,
+        },
+        cors,
+      );
+      return;
+    }
+
+    if (deterministicFollowUp?.message) {
+      sendJson(
+        res,
+        200,
+        {
+          message: deterministicFollowUp.message,
           responseId: null,
           model: settings.model,
           pricingStatus: quoteResult.status,

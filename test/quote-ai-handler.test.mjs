@@ -211,6 +211,49 @@ test("configured status identifies Gemini 3.1 Flash-Lite without exposing the ke
   });
 });
 
+test("four common incomplete scope queries get one deterministic follow-up without calling Gemini", async () => {
+  const { handler, fake, clientFactoryCalls } = createConfiguredHandler({ responses: [] });
+  const cases = [
+    {
+      input: "我传说对决钻石想升星耀，大约多少钱？",
+      expected: /傳說對決.*鑽石.*星耀.*V.*IV.*III.*II.*I/u,
+    },
+    {
+      input: "我想做莉莉安紫标",
+      expected: /傳說對決.*莉莉安紫標.*段位/u,
+    },
+    {
+      input: "HOK我要国标",
+      expected: /HOK.*小國標.*大國標/u,
+    },
+    {
+      input: "我想陪玩但不想开麦",
+      expected: /陪玩帶飛.*不強制開麥.*傳說對決.*王者榮耀國服.*HOK/u,
+    },
+  ];
+
+  await withHttpServer(handler, async (baseUrl) => {
+    for (const item of cases) {
+      const { response, payload } = await postJson(baseUrl, {
+        locale: "zh-HK",
+        messages: [{ role: "user", content: item.input }],
+        quoteContext: {},
+      });
+
+      assert.equal(response.status, 200);
+      assert.match(payload.message, item.expected);
+      assert.equal((payload.message.match(/[？?]/gu) || []).length, 1);
+      assert.doesNotMatch(payload.message, /(?:HK\$|HKD|\d+(?:\.\d+)?\s*(?:元|蚊|dollars?))/iu);
+      assert.equal(payload.responseId, null);
+      assert.equal(payload.model, DEFAULT_GEMINI_MODEL);
+      assert.equal(payload.pricingStatus, "incomplete");
+    }
+  });
+
+  assert.equal(fake.calls.length, 0);
+  assert.equal(clientFactoryCalls.length, 0);
+});
+
 test("normal chat preserves the frontend response shape and maps assistant history to Gemini model role", async () => {
   const { handler, fake, clientFactoryCalls } = createConfiguredHandler({
     responses: [
