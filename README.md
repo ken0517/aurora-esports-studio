@@ -99,12 +99,12 @@ npm run build
 
 ## 生产部署
 
-`npm run build` 只会产生静态前端。GitHub Pages 不能运行 Node Backend，因此正式上线 AI 功能还需要：
+`npm run build` 只会产生静态前端。正式环境使用 GitHub Pages 托管前端，并由 Vercel Functions 托管同一套 Node Backend：
 
-1. 将 `server/quote-ai-handler.mjs` 和 `server/quote-ai-server.mjs` 部署到可运行 Node.js 的 HTTPS 服务；
-2. 在该服务的服务器环境变量中设置 `GEMINI_API_KEY` 与 `GEMINI_MODEL=gemini-3.1-flash-lite`；
-3. 通过 `AI_ALLOWED_ORIGINS` 允许正式网站来源；
-4. 将 `VITE_QUOTE_AI_ENDPOINT` 指向部署后的 `/api/quote-ai`（如果前后端不同域）；
+1. `api/quote-ai.mjs` 与 `api/quote-ai/status.mjs` 只负责把 Vercel 请求交给共享的 `server/quote-ai-handler.mjs`；
+2. 在 Vercel Production 环境变量中设置 `GEMINI_API_KEY`、`GEMINI_MODEL=gemini-3.1-flash-lite`、`AI_ALLOWED_ORIGINS=https://ken0517.github.io` 与 `AI_TRUST_PROXY=true`；
+3. 将 GitHub 仓库变量 `VITE_QUOTE_AI_ENDPOINT` 指向 Vercel 的 `/api/quote-ai`；
+4. 重新运行 GitHub Pages workflow；
 5. 验证 `/api/quote-ai/status`、CORS、速率限制和超时处理。
 
 Backend 未部署和验证前，不应宣称 Gemini AI 已在正式网站上线。

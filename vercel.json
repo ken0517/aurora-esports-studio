@@ -1,0 +1,11 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "functions": {
+    "api/quote-ai.mjs": {
+      "maxDuration": 60
+    },
+    "api/quote-ai/status.mjs": {
+      "maxDuration": 10
+    }
+  }
+}

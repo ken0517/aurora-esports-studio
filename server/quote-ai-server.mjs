@@ -1,9 +1,8 @@
 import { createServer } from "node:http";
 import { handleQuoteAiRequest } from "./quote-ai-handler.mjs";
 
-const configuredPort = Number(process.env.PORT || process.env.AI_PORT || 8787);
-const port = Number.isInteger(configuredPort) && configuredPort > 0 ? configuredPort : 8787;
-const host = process.env.AI_HOST || "0.0.0.0";
+const port = Number(process.env.AI_PORT || 8787);
+const host = process.env.AI_HOST || "127.0.0.1";
 
 const server = createServer((req, res) => {
   const url = new URL(req.url || "/", `http://${req.headers.host || "localhost"}`);
