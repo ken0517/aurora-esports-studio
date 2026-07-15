@@ -13,3 +13,5 @@ pnpm-debug.log*
 .vite-dev.*
 vite.*.log
 .aurora-vite.*
+
+.vercel/

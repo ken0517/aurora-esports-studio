@@ -1,0 +1,10 @@
+.env
+.env.*
+.vercel/
+artifacts/
+dist/
+node_modules/
+*.log
+.aurora-vite.*
+.vite-dev.*
+vite.*.log
