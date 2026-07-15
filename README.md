@@ -6,7 +6,7 @@ Aurora Esports Studio 的单页网站，服务香港及台湾玩家，支持：
 - 《王者荣耀》国服
 - Honor of Kings／《王者荣耀》国际服
 
-网站包含三语界面、确定性报价表、搜索建议、WhatsApp 摘要，以及由安全后端提供的 Gemini AI 顾问。
+网站包含三语界面、确定性报价表、搜索建议、WhatsApp 摘要、安全 Gemini 客服，以及可登录的价格／时间管理后台。
 
 ## 技术栈
 
@@ -22,21 +22,27 @@ Aurora Esports Studio 的单页网站，服务香港及台湾玩家，支持：
 ```text
 src/
   App.jsx
+  AdminApp.jsx             # /admin 管理后台
   components/
     QuoteAssistant.jsx
     ServicesEditorial.jsx
   data/
     gameConfig.js       # 三个游戏共用的中央配置
     pricing.js          # 唯一正式定价资料源
+    runtimeCatalog.js   # 后台动态目录的白名单与校验
     ranks.js            # 中央配置的兼容入口
     suggestions.js
     translations.js
   lib/
     quoteEngine.js      # 确定性服务器／前端共用报价规则
 server/
+  admin-auth.mjs        # 签名会话、密码校验
+  admin-api.mjs         # 公开目录与管理员 API
+  catalog-store.mjs     # Vercel KV / Upstash Redis 持久化
   quote-ai-handler.mjs  # Gemini、安全限制、函数调用
   quote-ai-server.mjs
 test/
+  admin-backend.test.mjs
   game-config.test.mjs
   quote-engine.test.mjs
   quote-ai-handler.test.mjs
@@ -83,9 +89,51 @@ npm test
 npm run build
 ```
 
+## 管理后台
+
+后台地址为 `/admin`。管理员可以分别管理三款游戏的五类服务：
+
+- 修改公开价格、币种、价格后缀和预计完成时间；
+- 填写客户可见备注及全站公告；
+- 上架或隐藏单项服务；
+- 决定已获核准的固定价格是否进入自动报价；
+- 保存后由前台和服务器 AI 报价读取同一份动态目录。
+
+本地 Vite 只负责前端页面。需要完整测试后台 API 时，使用 Vercel Dev 或部署到 Vercel。生产环境先运行：
+
+如需在本机连同 API 预览，先在 `.env.local` 配置管理员变量，并仅在本地设置 `AURORA_ALLOW_MEMORY_STORAGE=true`，然后运行：
+
+```bash
+npm run build
+npm run preview:full
+```
+
+本地内存目录会在进程结束后消失，只用于界面与流程测试。
+
+生产环境先运行：
+
+```bash
+npm run admin:secrets
+```
+
+妥善保存命令输出的一次性管理员密码，并把 `AURORA_ADMIN_PASSWORD_SHA256` 与 `AURORA_ADMIN_SESSION_SECRET` 加入 Vercel 的 Production 环境变量。密码和会话密钥绝不能使用 `VITE_` 前缀。
+
+目录使用 Vercel Marketplace 的 Upstash Redis（或兼容 Vercel KV 环境变量）持久化。服务器必须存在以下其中一组：
+
+```dotenv
+KV_REST_API_URL=...
+KV_REST_API_TOKEN=...
+
+# 或
+UPSTASH_REDIS_REST_URL=...
+UPSTASH_REDIS_REST_TOKEN=...
+```
+
+没有持久化数据库时，后台仍可打开预览，但会禁止发布，避免让管理员误以为资料已经永久保存。`AURORA_ALLOW_MEMORY_STORAGE=true` 只供本地测试，不能用于生产。
+
 ## 报价安全
 
-目前尚未提供 Aurora 的正式价目表，因此 `src/data/pricing.js` 中所有金额均为 `null`，规则保持 `configured: false`。
+初始目录不包含任何假设价格，所有金额均为 `null`，规则保持 `configured: false`。
 
 在正式价格录入前：
 
@@ -95,24 +143,28 @@ npm run build
 - Gemini 只负责理解与整理需求；
 - 金额只能来自服务器的正式报价函数。
 
-正式价格只能在 `src/data/pricing.js` 更新。人工核准整份价目表后，才可同时启用目录总开关及对应规则开关。
+正式价格由管理员在 `/admin` 录入。公开显示价格与自动报价是两个独立选择：未开启自动报价时，价格可展示给客户，但详细订单仍会转人工确认。英雄战力和其他定制服务始终保留人工确认。
 
 ## 生产部署
 
-`npm run build` 只会产生静态前端。正式环境使用 GitHub Pages 托管前端，并由 Vercel Functions 托管同一套 Node Backend：
+为了让后台使用安全的同源 HttpOnly Cookie，正式环境推荐把前端和 Functions 一起部署到同一个 Vercel 项目。GitHub Pages workflow 仍可作为公开前台备用，但后台应在 Vercel 域名使用。
 
-1. `api/quote-ai.mjs` 与 `api/quote-ai/status.mjs` 只负责把 Vercel 请求交给共享的 `server/quote-ai-handler.mjs`；
-2. 在 Vercel Production 环境变量中设置 `GEMINI_API_KEY`、`GEMINI_MODEL=gemini-3.1-flash-lite`、`AI_ALLOWED_ORIGINS=https://ken0517.github.io` 与 `AI_TRUST_PROXY=true`；
-3. 将 GitHub 仓库变量 `VITE_QUOTE_AI_ENDPOINT` 指向 Vercel 的 `/api/quote-ai`；
-4. 重新运行 GitHub Pages workflow；
-5. 验证 `/api/quote-ai/status`、CORS、速率限制和超时处理。
+1. 从 GitHub 导入项目到 Vercel；Framework Preset 选择 Vite；
+2. 连接 Upstash Redis / Vercel KV，并确认 REST URL 与 Token 已注入；
+3. 设置上述管理员环境变量；
+4. 如需 AI 客服，再设置 `GEMINI_API_KEY`、`GEMINI_MODEL=gemini-3.1-flash-lite`、`AI_ALLOWED_ORIGINS=https://你的正式域名` 与 `AI_TRUST_PROXY=true`；
+5. 部署后检查 `/api/catalog`、`/api/quote-ai/status` 和 `/admin`；
+6. 登录后台录入已核准价格，发布后用无痕窗口检查前台。
+
+若继续用 GitHub Pages 展示前台，请把仓库变量 `VITE_AURORA_API_BASE_URL` 指向 Vercel 域名。公开目录支持跨域读取，但管理员登录仍应直接在 Vercel 同源 `/admin` 完成。
 
 Backend 未部署和验证前，不应宣称 Gemini AI 已在正式网站上线。
 
 ## 上线前仍需确认
 
-- 录入 Aurora 正式核准的价格、附加费、折扣和完成时间；
+- 连接生产数据库并生成管理员凭据；
+- 在后台录入 Aurora 正式核准的价格和完成时间；
 - 复核运营数据、玩家评价及服务政策；
 - 按各游戏当前条款审查账号相关服务；
-- 确认正式域名后设置绝对 Open Graph 图片 URL；
+- 确认正式域名后更新 canonical、sitemap 与 Open Graph 图片 URL；
 - 在 Desktop 与 Mobile 上完成真实 Backend 的端到端验收。

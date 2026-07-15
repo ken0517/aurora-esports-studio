@@ -85,16 +85,16 @@ export function getServiceLabel(serviceOrId, locale = "zh-HK") {
   return service.labels?.[locale] ?? service.labels?.["zh-HK"] ?? service.id;
 }
 
-export function getPricingRule(gameId, serviceId) {
-  return pricingCatalog.games?.[gameId]?.[serviceId] ?? null;
+export function getPricingRule(gameId, serviceId, catalog = pricingCatalog) {
+  return catalog?.games?.[gameId]?.[serviceId] ?? null;
 }
 
-export function isPricingConfigured(gameId, serviceId) {
+export function isPricingConfigured(gameId, serviceId, catalog = pricingCatalog) {
   // Master publish guard: no individual rule can become customer-facing until
   // Aurora explicitly enables the catalogue as a whole.
-  if (!pricingCatalog.configured) return false;
+  if (!catalog?.configured) return false;
 
-  const rule = getPricingRule(gameId, serviceId);
+  const rule = getPricingRule(gameId, serviceId, catalog);
   if (!rule?.configured) return false;
 
   // A configured flag alone is not enough. At least one approved monetary

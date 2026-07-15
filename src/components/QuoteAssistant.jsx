@@ -540,6 +540,7 @@ export function QuoteAssistant({
   className = "",
   onOpenChange,
   prefillRequest,
+  pricingCatalog,
 }) {
   const reduceMotion = useReducedMotion();
   const localeId = normalizedLocale(locale);
@@ -848,7 +849,9 @@ export function QuoteAssistant({
   const duoModes = selectedService?.modes ?? [];
   const otherServiceTypes = selectedService?.options ?? [];
   const pricingReady = Boolean(
-    draft.gameId && draft.serviceId && isPricingConfigured(draft.gameId, draft.serviceId),
+    draft.gameId &&
+      draft.serviceId &&
+      isPricingConfigured(draft.gameId, draft.serviceId, pricingCatalog),
   );
 
   const generateQuote = useCallback(() => {
@@ -865,7 +868,10 @@ export function QuoteAssistant({
       return;
     }
     try {
-      setQuote(calculateQuote({ ...draft, locale: localeId }));
+      setQuote(calculateQuote(
+        { ...draft, locale: localeId },
+        { pricingCatalog },
+      ));
     } catch {
       setQuote({
         status: "manual_review",
@@ -877,7 +883,7 @@ export function QuoteAssistant({
         finalTotal: null,
       });
     }
-  }, [draft, localeId, ui.incomplete]);
+  }, [draft, localeId, pricingCatalog, ui.incomplete]);
 
   const quoteText = useMemo(() => {
     if (!quote) return "";

@@ -10,7 +10,9 @@
     "lint": "eslint . --max-warnings=0",
     "test": "node --test",
     "preview": "vite preview --host 0.0.0.0",
-    "assets": "node scripts/generate-placeholders.mjs"
+    "preview:full": "node --env-file-if-exists=.env.local server/site-server.mjs",
+    "assets": "node scripts/generate-placeholders.mjs",
+    "admin:secrets": "node scripts/generate-admin-secrets.mjs"
   },
   "dependencies": {
     "@google/genai": "^2.11.0",

@@ -440,7 +440,7 @@ function baseQuoteResult(draft, validation, options = {}) {
     referenceNumber: reference,
     createdAt: (options.now instanceof Date ? options.now : new Date()).toISOString(),
     locale: draft.locale,
-    currency: pricingCurrency,
+    currency: options.pricingCatalog?.currency || pricingCurrency,
     draft,
     validation,
     service,
@@ -468,7 +468,7 @@ function baseQuoteResult(draft, validation, options = {}) {
     discount: null,
     estimatedCompletionTime: draft.completionTime || null,
     finalTotal: null,
-    pricing: { currency: pricingCurrency, configured: false, rule: null },
+    pricing: { currency: options.pricingCatalog?.currency || pricingCurrency, configured: false, rule: null },
   };
 }
 
@@ -485,9 +485,14 @@ export function calculateQuote(inputDraft, options = {}) {
   }
 
   const isManualIntent = manualOnlyIntents.includes(draft.intent) || service?.manualOnly;
-  const rule = getPricingRule(draft.gameId, draft.serviceId);
+  const activePricingCatalog = options.pricingCatalog;
+  const rule = getPricingRule(draft.gameId, draft.serviceId, activePricingCatalog);
   result.pricing.rule = rule;
-  result.pricing.configured = isPricingConfigured(draft.gameId, draft.serviceId);
+  result.pricing.configured = isPricingConfigured(
+    draft.gameId,
+    draft.serviceId,
+    activePricingCatalog,
+  );
 
   if (isManualIntent || validation.requiresManualReview) {
     result.status = "manual_review";

@@ -170,6 +170,30 @@
   line-height: 1.82;
 }
 
+.aurora-services__pricing {
+  display: grid;
+  gap: 5px;
+  width: 100%;
+  margin: 24px 0 22px;
+  padding-top: 18px;
+  border-top: 1px solid var(--services-line);
+  font-family: var(--services-sans);
+}
+
+.aurora-services__pricing strong {
+  color: var(--services-ink);
+  font-family: var(--services-serif);
+  font-size: 22px;
+  font-weight: 500;
+}
+
+.aurora-services__pricing span,
+.aurora-services__pricing small {
+  color: var(--services-muted);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
 .aurora-services__quote-button {
   display: flex;
   align-items: center;
@@ -192,10 +216,6 @@
     border-color 180ms ease,
     color 180ms ease,
     transform 120ms ease;
-}
-
-.aurora-services__card p + .aurora-services__quote-button {
-  margin-top: auto;
 }
 
 .aurora-services__quote-button:hover {

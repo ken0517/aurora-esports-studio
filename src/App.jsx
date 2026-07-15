@@ -24,6 +24,7 @@ import {
   testimonials,
 } from "./data/content";
 import { supportedLocales, translate } from "./data/translations";
+import { useRuntimeCatalog } from "./hooks/useRuntimeCatalog";
 import { publicAsset } from "./lib/publicAsset.js";
 
 const localeFallbackLabels = {
@@ -240,6 +241,7 @@ function SectionIntro({ eyebrow, title, description, inverse = false }) {
 
 export default function App() {
   const reduceMotion = useReducedMotion();
+  const { catalog: runtimeCatalog } = useRuntimeCatalog();
   const [locale, setLocale] = useState(() => {
     if (typeof window === "undefined") return supportedLocales[0] || "zh-HK";
     try {
@@ -351,6 +353,12 @@ export default function App() {
         {text("a11y.skip", "跳到主要內容")}
       </a>
 
+      {runtimeCatalog.announcement ? (
+        <aside className="site-announcement" role="status">
+          <span>{runtimeCatalog.announcement}</span>
+        </aside>
+      ) : null}
+
       <main id="main-content">
         <section className="cinematic-hero" id="top" aria-labelledby="hero-title">
           <div className="cinematic-hero__art" aria-hidden="true">
@@ -389,7 +397,7 @@ export default function App() {
             transition={{ duration: 0.9, delay: 0.15, ease: [0.22, 1, 0.36, 1] }}
           >
             <span>{text("hero.eyebrow", "AURORA · HONG KONG / TAIWAN")}</span>
-            <h1 id="hero-title">{text("hero.title", "Welcome")}</h1>
+            <h1 id="hero-title">{text("hero.title", "傳說對決 × 王者榮耀")}</h1>
             <p>
               {text(
                 "hero.description",
@@ -423,6 +431,7 @@ export default function App() {
               t={t}
               contactLinks={contactLinks}
               prefillRequest={serviceQuoteRequest}
+              pricingCatalog={runtimeCatalog}
             />
           </div>
 
@@ -510,6 +519,7 @@ export default function App() {
           activeGameId={activeGameId}
           onGameChange={setActiveGameId}
           onServiceSelect={handleServiceQuote}
+          pricingCatalog={runtimeCatalog}
         />
 
         <section className="process-editorial" id="process">

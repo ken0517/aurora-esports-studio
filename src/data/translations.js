@@ -43,7 +43,7 @@ const zhHK = {
   },
   hero: {
     eyebrow: "HK · TW MOBILE ESPORTS STUDIO",
-    title: "Welcome",
+    title: "傳說對決 × 王者榮耀",
     titleAccent: "",
     description: "走進 Aurora 的專屬戰場，為香港及台灣玩家帶來更從容、更精準的遊戲服務體驗。",
     sideNote: "香港為主 · 台灣亦可查詢",
@@ -180,7 +180,7 @@ const zhHK = {
   faqs: [
     { question: "目前支援哪些遊戲？", answer: "現時支援《傳說對決》、《王者榮耀》國服，以及 Honor of Kings 國際服。" },
     { question: "如何下單？", answer: "可透過 WhatsApp、Instagram、Discord、LINE 或 Carousell 私訊，提供遊戲、段位、目標和時段。" },
-    { question: "為甚麼不公開固定價目？", answer: "不同遊戲、伺服器、段位、目標和時段安排不同；只有已配置的規則才能自動計算，其餘轉人工確認。" },
+    { question: "價格為甚麼會按訂單調整？", answer: "網站會顯示 Aurora 已發布的公開價格或起價；遊戲、伺服器、段位、目標、加急要求和時段仍可能影響最終報價。未啟用自動報價的項目會由客服人工確認。" },
     { question: "香港和台灣玩家如何聯絡？", answer: "香港玩家建議使用 WhatsApp 或 Instagram；台灣玩家可使用 LINE、Instagram 或 Discord。" },
     { question: "是否提供售後或補單？", answer: "售後範圍會在開始前按方案說明。若時間或安排出現變動，客服會在原本的私人對話內跟進。" },
     { question: "服務是否有風險？", answer: "任何網上遊戲服務都不應描述為零風險。所有安排先說明流程與限制，並優先提供由玩家本人參與的陪打及訓練方案。" },
@@ -320,7 +320,7 @@ const en = {
   nav: { games: "Games", services: "Services", process: "Process", proof: "Results", reviews: "Reviews", faq: "FAQ", contact: "Contact", menu: "Menu", openMenu: "Open menu", closeMenu: "Close menu" },
   hero: {
     eyebrow: "HK · TW MOBILE ESPORTS STUDIO",
-    title: "Welcome",
+    title: "Arena of Valor × Honor of Kings",
     titleAccent: "",
     description: "Step into Aurora's private arena—a more considered, precise service experience for players across Hong Kong and Taiwan.",
     sideNote: "Hong Kong first · Taiwan welcome",
@@ -376,7 +376,7 @@ const en = {
   faqs: [
     { question: "Which games are supported?", answer: "Arena of Valor, Honor of Kings China and Honor of Kings Global." },
     { question: "How do I place an order?", answer: "Message us on WhatsApp, Instagram, Discord, LINE or Carousell with your game, rank, target and timing." },
-    { question: "Why is there no fixed public price list?", answer: "Game, server, rank, target and timing differ. Only configured rules can calculate automatically; all other requests go to human review." },
+    { question: "Why can the price vary by order?", answer: "The site shows Aurora's published price or starting price. Game, server, rank, target, express requests and timing can still affect the final quote; services without automatic pricing go to human review." },
     { question: "How should Hong Kong and Taiwan players contact Aurora?", answer: "WhatsApp or Instagram is recommended for Hong Kong; LINE, Instagram or Discord works well for Taiwan." },
     { question: "Is after-sales support or a make-up service available?", answer: "The applicable after-sales scope is explained before work begins. If timing or arrangements change, support follows up in the original private conversation." },
     { question: "Is the service risk-free?", answer: "No online game service should be described as zero-risk. We explain constraints first and prioritise player-participation duo play and coaching." },
@@ -410,7 +410,7 @@ const zhCN = {
   locale: { label: "语言", "zh-Hant": "繁體中文", en: "English", "zh-Hans": "简体中文" },
   nav: { games: "游戏专区", services: "服务项目", process: "流程", proof: "实绩", reviews: "玩家反馈", faq: "常见问题", contact: "联系", menu: "菜单", openMenu: "打开菜单", closeMenu: "关闭菜单" },
   hero: {
-    eyebrow: "HK · TW MOBILE ESPORTS STUDIO", title: "Welcome", titleAccent: "", description: "走进 Aurora 的专属战场，为香港及台湾玩家带来更从容、更精准的游戏服务体验。", sideNote: "香港为主 · 台湾亦可咨询", serviceNote: "3 GAMES · 1 TEAM · PRIVATE SERVICE", scroll: "向下探索", quoteControl: "向 Aurora客服查询报价", quoteControlShort: "Aurora客服即时报价", quoteDisclaimer: "Aurora客服会按已确认的中央资料协助整理报价需求。",
+    eyebrow: "HK · TW MOBILE ESPORTS STUDIO", title: "传说对决 × 王者荣耀", titleAccent: "", description: "走进 Aurora 的专属战场，为香港及台湾玩家带来更从容、更精准的游戏服务体验。", sideNote: "香港为主 · 台湾亦可咨询", serviceNote: "3 GAMES · 1 TEAM · PRIVATE SERVICE", scroll: "向下探索", quoteControl: "向 Aurora客服查询报价", quoteControlShort: "Aurora客服即时报价", quoteDisclaimer: "Aurora客服会按已确认的中央资料协助整理报价需求。",
   },
   stats: { eyebrow: "AURORA AT A GLANCE", disclaimer: "工作室累计运营数据；实际结果会按游戏、段位、时段及个别安排而异。", items: [
     { value: sharedStatsValues[0], label: "高端局参考胜率" }, { value: sharedStatsValues[1], label: "累计完成订单" }, { value: sharedStatsValues[2], label: "Carousell 评分" }, { value: sharedStatsValues[3], label: "客服协作时段" },
@@ -439,7 +439,7 @@ const zhCN = {
   ],
   faq: { eyebrow: "FAQ", title: "开始前，你可能想先知道。", description: "价格、流程、联系方式与服务限制，都在开始前说清楚。" },
   faqs: [
-    { question: "目前支持哪些游戏？", answer: "现时支持《传说对决》、《王者荣耀》国服，以及 Honor of Kings 国际服。" }, { question: "如何下单？", answer: "可通过 WhatsApp、Instagram、Discord、LINE 或 Carousell 私信，提供游戏、段位、目标和时段。" }, { question: "为什么不公开固定价目？", answer: "不同游戏、服务器、段位、目标和时段安排不同；只有已配置的规则才能自动计算，其余转人工确认。" }, { question: "香港和台湾玩家如何联系？", answer: "香港玩家建议使用 WhatsApp 或 Instagram；台湾玩家可使用 LINE、Instagram 或 Discord。" }, { question: "是否提供售后或补单？", answer: "售后范围会在开始前按方案说明。如果时间或安排发生变化，客服会在原来的私人对话中跟进。" }, { question: "服务是否有风险？", answer: "任何网上游戏服务都不应描述为零风险。所有安排先说明流程与限制，并优先提供由玩家本人参与的陪玩及训练方案。" }, { question: "可以咨询陪玩或教学服务吗？", answer: "可以。陪玩带飞可选排位或5V5匹配；复盘教学、Discord录屏及英雄教学可在“其他服务”内咨询。" },
+    { question: "目前支持哪些游戏？", answer: "现时支持《传说对决》、《王者荣耀》国服，以及 Honor of Kings 国际服。" }, { question: "如何下单？", answer: "可通过 WhatsApp、Instagram、Discord、LINE 或 Carousell 私信，提供游戏、段位、目标和时段。" }, { question: "价格为什么会按订单调整？", answer: "网站会显示 Aurora 已发布的公开价格或起价；游戏、服务器、段位、目标、加急要求和时段仍可能影响最终报价。未启用自动报价的项目会由客服人工确认。" }, { question: "香港和台湾玩家如何联系？", answer: "香港玩家建议使用 WhatsApp 或 Instagram；台湾玩家可使用 LINE、Instagram 或 Discord。" }, { question: "是否提供售后或补单？", answer: "售后范围会在开始前按方案说明。如果时间或安排发生变化，客服会在原来的私人对话中跟进。" }, { question: "服务是否有风险？", answer: "任何网上游戏服务都不应描述为零风险。所有安排先说明流程与限制，并优先提供由玩家本人参与的陪玩及训练方案。" }, { question: "可以咨询陪玩或教学服务吗？", answer: "可以。陪玩带飞可选排位或5V5匹配；复盘教学、Discord录屏及英雄教学可在“其他服务”内咨询。" },
   ],
   contact: {
     eyebrow: "READY WHEN YOU ARE", title: "把游戏、段位和目标发给我们。", description: "香港玩家建议使用 WhatsApp；台湾玩家可选 LINE。其他渠道同样可以咨询。", whatsapp: "WhatsApp 立即咨询",

@@ -10,13 +10,22 @@ import "../styles/services-editorial.css";
 
 const DEFAULT_GAME_ID = serviceEditorialGames[0].id;
 
-function ServiceCard({ service, game, locale, labels, onSelect }) {
+function ServiceCard({ service, game, locale, labels, onSelect, pricing }) {
   const gameName = getServiceEditorialText(game.name, locale);
   const serviceTitle = getServiceEditorialText(service.title, locale);
   const description = getServiceEditorialText(service.description, locale).replace(
     "{game}",
     gameName,
   );
+  const price = Number.isFinite(pricing?.basePrice)
+    ? new Intl.NumberFormat(locale, {
+        style: "currency",
+        currency: pricing.currency || "HKD",
+        maximumFractionDigits: 0,
+      }).format(pricing.basePrice)
+    : null;
+  const contactLabel = locale === "en" ? "Ask for price" : locale === "zh-CN" ? "咨询价格" : "查詢價格";
+  const timeLabel = locale === "en" ? "Estimated" : locale === "zh-CN" ? "预计" : "預計";
 
   return (
     <article className="aurora-services__card" data-service-id={service.id}>
@@ -25,6 +34,13 @@ function ServiceCard({ service, game, locale, labels, onSelect }) {
       </span>
       <h3>{serviceTitle}</h3>
       <p>{description}</p>
+      <div className="aurora-services__pricing" aria-label={`${serviceTitle} ${price || contactLabel}`}>
+        <strong>{price ? `${price} ${pricing?.priceSuffix || ""}` : contactLabel}</strong>
+        {pricing?.estimatedCompletionTime ? (
+          <span>{timeLabel}：{pricing.estimatedCompletionTime}</span>
+        ) : null}
+        {pricing?.note ? <small>{pricing.note}</small> : null}
+      </div>
       <button
         type="button"
         className="aurora-services__quote-button"
@@ -57,6 +73,7 @@ export default function ServicesEditorial({
   onServiceSelect,
   id = "services",
   className = "",
+  pricingCatalog,
 }) {
   const normalizedLocale = normalizeServiceLocale(locale);
   const labels = serviceEditorialCopy[normalizedLocale];
@@ -69,10 +86,12 @@ export default function ServicesEditorial({
     ? requestedGameId
     : DEFAULT_GAME_ID;
   const activeGame = serviceEditorialGames.find((game) => game.id === activeGameId);
-  const visibleServices = useMemo(
-    () => getEditorialServicesForGame(activeGameId),
-    [activeGameId],
-  );
+  const visibleServices = useMemo(() => {
+    const settings = pricingCatalog?.games?.[activeGameId] ?? {};
+    return getEditorialServicesForGame(activeGameId).filter(
+      (service) => settings[service.id]?.enabled !== false,
+    );
+  }, [activeGameId, pricingCatalog]);
   const instanceId = useId().replace(/:/g, "");
 
   const selectGame = (gameId) => {
@@ -156,6 +175,10 @@ export default function ServicesEditorial({
               locale={normalizedLocale}
               labels={labels}
               onSelect={onServiceSelect}
+              pricing={{
+                ...pricingCatalog?.games?.[activeGameId]?.[service.id],
+                currency: pricingCatalog?.currency,
+              }}
             />
           ))}
         </div>

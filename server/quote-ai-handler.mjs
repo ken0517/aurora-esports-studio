@@ -15,6 +15,7 @@ import {
 } from "../src/data/gameConfig.js";
 import { pricingCatalog } from "../src/data/pricing.js";
 import { calculateQuote, validateQuoteDraft } from "../src/lib/quoteEngine.js";
+import { createCatalogStore } from "./catalog-store.mjs";
 
 export const DEFAULT_GEMINI_MODEL = "gemini-3.1-flash-lite";
 
@@ -554,7 +555,7 @@ export function calculateAuthoritativeQuote(
   }
 }
 
-export function buildSystemInstructions(locale, quoteContext, quoteResult) {
+export function buildSystemInstructions(locale, quoteContext, quoteResult, activePricingCatalog = pricingCatalog) {
   const language = locale === "en"
     ? "English"
     : locale === "zh-CN"
@@ -563,8 +564,8 @@ export function buildSystemInstructions(locale, quoteContext, quoteResult) {
   const context = {
     studio: "Aurora Esports Studio",
     markets: ["Hong Kong", "Taiwan"],
-    pricingVersion: pricingCatalog.version,
-    pricingConfigured: Boolean(pricingCatalog.configured),
+    pricingVersion: activePricingCatalog.version || activePricingCatalog.revision,
+    pricingConfigured: Boolean(activePricingCatalog.configured),
     games: buildGameContext(locale),
     customerQuoteContext: quoteContext,
     authoritativeQuote: quoteResult,
@@ -909,8 +910,17 @@ export function createQuoteAiHandler({
     if (inferredGameId) quoteContext.gameId = inferredGameId;
     const deterministicFollowUp = buildDeterministicFollowUp(messages, quoteContext, locale);
     if (deterministicFollowUp?.patch) Object.assign(quoteContext, deterministicFollowUp.patch);
+    let activePricingCatalog = pricingCatalog;
+    try {
+      activePricingCatalog = await createCatalogStore().read();
+    } catch {
+      // The safe static catalogue remains unconfigured if storage is offline.
+    }
+    const calculateWithActiveCatalog = (draft) => calculateQuoteFn(draft, {
+      pricingCatalog: activePricingCatalog,
+    });
     let quoteResult = calculateAuthoritativeQuote(quoteContext, {
-      calculateQuoteFn,
+      calculateQuoteFn: calculateWithActiveCatalog,
       validateQuoteDraftFn,
     });
 
@@ -959,7 +969,7 @@ export function createQuoteAiHandler({
           model: settings.model,
           contents,
           config: {
-            systemInstruction: buildSystemInstructions(locale, quoteContext, quoteResult),
+            systemInstruction: buildSystemInstructions(locale, quoteContext, quoteResult, activePricingCatalog),
             maxOutputTokens: 700,
             tools: [{ functionDeclarations: [calculateQuoteDeclaration] }],
             toolConfig: {
@@ -982,7 +992,7 @@ export function createQuoteAiHandler({
             locale,
           );
           const result = calculateAuthoritativeQuote(context, {
-            calculateQuoteFn,
+            calculateQuoteFn: calculateWithActiveCatalog,
             validateQuoteDraftFn,
           });
           return { functionCall, context, result };
@@ -1012,7 +1022,7 @@ export function createQuoteAiHandler({
               },
             ],
             config: {
-              systemInstruction: buildSystemInstructions(locale, toolQuoteContext, quoteResult),
+              systemInstruction: buildSystemInstructions(locale, toolQuoteContext, quoteResult, activePricingCatalog),
               maxOutputTokens: 700,
               tools: [{ functionDeclarations: [calculateQuoteDeclaration] }],
               toolConfig: {
