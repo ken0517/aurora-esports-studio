@@ -30,6 +30,7 @@ test("quote context keeps the five-service dependent fields and drops unknown in
       {
         serviceId: "hero-power",
         duoMode: "match-5v5",
+        preferredStartTime: "2026-07-16T20:00",
         otherServiceType: "hero-coaching",
         currentHeroPowerPoints: 3210,
         targetHeroPowerPoints: 4560,
@@ -41,6 +42,7 @@ test("quote context keeps the five-service dependent fields and drops unknown in
       locale: "zh-HK",
       serviceId: "hero-power",
       duoMode: "match-5v5",
+      preferredStartTime: "2026-07-16T20:00",
       otherServiceType: "hero-coaching",
       currentHeroPowerPoints: 3210,
       targetHeroPowerPoints: 4560,
@@ -366,6 +368,7 @@ test("Gemini receives all three games from the shared central configuration", as
   ]);
   assert.equal(declaration.parametersJsonSchema.properties.currentHeroPowerPoints.type, "number");
   assert.equal(declaration.parametersJsonSchema.properties.targetHeroPowerPoints.type, "number");
+  assert.equal(declaration.parametersJsonSchema.properties.preferredStartTime.type, "string");
 });
 
 test("customer-visible model text is presented only as Aurora customer service", async () => {

@@ -48,6 +48,7 @@ const draftDefaults = {
   // integrations should prefer currentPoints/targetPoints or quantity.
   points: null,
   completionTime: "",
+  preferredStartTime: "",
   express: null,
   preferredHero: "",
   preferredRole: "",
@@ -293,10 +294,15 @@ export function validateQuoteDraft(inputDraft, options = {}) {
     const validModes = new Set((service?.modes || []).map((mode) => mode.id));
     if (!draft.duoMode) addMissing(result, "duoMode", "duoModeRequired");
     else if (!validModes.has(draft.duoMode)) addError(result, "duoMode", "invalidDuoMode");
-    else if (draft.duoMode === "ranked") {
-      validateRankContext(result, draft, { includeTarget: true, checkProgress: true });
-    } else if (draft.duoMode === "match-5v5") {
-      validatePositiveNumber(result, draft, "quantity");
+    else {
+      if (draft.duoMode === "ranked") {
+        validateRankContext(result, draft, { includeTarget: true, checkProgress: true });
+      } else if (draft.duoMode === "match-5v5") {
+        validatePositiveNumber(result, draft, "quantity");
+      }
+      if (!String(draft.preferredStartTime ?? "").trim()) {
+        addMissing(result, "preferredStartTime", "preferredStartTimeRequired");
+      }
     }
   }
 
@@ -337,7 +343,7 @@ export function validateQuoteDraft(inputDraft, options = {}) {
     addMissing(result, "express", "expressRequired");
   }
 
-  if ((service || isHeroPower) && !String(draft.completionTime ?? "").trim()) {
+  if ((service || isHeroPower) && draft.serviceId !== "duo" && !String(draft.completionTime ?? "").trim()) {
     addMissing(result, "completionTime", "completionTimeRequired");
   }
 
@@ -422,7 +428,10 @@ function calculateConfiguredPricing(rule, draft) {
     optionalChargeItems,
     discount,
     finalTotal: Math.max(0, basePrice + optionalCharges - discount),
-    estimatedCompletionTime: localize(rule.estimatedCompletionTime, draft.locale) || draft.completionTime || null,
+    estimatedCompletionTime: draft.serviceId === "duo"
+      ? null
+      : localize(rule.estimatedCompletionTime, draft.locale) || draft.completionTime || null,
+    preferredStartTime: draft.serviceId === "duo" ? draft.preferredStartTime || null : null,
     quantity,
   };
 }
@@ -462,11 +471,12 @@ function baseQuoteResult(draft, validation, options = {}) {
     preferredHero: draft.preferredHero,
     preferredRole: draft.preferredRole,
     heroPowerMarkId: draft.heroPowerMarkId,
+    preferredStartTime: draft.preferredStartTime || null,
     basePrice: null,
     optionalCharges: null,
     optionalChargeItems: [],
     discount: null,
-    estimatedCompletionTime: draft.completionTime || null,
+    estimatedCompletionTime: draft.serviceId === "duo" ? null : draft.completionTime || null,
     finalTotal: null,
     pricing: { currency: options.pricingCatalog?.currency || pricingCurrency, configured: false, rule: null },
   };
@@ -548,6 +558,24 @@ function getServiceChoiceLabel(service, collectionName, choiceId, locale) {
   return localize(choice?.labels, locale) || choiceId || "—";
 }
 
+function formatAppointmentTime(value, locale) {
+  if (!value) return translate(locale, "common.notAvailable");
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return String(value).replace("T", " ");
+  try {
+    return new Intl.DateTimeFormat(locale, {
+      weekday: "long",
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+      hour: "numeric",
+      minute: "2-digit",
+    }).format(date);
+  } catch {
+    return String(value).replace("T", " ");
+  }
+}
+
 export function formatQuoteText(quoteOrDraft, locale = null) {
   const quote = quoteOrDraft?.reference || quoteOrDraft?.referenceNumber
     ? quoteOrDraft
@@ -567,6 +595,7 @@ export function formatQuoteText(quoteOrDraft, locale = null) {
   if (isDuo) {
     detailRows.push(
       `${translate(resolvedLocale, "quote.fields.duoMode")}: ${getServiceChoiceLabel(quote.service, "modes", draft.duoMode, resolvedLocale)}`,
+      `${translate(resolvedLocale, "quote.table.preferredStartTime")}: ${formatAppointmentTime(quote.preferredStartTime || draft.preferredStartTime, resolvedLocale)}`,
     );
   }
   if (isRankRange || isHeroPower) {
@@ -626,7 +655,9 @@ export function formatQuoteText(quoteOrDraft, locale = null) {
     `${translate(resolvedLocale, "quote.table.basePrice")}: ${formatMoney(quote.basePrice, currency, resolvedLocale)}`,
     `${translate(resolvedLocale, "quote.table.optionalCharges")}: ${formatMoney(quote.optionalCharges, currency, resolvedLocale)}`,
     `${translate(resolvedLocale, "quote.table.discount")}: ${formatMoney(quote.discount, currency, resolvedLocale)}`,
-    `${translate(resolvedLocale, "quote.table.estimatedCompletionTime")}: ${quote.estimatedCompletionTime || draft.completionTime || translate(resolvedLocale, "common.notAvailable")}`,
+    ...(!isDuo
+      ? [`${translate(resolvedLocale, "quote.table.estimatedCompletionTime")}: ${quote.estimatedCompletionTime || draft.completionTime || translate(resolvedLocale, "common.notAvailable")}`]
+      : []),
     ...(["rank", "peak", "hero-power"].includes(draft.serviceId)
       ? [`${translate(resolvedLocale, "quote.fields.express")}: ${isPresent(draft.express) ? translate(resolvedLocale, draft.express ? "common.yes" : "common.no") : translate(resolvedLocale, "common.notAvailable")}`]
       : []),

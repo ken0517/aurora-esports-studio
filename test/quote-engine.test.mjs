@@ -37,6 +37,7 @@ const duoRankedDraft = {
   ...shared,
   serviceId: "duo",
   duoMode: "ranked",
+  preferredStartTime: "2026-07-16T20:00",
   currentRankId: "diamond",
   currentDivision: "III",
   currentStars: 2,
@@ -49,6 +50,7 @@ const duoMatchDraft = {
   ...shared,
   serviceId: "duo",
   duoMode: "match-5v5",
+  preferredStartTime: "2026-07-16T20:00",
   quantity: 3,
 };
 
@@ -131,13 +133,13 @@ test("each service rejects every missing field from its active field set", () =>
         "targetRankId",
         "targetDivision",
         "targetStars",
-        "completionTime",
+        "preferredStartTime",
       ],
     },
     {
       name: "duo 5V5",
       draft: duoMatchDraft,
-      fields: ["duoMode", "quantity", "completionTime"],
+      fields: ["duoMode", "quantity", "preferredStartTime"],
     },
     {
       name: "hero power",
@@ -194,6 +196,30 @@ test("duo modes validate only their own dynamic fields", () => {
   const invalidMode = validateQuoteDraft({ ...duoMatchDraft, duoMode: "voice" });
   assert.equal(invalidMode.valid, false);
   assert.ok(invalidMode.invalidFields.includes("duoMode"));
+
+  const beforeModeSelection = validateQuoteDraft({
+    ...duoMatchDraft,
+    duoMode: null,
+    preferredStartTime: "",
+  });
+  assert.ok(beforeModeSelection.missingFields.includes("duoMode"));
+  assert.ok(!beforeModeSelection.missingFields.includes("preferredStartTime"));
+
+  const afterModeSelection = validateQuoteDraft({
+    ...duoMatchDraft,
+    preferredStartTime: "",
+  });
+  assert.ok(afterModeSelection.missingFields.includes("preferredStartTime"));
+
+  const oneMatch = validateQuoteDraft({ ...duoMatchDraft, quantity: 1 });
+  assert.equal(oneMatch.valid, true);
+});
+
+test("duo WhatsApp summary uses the appointment start time instead of completion time", () => {
+  const message = formatWhatsAppMessage(calculateQuote(duoMatchDraft), "zh-HK");
+  assert.ok(message.includes("預約開始時間:"));
+  assert.ok(message.includes("2026"));
+  assert.ok(!message.includes("預計完成時間:"));
 });
 
 test("all three other-service subcategories validate and retain their selected label", () => {

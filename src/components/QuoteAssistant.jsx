@@ -77,6 +77,8 @@ const copyByLocale = {
     currentHeroPowerPoints: "目前英雄戰力分數",
     targetHeroPowerPoints: "目標英雄戰力分數",
     duoMode: "陪玩模式",
+    preferredStartTime: "理想開始時間",
+    preferredStartHint: "請選擇陪玩預約日期和開始時間",
     otherServiceType: "其他服務類型",
     optional: "選填",
     select: "請選擇",
@@ -130,6 +132,8 @@ const copyByLocale = {
     currentHeroPowerPoints: "Current hero-power score",
     targetHeroPowerPoints: "Target hero-power score",
     duoMode: "Companion mode",
+    preferredStartTime: "Preferred start time",
+    preferredStartHint: "Choose the appointment date and start time",
     otherServiceType: "Other service type",
     optional: "Optional",
     select: "Select",
@@ -183,6 +187,8 @@ const copyByLocale = {
     currentHeroPowerPoints: "目前英雄战力分数",
     targetHeroPowerPoints: "目标英雄战力分数",
     duoMode: "陪玩模式",
+    preferredStartTime: "理想开始时间",
+    preferredStartHint: "请选择陪玩预约日期和开始时间",
     otherServiceType: "其他服务类型",
     optional: "选填",
     select: "请选择",
@@ -219,6 +225,7 @@ const translationKeys = {
   targetStars: "quote.fields.targetStars",
   quantity: "quote.fields.quantity",
   completionTime: "quote.fields.completionTime",
+  preferredStartTime: "quote.fields.preferredStartTime",
   express: "quote.fields.express",
   preferredHero: "quote.fields.preferredHero",
   preferredRole: "quote.fields.preferredRole",
@@ -269,6 +276,7 @@ function makeDraft(locale) {
     targetHeroPowerPoints: null,
     quantity: null,
     completionTime: "",
+    preferredStartTime: "",
     express: null,
     preferredHero: "",
     preferredRole: "",
@@ -296,6 +304,7 @@ const gameScopedDraftReset = {
   preferredRole: "",
   heroPowerMarkId: null,
   duoMode: null,
+  preferredStartTime: "",
   otherServiceType: null,
   additionalRequirements: "",
 };
@@ -319,6 +328,7 @@ const serviceScopedDraftReset = {
   duoMode: null,
   otherServiceType: null,
   completionTime: "",
+  preferredStartTime: "",
   express: null,
   additionalRequirements: "",
 };
@@ -369,6 +379,7 @@ function mergeDraftPatch(current, patch) {
   }
 
   if (next.serviceId !== "duo") next.duoMode = null;
+  if (!(next.serviceId === "duo" && next.duoMode)) next.preferredStartTime = "";
   if (!(next.serviceId === "duo" && next.duoMode === "match-5v5")) {
     next.quantity = null;
     next.points = null;
@@ -493,6 +504,24 @@ function formatValue(value, locale, currency, pending) {
     }
   }
   return String(value);
+}
+
+function formatAppointmentTime(value, locale) {
+  if (!value) return "";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return String(value).replace("T", " ");
+  try {
+    return new Intl.DateTimeFormat(locale, {
+      weekday: "long",
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+      hour: "numeric",
+      minute: "2-digit",
+    }).format(date);
+  } catch {
+    return String(value).replace("T", " ");
+  }
 }
 
 function Field({ label, optional, hint, wide = false, children }) {
@@ -1247,7 +1276,24 @@ export function QuoteAssistant({
             </>
           ) : null}
 
-          {draft.serviceId ? (
+          {isDuo && draft.duoMode ? (
+            <Field
+              label={text("preferredStartTime", ui.preferredStartTime)}
+              hint={draft.preferredStartTime
+                ? formatAppointmentTime(draft.preferredStartTime, localeId)
+                : ui.preferredStartHint}
+            >
+              <input
+                type="datetime-local"
+                required
+                step="1800"
+                value={draft.preferredStartTime}
+                onChange={(event) => updateDraft("preferredStartTime", event.target.value)}
+              />
+            </Field>
+          ) : null}
+
+          {draft.serviceId && !isDuo ? (
             <Field label={text("completionTime", "理想完成時間")}>
               <input type="text" required value={draft.completionTime} placeholder={localeId === "en" ? "e.g. within 3 days" : "例如：三日內／今晚開始"} onChange={(event) => updateDraft("completionTime", event.target.value)} />
             </Field>
@@ -1334,7 +1380,9 @@ export function QuoteAssistant({
       [text("basePrice", "基本價格"), formatValue(quote?.basePrice, localeId, currency, ui.pending)],
       [text("optionalCharges", "附加費用"), formatValue(quote?.optionalCharges, localeId, currency, ui.pending)],
       [text("discount", "折扣"), formatValue(quote?.discount, localeId, currency, ui.pending)],
-      [text("estimatedTime", "預計完成時間"), quote?.estimatedCompletionTime ?? draft.completionTime ?? ui.pending],
+      ...(isDuo
+        ? [[text("preferredStartTime", ui.preferredStartTime), formatAppointmentTime(draft.preferredStartTime, localeId) || ui.pending]]
+        : [[text("estimatedTime", "預計完成時間"), quote?.estimatedCompletionTime ?? draft.completionTime ?? ui.pending]]),
       [text("finalTotal", "最終總額"), formatValue(quote?.finalTotal, localeId, currency, ui.pending)],
       [text("quoteStatus", "報價狀態"), statusLabel],
       [text("reference", "報價編號"), quote?.referenceNumber ?? quote?.reference ?? "—"],

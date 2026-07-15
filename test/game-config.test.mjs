@@ -154,7 +154,7 @@ test("five service definitions expose the expected central field contracts", () 
       "express",
     ],
     peak: ["gameId", "currentPoints", "targetPoints", "completionTime", "express"],
-    duo: ["gameId", "duoMode", "completionTime"],
+    duo: ["gameId", "duoMode", "preferredStartTime"],
     "hero-power": [
       "gameId",
       "currentRankId",

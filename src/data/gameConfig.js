@@ -202,7 +202,7 @@ export const serviceDefinitions = [
         requiredFields: ["quantity"],
       },
     ],
-    requiredFields: ["gameId", "duoMode", "completionTime"],
+    requiredFields: ["gameId", "duoMode", "preferredStartTime"],
   },
   {
     id: "hero-power",
