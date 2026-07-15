@@ -118,7 +118,7 @@ npm run admin:secrets
 
 妥善保存命令输出的一次性管理员密码，并把 `AURORA_ADMIN_PASSWORD_SHA256` 与 `AURORA_ADMIN_SESSION_SECRET` 加入 Vercel 的 Production 环境变量。密码和会话密钥绝不能使用 `VITE_` 前缀。
 
-目录使用 Vercel Marketplace 的 Upstash Redis（或兼容 Vercel KV 环境变量）持久化。服务器必须存在以下其中一组：
+目录优先支持 Vercel 原生 Private Blob，也兼容 Vercel Marketplace 的 Upstash Redis。连接 Private Blob 后，Vercel 会自动提供 `BLOB_STORE_ID` 与短期 OIDC 凭据；如果使用 Redis，则必须存在以下其中一组：
 
 ```dotenv
 KV_REST_API_URL=...

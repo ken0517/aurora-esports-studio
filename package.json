@@ -17,6 +17,7 @@
   },
   "dependencies": {
     "@google/genai": "^2.11.0",
+    "@vercel/blob": "^2.6.1",
     "framer-motion": "latest",
     "lucide-react": "latest",
     "react": "latest",
