@@ -54,7 +54,10 @@ const draftDefaults = {
   preferredRole: "",
   heroPowerMarkId: null,
   duoMode: null,
+  duoGuarantee: null,
   otherServiceType: null,
+  customSchedule: false,
+  winRate70: false,
   additionalRequirements: "",
 };
 
@@ -97,6 +100,10 @@ function normalizeDraft(draft = {}) {
 
   if (normalized.express === "true") normalized.express = true;
   if (normalized.express === "false") normalized.express = false;
+  if (normalized.customSchedule === "true") normalized.customSchedule = true;
+  if (normalized.customSchedule === "false") normalized.customSchedule = false;
+  if (normalized.winRate70 === "true") normalized.winRate70 = true;
+  if (normalized.winRate70 === "false") normalized.winRate70 = false;
   return normalized;
 }
 
@@ -297,8 +304,16 @@ export function validateQuoteDraft(inputDraft, options = {}) {
     else {
       if (draft.duoMode === "ranked") {
         validateRankContext(result, draft, { includeTarget: true, checkProgress: true });
+        const validGuarantees = new Set((service?.guaranteeOptions || []).map((option) => option.id));
+        if (!draft.duoGuarantee) addMissing(result, "duoGuarantee", "duoGuaranteeRequired");
+        else if (!validGuarantees.has(draft.duoGuarantee)) addError(result, "duoGuarantee", "invalidDuoGuarantee");
       } else if (draft.duoMode === "match-5v5") {
         validatePositiveNumber(result, draft, "quantity");
+        const rule = getPricingRule(draft.gameId, draft.serviceId, options.pricingCatalog);
+        const minimum = rule?.pricingModel === "aov-duo" ? rule.matchPricing?.minimumQuantity : null;
+        if (Number.isFinite(draft.quantity) && Number.isFinite(minimum) && draft.quantity < minimum) {
+          addError(result, "quantity", "minimumQuantity");
+        }
       }
       if (!String(draft.preferredStartTime ?? "").trim()) {
         addMissing(result, "preferredStartTime", "preferredStartTimeRequired");
@@ -330,6 +345,7 @@ export function validateQuoteDraft(inputDraft, options = {}) {
 
   if (draft.serviceId === "other") {
     const validTypes = new Set((service?.options || []).map((option) => option.id));
+    const selectedOption = (service?.options || []).find((option) => option.id === draft.otherServiceType);
     if (!draft.otherServiceType) addMissing(result, "otherServiceType", "otherServiceTypeRequired");
     else if (!validTypes.has(draft.otherServiceType)) {
       addError(result, "otherServiceType", "invalidOtherServiceType");
@@ -337,13 +353,22 @@ export function validateQuoteDraft(inputDraft, options = {}) {
     if (!String(draft.additionalRequirements ?? "").trim()) {
       addMissing(result, "additionalRequirements", "requirementsRequired");
     }
+    if (selectedOption?.manualOnly) {
+      result.requiresManualReview = true;
+      result.manualReviewReasons.push("manual-only-other-option");
+    }
+    if (draft.otherServiceType === "review-coaching" && !String(draft.preferredStartTime ?? "").trim()) {
+      addMissing(result, "preferredStartTime", "preferredStartTimeRequired");
+    }
   }
 
   if (["rank", "peak", "hero-power"].includes(draft.serviceId) && !isPresent(draft.express)) {
     addMissing(result, "express", "expressRequired");
   }
 
-  if ((service || isHeroPower) && draft.serviceId !== "duo" && !String(draft.completionTime ?? "").trim()) {
+  const usesAppointmentStart = draft.serviceId === "duo" ||
+    (draft.serviceId === "other" && draft.otherServiceType === "review-coaching");
+  if ((service || isHeroPower) && !usesAppointmentStart && !String(draft.completionTime ?? "").trim()) {
     addMissing(result, "completionTime", "completionTimeRequired");
   }
 
@@ -381,9 +406,209 @@ function monetaryValue(value) {
   return Number.isFinite(value) ? value : null;
 }
 
+function divisionNodesForGame(gameId) {
+  return (rankCatalog[gameId]?.ranks || [])
+    .filter((rank) => Array.isArray(rank.divisions) && rank.divisions.length)
+    .flatMap((rank) => rank.divisions.map((division) => ({
+      rankId: rank.id,
+      division,
+      key: `${rank.id}:${division}`,
+    })));
+}
+
+function perStarPrice(starNumber, starPricing) {
+  const bandSize = starPricing?.bandSize;
+  const base = starPricing?.basePerStar;
+  const increment = starPricing?.incrementPerBand;
+  if (![bandSize, base, increment].every(Number.isFinite) || bandSize <= 0 || starNumber < 0) return null;
+  // Aurora approved that the 10th star enters the 10–19 price band.
+  return base + Math.floor(starNumber / bandSize) * increment;
+}
+
+function calculateAovProgression(ruleLike, draft) {
+  const divisionStepPrices = ruleLike?.divisionStepPrices;
+  const starPricing = ruleLike?.starPricing;
+  if (!divisionStepPrices || !starPricing) return null;
+
+  const currentRank = getRankById(draft.gameId, draft.currentRankId);
+  const targetRank = getRankById(draft.gameId, draft.targetRankId);
+  if (!currentRank || !targetRank) return null;
+
+  const divisionNodes = divisionNodesForGame(draft.gameId);
+  const currentIsDivision = Boolean(currentRank.divisions?.length);
+  const targetIsDivision = Boolean(targetRank.divisions?.length);
+  let total = 0;
+  let divisionSteps = 0;
+  let starCount = 0;
+
+  if (currentIsDivision) {
+    const currentIndex = divisionNodes.findIndex((node) =>
+      node.rankId === currentRank.id && node.division === String(draft.currentDivision));
+    const targetIndex = targetIsDivision
+      ? divisionNodes.findIndex((node) => node.rankId === targetRank.id && node.division === String(draft.targetDivision))
+      : divisionNodes.length;
+    if (currentIndex < 0 || targetIndex < 0 || targetIndex <= currentIndex) return null;
+    for (let index = currentIndex; index < targetIndex; index += 1) {
+      const price = monetaryValue(divisionStepPrices[divisionNodes[index].key]);
+      if (!Number.isFinite(price)) return null;
+      total += price;
+      divisionSteps += 1;
+    }
+  } else if (targetIsDivision) {
+    return null;
+  }
+
+  if (!targetIsDivision) {
+    const startStar = currentIsDivision ? 0 : Number(draft.currentStars);
+    const targetStar = Number(draft.targetStars);
+    if (!Number.isFinite(startStar) || !Number.isFinite(targetStar) || targetStar < startStar) return null;
+    for (let star = startStar + 1; star <= targetStar; star += 1) {
+      const price = perStarPrice(star, starPricing);
+      if (!Number.isFinite(price)) return null;
+      total += price;
+      starCount += 1;
+    }
+  }
+
+  return { amount: total, divisionSteps, starCount };
+}
+
+function addPercentageCharge(items, id, basePrice, config) {
+  if (config?.type !== "percentage" || !Number.isFinite(config.value)) return;
+  const amount = basePrice * config.value;
+  if (Number.isFinite(amount) && amount !== 0) items.push({ id, amount });
+}
+
+function progressionTime(rule, progression, draft) {
+  const time = rule.timeRules;
+  if (!time || !progression) return localize(rule.estimatedCompletionTime, draft.locale) || draft.completionTime || null;
+  const starGroups = progression.starCount / 10;
+  let minimum = progression.divisionSteps * time.hoursPerDivision + starGroups * time.hoursPerTenStarsMin;
+  let maximum = progression.divisionSteps * time.hoursPerDivision + starGroups * time.hoursPerTenStarsMax;
+  if (draft.express && Number.isFinite(time.expressTimeMultiplier)) {
+    minimum *= time.expressTimeMultiplier;
+    maximum *= time.expressTimeMultiplier;
+  }
+  const round = (value) => Math.round(value * 10) / 10;
+  const resolvedLocale = normalizeLocale(draft.locale);
+  const unit = resolvedLocale === "en" ? "hours" : resolvedLocale === "zh-CN" ? "小时" : "小時";
+  if (maximum <= 0) return localize(rule.estimatedCompletionTime, draft.locale) || draft.completionTime || null;
+  return minimum === maximum ? `${round(minimum)} ${unit}` : `${round(minimum)}–${round(maximum)} ${unit}`;
+}
+
 function calculateConfiguredPricing(rule, draft) {
   const quantity = deriveQuantity(draft);
   let basePrice = monetaryValue(rule.basePrice);
+
+  if (rule.pricingModel === "aov-rank-progression") {
+    const progression = calculateAovProgression(rule, draft);
+    if (!progression) return null;
+    basePrice = progression.amount;
+    const optionalChargeItems = [];
+    if (draft.express) addPercentageCharge(optionalChargeItems, "express", basePrice, rule.optionalCharges?.express);
+    if (String(draft.preferredRole || "").trim()) {
+      addPercentageCharge(optionalChargeItems, "preferredRole", basePrice, rule.optionalCharges?.preferredRole);
+    }
+    if (draft.customSchedule) addPercentageCharge(optionalChargeItems, "customSchedule", basePrice, rule.optionalCharges?.customSchedule);
+    if (draft.winRate70) addPercentageCharge(optionalChargeItems, "winRate70", basePrice, rule.optionalCharges?.winRate70);
+    let optionalCharges = optionalChargeItems.reduce((sum, item) => sum + item.amount, 0);
+    const beforeMinimum = basePrice + optionalCharges;
+    if (Number.isFinite(rule.minimumPrice) && beforeMinimum < rule.minimumPrice) {
+      const amount = rule.minimumPrice - beforeMinimum;
+      optionalChargeItems.push({ id: "minimumOrder", amount });
+      optionalCharges += amount;
+    }
+    return {
+      basePrice,
+      optionalCharges,
+      optionalChargeItems,
+      discount: 0,
+      finalTotal: basePrice + optionalCharges,
+      estimatedCompletionTime: progressionTime(rule, progression, draft),
+      preferredStartTime: null,
+      quantity: progression.divisionSteps + progression.starCount,
+      progression,
+      quoteValidityDays: rule.quoteValidityDays ?? null,
+    };
+  }
+
+  if (rule.pricingModel === "aov-duo") {
+    if (draft.duoMode === "ranked") {
+      const progression = calculateAovProgression(rule.rankPricing, draft);
+      if (!progression) return null;
+      basePrice = progression.amount;
+      const optionalChargeItems = [];
+      let discount = 0;
+      if (draft.duoGuarantee === "guaranteed") {
+        const multiplier = rule.rankPricing.guaranteedMultiplier;
+        optionalChargeItems.push({ id: "guaranteed", amount: basePrice * (multiplier - 1) });
+      } else if (draft.duoGuarantee === "standard") {
+        discount = basePrice * (1 - rule.rankPricing.standardMultiplier);
+      } else return null;
+      let optionalCharges = optionalChargeItems.reduce((sum, item) => sum + item.amount, 0);
+      const beforeMinimum = basePrice + optionalCharges - discount;
+      if (Number.isFinite(rule.rankPricing.minimumPrice) && beforeMinimum < rule.rankPricing.minimumPrice) {
+        const amount = rule.rankPricing.minimumPrice - beforeMinimum;
+        optionalChargeItems.push({ id: "minimumOrder", amount });
+        optionalCharges += amount;
+      }
+      return {
+        basePrice,
+        optionalCharges,
+        optionalChargeItems,
+        discount,
+        finalTotal: basePrice + optionalCharges - discount,
+        estimatedCompletionTime: null,
+        preferredStartTime: draft.preferredStartTime || null,
+        quantity: progression.divisionSteps + progression.starCount,
+        progression,
+        quoteValidityDays: rule.quoteValidityDays ?? null,
+      };
+    }
+    if (draft.duoMode === "match-5v5" && Number.isFinite(quantity)) {
+      const match = rule.matchPricing;
+      if (quantity < match.minimumQuantity) return null;
+      basePrice = match.unitPrice * quantity;
+      const discount = quantity >= match.discountThreshold ? basePrice * match.discountRate : 0;
+      return {
+        basePrice,
+        optionalCharges: 0,
+        optionalChargeItems: [],
+        discount,
+        finalTotal: basePrice - discount,
+        estimatedCompletionTime: null,
+        preferredStartTime: draft.preferredStartTime || null,
+        quantity,
+        unitPrice: match.unitPrice,
+        quoteValidityDays: rule.quoteValidityDays ?? null,
+      };
+    }
+    return null;
+  }
+
+  if (rule.pricingModel === "aov-other") {
+    const option = rule.options?.[draft.otherServiceType];
+    if (!option?.configured || draft.otherServiceType !== "review-coaching") return null;
+    const bookingDeposit = Number.isFinite(option.bookingDeposit)
+      ? option.bookingDeposit
+      : option.unitPrice * option.minimumMinutes;
+    return {
+      basePrice: bookingDeposit,
+      optionalCharges: 0,
+      optionalChargeItems: [],
+      discount: 0,
+      finalTotal: bookingDeposit,
+      amountType: "booking-deposit",
+      remainingBalancePending: true,
+      unitPrice: option.unitPrice,
+      minimumMinutes: option.minimumMinutes,
+      freeRescheduleNoticeHours: option.freeRescheduleNoticeHours,
+      estimatedCompletionTime: null,
+      preferredStartTime: draft.preferredStartTime || null,
+      quantity: option.minimumMinutes,
+      quoteValidityDays: rule.quoteValidityDays ?? null,
+    };
+  }
 
   if (rule.pricingModel === "per-unit" && Number.isFinite(rule.unitPrice) && Number.isFinite(quantity)) {
     basePrice = (basePrice ?? 0) + rule.unitPrice * quantity;
@@ -467,7 +692,10 @@ function baseQuoteResult(draft, validation, options = {}) {
     targetHeroPowerPoints: draft.targetHeroPowerPoints,
     quantity: deriveQuantity(draft),
     duoMode: draft.duoMode,
+    duoGuarantee: draft.duoGuarantee,
     otherServiceType: draft.otherServiceType,
+    customSchedule: Boolean(draft.customSchedule),
+    winRate70: Boolean(draft.winRate70),
     preferredHero: draft.preferredHero,
     preferredRole: draft.preferredRole,
     heroPowerMarkId: draft.heroPowerMarkId,
@@ -484,7 +712,7 @@ function baseQuoteResult(draft, validation, options = {}) {
 
 export function calculateQuote(inputDraft, options = {}) {
   const draft = normalizeDraft(inputDraft);
-  const validation = validateQuoteDraft(draft);
+  const validation = validateQuoteDraft(draft, { pricingCatalog: options.pricingCatalog });
   const result = baseQuoteResult(draft, validation, options);
   const service = getServiceDefinition(draft.serviceId);
 
@@ -502,6 +730,7 @@ export function calculateQuote(inputDraft, options = {}) {
     draft.gameId,
     draft.serviceId,
     activePricingCatalog,
+    draft,
   );
 
   if (isManualIntent || validation.requiresManualReview) {
@@ -597,6 +826,11 @@ export function formatQuoteText(quoteOrDraft, locale = null) {
       `${translate(resolvedLocale, "quote.fields.duoMode")}: ${getServiceChoiceLabel(quote.service, "modes", draft.duoMode, resolvedLocale)}`,
       `${translate(resolvedLocale, "quote.table.preferredStartTime")}: ${formatAppointmentTime(quote.preferredStartTime || draft.preferredStartTime, resolvedLocale)}`,
     );
+    if (isDuoRanked) {
+      detailRows.push(
+        `${translate(resolvedLocale, "quote.fields.duoGuarantee")}: ${getServiceChoiceLabel(quote.service, "guaranteeOptions", draft.duoGuarantee, resolvedLocale)}`,
+      );
+    }
   }
   if (isRankRange || isHeroPower) {
     detailRows.push(
@@ -644,6 +878,11 @@ export function formatQuoteText(quoteOrDraft, locale = null) {
       `${translate(resolvedLocale, "quote.fields.otherServiceType")}: ${getServiceChoiceLabel(quote.service, "options", draft.otherServiceType, resolvedLocale)}`,
       `${translate(resolvedLocale, "quote.fields.additionalRequirements")}: ${draft.additionalRequirements || "—"}`,
     );
+    if (draft.otherServiceType === "review-coaching") {
+      detailRows.push(
+        `${translate(resolvedLocale, "quote.table.preferredStartTime")}: ${formatAppointmentTime(quote.preferredStartTime || draft.preferredStartTime, resolvedLocale)}`,
+      );
+    }
   }
 
   const rows = [
@@ -655,15 +894,30 @@ export function formatQuoteText(quoteOrDraft, locale = null) {
     `${translate(resolvedLocale, "quote.table.basePrice")}: ${formatMoney(quote.basePrice, currency, resolvedLocale)}`,
     `${translate(resolvedLocale, "quote.table.optionalCharges")}: ${formatMoney(quote.optionalCharges, currency, resolvedLocale)}`,
     `${translate(resolvedLocale, "quote.table.discount")}: ${formatMoney(quote.discount, currency, resolvedLocale)}`,
-    ...(!isDuo
+    ...(!isDuo && !(isOther && draft.otherServiceType === "review-coaching")
       ? [`${translate(resolvedLocale, "quote.table.estimatedCompletionTime")}: ${quote.estimatedCompletionTime || draft.completionTime || translate(resolvedLocale, "common.notAvailable")}`]
       : []),
     ...(["rank", "peak", "hero-power"].includes(draft.serviceId)
       ? [`${translate(resolvedLocale, "quote.fields.express")}: ${isPresent(draft.express) ? translate(resolvedLocale, draft.express ? "common.yes" : "common.no") : translate(resolvedLocale, "common.notAvailable")}`]
       : []),
-    `${translate(resolvedLocale, "quote.table.finalTotal")}: ${formatMoney(quote.finalTotal, currency, resolvedLocale)}`,
+    ...(draft.serviceId === "rank"
+      ? [
+          `${translate(resolvedLocale, "quote.fields.customSchedule")}: ${translate(resolvedLocale, draft.customSchedule ? "common.yes" : "common.no")}`,
+          `${translate(resolvedLocale, "quote.fields.winRate70")}: ${translate(resolvedLocale, draft.winRate70 ? "common.yes" : "common.no")}`,
+        ]
+      : []),
+    `${translate(resolvedLocale, quote.amountType === "booking-deposit" ? "quote.table.bookingDeposit" : "quote.table.finalTotal")}: ${formatMoney(quote.finalTotal, currency, resolvedLocale)}`,
     `${translate(resolvedLocale, "quote.fields.quoteStatus")}: ${translate(resolvedLocale, `quote.status.${quote.status === "quoted" ? "quoted" : "manual_review"}`)}`,
   ];
+
+  if (quote.amountType === "booking-deposit" && quote.status === "quoted") {
+    rows.push(
+      translate(resolvedLocale, "quote.reviewBillingNotice", {
+        unitPrice: formatMoney(quote.unitPrice, currency, resolvedLocale),
+        minimumMinutes: quote.minimumMinutes,
+      }),
+    );
+  }
 
   if (quote.status !== "quoted") rows.push("", translate(resolvedLocale, "quote.manualNotice"));
   return rows.join("\n");

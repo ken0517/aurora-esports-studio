@@ -58,13 +58,19 @@ const quoteFields = new Set([
   "preferredRole",
   "heroPowerMarkId",
   "duoMode",
+  "duoGuarantee",
   "otherServiceType",
+  "customSchedule",
+  "winRate70",
   "additionalRequirements",
 ]);
 
 const duoModeIds = serviceDefinitions
   .find((service) => service.id === "duo")
   ?.modes?.map((mode) => mode.id) || [];
+const duoGuaranteeIds = serviceDefinitions
+  .find((service) => service.id === "duo")
+  ?.guaranteeOptions?.map((option) => option.id) || [];
 const otherServiceTypeIds = serviceDefinitions
   .find((service) => service.id === "other")
   ?.options?.map((option) => option.id) || [];
@@ -98,7 +104,10 @@ const calculateQuoteDeclaration = {
       preferredRole: { type: "string" },
       heroPowerMarkId: { type: "string" },
       duoMode: { type: "string", enum: duoModeIds },
+      duoGuarantee: { type: "string", enum: duoGuaranteeIds },
       otherServiceType: { type: "string", enum: otherServiceTypeIds },
+      customSchedule: { type: "boolean" },
+      winRate70: { type: "boolean" },
       additionalRequirements: { type: "string" },
     },
   },
@@ -547,6 +556,10 @@ export function calculateAuthoritativeQuote(
       currency: quote.currency ?? pricingCatalog.currency,
       estimatedCompletionTime: quote.estimatedCompletionTime ?? null,
       preferredStartTime: quote.preferredStartTime ?? null,
+      amountType: quote.amountType ?? null,
+      remainingBalancePending: Boolean(quote.remainingBalancePending),
+      unitPrice: quote.unitPrice ?? null,
+      minimumMinutes: quote.minimumMinutes ?? null,
       referenceNumber: quote.referenceNumber ?? quote.reference ?? null,
     };
   } catch {
@@ -593,16 +606,17 @@ GAME DATA RULES:
 - Use only the supplied central game configuration. Never mix lanes, ranks, divisions, star ranges, or hero-power marks between games.
 - Treat common lane and mark aliases in the configuration as aliases only for their matching game.
 - Respect service voiceRequired metadata. If the customer says they do not want to use voice or a microphone, never select a service where voiceRequired is true; use the matching non-voice companion service instead.
-- For duo, collect duoMode first and then collect the appointment preferredStartTime plus that mode's other requiredFields. Do not ask for the appointment time before the customer has chosen a duo mode. For other, collect otherServiceType from the supplied options.
+- For duo, collect duoMode first. Ranked duo also requires duoGuarantee (guaranteed target or standard win/loss charging). Then collect the appointment preferredStartTime plus that mode's other requiredFields. Do not ask for the appointment time before the customer has chosen a duo mode. For other, collect otherServiceType from the supplied options; live review coaching uses preferredStartTime instead of completionTime.
 - "green card" or 綠牌 can mean the Arena of Valor green mark.
 - If a customer says 國標 or 国标, ask whether they mean the minor national mark or major national mark.
 - If a customer chooses a mark or lane from the wrong game, explain the valid options for the selected game instead of silently accepting it.
 
 QUOTE AND PRICING RULES:
-- Extract game, service, duoMode or otherServiceType, rank/division/stars or points, current and target hero-power points, hero, lane, target mark, preferredStartTime for duo appointments, completion time for other services, and express preference when relevant.
+- Extract game, service, duoMode, duoGuarantee or otherServiceType, rank/division/stars or points, current and target hero-power points, hero, lane, target mark, preferredStartTime for appointments, completion time where relevant, express preference, specified-time and 70%+ win-rate requests.
 - Once enough structured information is available, call calculate_quote. The function runs on Aurora's server.
 - Never invent, estimate, interpolate, or infer a price, discount, surcharge, completion time, success rate, or availability.
 - A monetary amount may be stated only when the calculate_quote result has status "quoted" and contains that exact non-null amount.
+- When amountType is "booking-deposit", clearly call it the booking payment rather than a final total. Explain that review coaching is billed by the actual rounded-up call minutes and any balance is settled after the session.
 - If pricing is not configured or the result is incomplete/manual_review, say "待人工確認" (or the equivalent in the reply language) and offer WhatsApp human support. Do not provide example numbers.
 - Never treat a customer-provided price as Aurora-approved.
 
@@ -922,9 +936,12 @@ export function createQuoteAiHandler({
     const calculateWithActiveCatalog = (draft) => calculateQuoteFn(draft, {
       pricingCatalog: activePricingCatalog,
     });
+    const validateWithActiveCatalog = (draft) => validateQuoteDraftFn(draft, {
+      pricingCatalog: activePricingCatalog,
+    });
     let quoteResult = calculateAuthoritativeQuote(quoteContext, {
       calculateQuoteFn: calculateWithActiveCatalog,
-      validateQuoteDraftFn,
+      validateQuoteDraftFn: validateWithActiveCatalog,
     });
 
     if (promptInjectionDetected(messages.at(-1).content)) {
@@ -996,7 +1013,7 @@ export function createQuoteAiHandler({
           );
           const result = calculateAuthoritativeQuote(context, {
             calculateQuoteFn: calculateWithActiveCatalog,
-            validateQuoteDraftFn,
+            validateQuoteDraftFn: validateWithActiveCatalog,
           });
           return { functionCall, context, result };
         });

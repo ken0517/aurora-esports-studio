@@ -194,12 +194,22 @@ export const serviceDefinitions = [
       {
         id: "ranked",
         labels: labels("排位", "Ranked", "排位"),
-        requiredFields: ["currentRankId", "currentStars", "targetRankId", "targetStars"],
+        requiredFields: ["currentRankId", "currentStars", "targetRankId", "targetStars", "duoGuarantee"],
       },
       {
         id: "match-5v5",
         labels: labels("5V5 匹配", "5V5 Match", "5V5 匹配"),
         requiredFields: ["quantity"],
+      },
+    ],
+    guaranteeOptions: [
+      {
+        id: "guaranteed",
+        labels: labels("包贏（保證升到目標）", "Guaranteed target", "包赢（保证升到目标）"),
+      },
+      {
+        id: "standard",
+        labels: labels("不包贏（每局照計）", "Standard, win or lose", "不包赢（每局照计）"),
       },
     ],
     requiredFields: ["gameId", "duoMode", "preferredStartTime"],
@@ -242,12 +252,25 @@ export const serviceDefinitions = [
     ],
     unit: "request",
     options: [
-      { id: "review-coaching", labels: labels("復盤教學", "Review coaching", "复盘教学") },
-      { id: "discord-recorded-review", labels: labels("Discord 錄屏", "Discord recording", "Discord 录屏") },
-      { id: "hero-coaching", labels: labels("英雄教學", "Hero coaching", "英雄教学") },
+      {
+        id: "review-coaching",
+        labels: labels("復盤教學", "Review coaching", "复盘教学"),
+        requiredFields: ["preferredStartTime", "additionalRequirements"],
+      },
+      {
+        id: "discord-recorded-review",
+        labels: labels("Discord 錄屏", "Discord recording", "Discord 录屏"),
+        requiredFields: ["completionTime", "additionalRequirements"],
+        manualOnly: true,
+      },
+      {
+        id: "hero-coaching",
+        labels: labels("英雄教學", "Hero coaching", "英雄教学"),
+        requiredFields: ["completionTime", "additionalRequirements"],
+        manualOnly: true,
+      },
     ],
-    requiredFields: ["gameId", "otherServiceType", "additionalRequirements", "completionTime"],
-    manualOnly: true,
+    requiredFields: ["gameId", "otherServiceType", "additionalRequirements"],
   },
 ];
 

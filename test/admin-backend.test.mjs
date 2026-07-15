@@ -121,7 +121,7 @@ test("admin API requires login and persists published catalogue changes", async 
     const currentResponse = await fetch(`${origin}/api/admin/catalog`, { headers: { Cookie: cookie } });
     assert.equal(currentResponse.status, 200);
     const current = await currentResponse.json();
-    current.catalog.games.aov.rank.basePrice = 88;
+    current.catalog.games.aov.rank.minimumPrice = 88;
     current.catalog.games.aov.rank.configured = true;
     current.catalog.games.aov.rank.estimatedCompletionTime = "当天开始";
 
@@ -137,7 +137,7 @@ test("admin API requires login and persists published catalogue changes", async 
 
     const publicResponse = await fetch(`${origin}/api/catalog`);
     const published = await publicResponse.json();
-    assert.equal(published.catalog.games.aov.rank.basePrice, 88);
+    assert.equal(published.catalog.games.aov.rank.minimumPrice, 88);
     assert.equal(published.catalog.games.aov.rank.estimatedCompletionTime, "当天开始");
     assert.notEqual(published.catalog.revision, "default");
   });

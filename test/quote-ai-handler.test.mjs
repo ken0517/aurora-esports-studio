@@ -361,6 +361,10 @@ test("Gemini receives all three games from the shared central configuration", as
     "ranked",
     "match-5v5",
   ]);
+  assert.deepEqual(declaration.parametersJsonSchema.properties.duoGuarantee.enum, [
+    "guaranteed",
+    "standard",
+  ]);
   assert.deepEqual(declaration.parametersJsonSchema.properties.otherServiceType.enum, [
     "review-coaching",
     "discord-recorded-review",

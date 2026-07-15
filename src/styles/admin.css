@@ -63,6 +63,7 @@ textarea { resize: vertical; line-height: 1.5; }
 .admin-game-tabs button.is-active { border-bottom-color: var(--admin-gold); color: var(--admin-ink); font-weight: 600; }
 .admin-service-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; }
 .admin-service-card { display: flex; min-width: 0; flex-direction: column; border: 1px solid var(--admin-line); background: var(--admin-card); transition: opacity .2s; }
+.admin-service-card.is-rule { grid-column: 1 / -1; }
 .admin-service-card.is-hidden { opacity: .64; }
 .admin-service-card > header { display: flex; align-items: center; justify-content: space-between; gap: 15px; padding: 22px 24px; border-bottom: 1px solid var(--admin-line); }
 .admin-service-card > header div > span { color: var(--admin-gold); font-size: 9px; letter-spacing: .18em; }
@@ -75,6 +76,12 @@ textarea { resize: vertical; line-height: 1.5; }
 .admin-switch input:checked + span::after { transform: translateX(15px); }
 .admin-service-fields { grid-template-columns: 1fr .7fr; padding: 22px 24px; }
 .admin-field-wide { grid-column: 1 / -1; }
+.admin-approved-rule { margin-top: 6px; padding: 16px; border: 1px solid rgba(151,112,58,.22); background: rgba(239,228,208,.24); }
+.admin-approved-rule h4 { margin: 0 0 13px; font-family: inherit; font-size: 12px; letter-spacing: .06em; color: #6f4f25; }
+.admin-approved-rule h4:not(:first-child) { margin-top: 18px; }
+.admin-approved-rule p { margin: -4px 0 14px; color: #776f63; font-size: 11px; line-height: 1.6; }
+.admin-rule-grid, .admin-transition-grid { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 13px 16px; }
+.admin-transition-grid { grid-template-columns: repeat(3,minmax(0,1fr)); }
 .admin-service-card > footer { display: grid; gap: 7px; margin-top: auto; padding: 17px 24px 20px; border-top: 1px solid var(--admin-line); }
 .admin-check { display: flex; align-items: center; gap: 8px; font-size: 12px; cursor: pointer; }
 .admin-check > span { display: grid; width: 18px; height: 18px; place-items: center; border: 1px solid var(--admin-line); color: transparent; }
@@ -99,4 +106,5 @@ textarea { resize: vertical; line-height: 1.5; }
   .admin-service-fields { grid-template-columns: 1fr; padding: 19px; }
   .admin-field-wide { grid-column: auto; }
   .admin-meta { flex-direction: column; }
+  .admin-rule-grid, .admin-transition-grid { grid-template-columns: 1fr; }
 }

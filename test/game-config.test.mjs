@@ -120,6 +120,7 @@ test("duo service exposes exactly the ranked and 5V5 match modes", () => {
     "currentStars",
     "targetRankId",
     "targetStars",
+    "duoGuarantee",
   ]);
   assert.deepEqual(duo.modes[1].requiredFields, ["quantity"]);
 });
@@ -127,7 +128,7 @@ test("duo service exposes exactly the ranked and 5V5 match modes", () => {
 test("other service contains exactly the three supported subcategories", () => {
   const other = serviceDefinitions.find((service) => service.id === "other");
   assert.ok(other);
-  assert.equal(other.manualOnly, true);
+  assert.equal(other.manualOnly, undefined);
   assert.deepEqual(other.options.map((option) => option.id), [
     "review-coaching",
     "discord-recorded-review",
@@ -167,6 +168,6 @@ test("five service definitions expose the expected central field contracts", () 
       "completionTime",
       "express",
     ],
-    other: ["gameId", "otherServiceType", "additionalRequirements", "completionTime"],
+    other: ["gameId", "otherServiceType", "additionalRequirements"],
   });
 });

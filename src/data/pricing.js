@@ -1,13 +1,10 @@
 /**
- * Aurora's single pricing source.
+ * Aurora's single approved pricing source.
  *
- * IMPORTANT: no confirmed business prices were supplied for this build.
- * Every monetary field is therefore `null` and every rule is `configured: false`.
- * The UI and quote engine must treat these rules as manual-review only; `null`
- * values are never placeholders to display and must never be converted to zero.
- *
- * When Aurora approves its final rate card, update rules here only. Both the
- * manual form and the quotation assistant read this same catalogue.
+ * Only the three Arena of Valor rules explicitly approved by Aurora are
+ * enabled. Every other game/service remains unconfigured and must fall back
+ * to human confirmation. The manual form, Gemini function calling and admin
+ * catalogue all consume this same structure.
  */
 
 import {
@@ -16,7 +13,7 @@ import {
   supportedGameIds as centralSupportedGameIds,
 } from "./gameConfig.js";
 
-export const pricingVersion = "2026-07-unconfigured";
+export const pricingVersion = "2026-07-aov-approved-v1";
 export const pricingCurrency = "HKD";
 export const supportedGameIds = centralSupportedGameIds;
 
@@ -29,6 +26,34 @@ export const serviceCatalog = serviceDefinitions.map((service) => ({
 
 export const manualOnlyIntents = ["hero-power", "unusual-request"];
 
+export const aovDivisionStepPrices = {
+  "bronze:III": 20,
+  "bronze:II": 25,
+  "bronze:I": 25,
+  "silver:III": 30,
+  "silver:II": 35,
+  "silver:I": 35,
+  "gold:IV": 45,
+  "gold:III": 45,
+  "gold:II": 45,
+  "gold:I": 45,
+  "platinum:V": 60,
+  "platinum:IV": 60,
+  "platinum:III": 60,
+  "platinum:II": 60,
+  "platinum:I": 60,
+  "diamond:V": 75,
+  "diamond:IV": 75,
+  "diamond:III": 75,
+  "diamond:II": 75,
+  "diamond:I": 75,
+  "veteran:V": 90,
+  "veteran:IV": 90,
+  "veteran:III": 90,
+  "veteran:II": 90,
+  "veteran:I": 90,
+};
+
 function unconfiguredRule(gameId, serviceId) {
   return {
     gameId,
@@ -37,9 +62,6 @@ function unconfiguredRule(gameId, serviceId) {
     status: "awaiting-aurora-prices",
     currency: pricingCurrency,
     pricingModel: null,
-
-    // Insert Aurora's confirmed values below. Do not put display-only sample
-    // numbers here: the quote engine will treat real numbers as approved rates.
     basePrice: null,
     unitPrice: null,
     rankStepPrices: null,
@@ -47,11 +69,101 @@ function unconfiguredRule(gameId, serviceId) {
     optionalCharges: {
       express: { type: null, value: null },
       preferredHero: { type: null, value: null },
+      preferredRole: { type: null, value: null },
       customSchedule: { type: null, value: null },
+      winRate70: { type: null, value: null },
     },
     discounts: null,
     estimatedCompletionTime: null,
-    internalNote: "Replace nulls only after Aurora approves the final rate card.",
+    internalNote: "No approved automatic price. Keep this service on human confirmation.",
+  };
+}
+
+function aovRankRule(serviceId = "rank") {
+  return {
+    ...unconfiguredRule("aov", serviceId),
+    configured: true,
+    status: "approved",
+    pricingModel: "aov-rank-progression",
+    minimumPrice: 50,
+    divisionStepPrices: { ...aovDivisionStepPrices },
+    starPricing: {
+      bandSize: 10,
+      basePerStar: 20,
+      incrementPerBand: 5,
+    },
+    optionalCharges: {
+      express: { type: "percentage", value: 0.25 },
+      preferredHero: { type: null, value: null },
+      preferredRole: { type: "percentage", value: 0.15 },
+      customSchedule: { type: "percentage", value: 0.15 },
+      winRate70: { type: "percentage", value: 0.15 },
+    },
+    timeRules: {
+      hoursPerDivision: 1,
+      hoursPerTenStarsMin: 3,
+      hoursPerTenStarsMax: 4,
+      expressTimeMultiplier: 0.75,
+    },
+    quoteValidityDays: 3,
+    estimatedCompletionTime: {
+      "zh-HK": "每小段約 1 小時；每 10 星約 3–4 小時",
+      en: "About 1 hour per division; 3–4 hours per 10 stars",
+      "zh-CN": "每小段约 1 小时；每 10 星约 3–4 小时",
+    },
+    internalNote: "Approved AOV progression table. The minimum is applied after percentage charges.",
+  };
+}
+
+function aovDuoRule() {
+  return {
+    ...unconfiguredRule("aov", "duo"),
+    configured: true,
+    status: "approved",
+    pricingModel: "aov-duo",
+    rankPricing: {
+      minimumPrice: 50,
+      divisionStepPrices: { ...aovDivisionStepPrices },
+      starPricing: {
+        bandSize: 10,
+        basePerStar: 20,
+        incrementPerBand: 5,
+      },
+      guaranteedMultiplier: 1.25,
+      standardMultiplier: 0.9,
+    },
+    matchPricing: {
+      unitPrice: 25,
+      minimumQuantity: 2,
+      discountThreshold: 10,
+      discountRate: 0.1,
+    },
+    quoteValidityDays: 3,
+    internalNote: "Ranked duo follows the AOV progression table. Match orders are HK$25 per game.",
+  };
+}
+
+function aovOtherRule() {
+  return {
+    ...unconfiguredRule("aov", "other"),
+    configured: true,
+    status: "partially-approved",
+    pricingModel: "aov-other",
+    options: {
+      "review-coaching": {
+        configured: true,
+        pricingModel: "live-minute",
+        unitPrice: 2.5,
+        minimumMinutes: 15,
+        bookingDeposit: 37.5,
+        rounding: "ceil-minute",
+        freeRescheduleNoticeHours: 4,
+      },
+      "discord-recorded-review": { configured: false },
+      "hero-coaching": { configured: false },
+    },
+    quoteValidityDays: 3,
+    internalNote: "Only live Discord review coaching has approved pricing.",
   };
 }
 
@@ -61,13 +173,18 @@ function unconfiguredRulesForGame(gameId) {
   );
 }
 
+const aovRules = unconfiguredRulesForGame("aov");
+aovRules.rank = aovRankRule();
+aovRules.duo = aovDuoRule();
+aovRules.other = aovOtherRule();
+
 export const pricingCatalog = {
   currency: pricingCurrency,
   version: pricingVersion,
-  configured: false,
+  configured: true,
   placeholderValues: false,
   games: {
-    aov: unconfiguredRulesForGame("aov"),
+    aov: aovRules,
     "hok-cn": unconfiguredRulesForGame("hok-cn"),
     "hok-global": unconfiguredRulesForGame("hok-global"),
   },
@@ -89,17 +206,25 @@ export function getPricingRule(gameId, serviceId, catalog = pricingCatalog) {
   return catalog?.games?.[gameId]?.[serviceId] ?? null;
 }
 
-export function isPricingConfigured(gameId, serviceId, catalog = pricingCatalog) {
-  // Master publish guard: no individual rule can become customer-facing until
-  // Aurora explicitly enables the catalogue as a whole.
+export function isPricingConfigured(gameId, serviceId, catalog = pricingCatalog, draft = null) {
   if (!catalog?.configured) return false;
-
   const rule = getPricingRule(gameId, serviceId, catalog);
   if (!rule?.configured) return false;
 
-  // A configured flag alone is not enough. At least one approved monetary
-  // source must exist, preventing an accidental `configured: true` from
-  // producing a zero or invented quote.
+  if (rule.pricingModel === "aov-rank-progression") {
+    return Number.isFinite(rule.minimumPrice) &&
+      Object.keys(rule.divisionStepPrices || {}).length > 0 &&
+      Number.isFinite(rule.starPricing?.basePerStar);
+  }
+  if (rule.pricingModel === "aov-duo") {
+    return Number.isFinite(rule.rankPricing?.guaranteedMultiplier) &&
+      Number.isFinite(rule.matchPricing?.unitPrice);
+  }
+  if (rule.pricingModel === "aov-other") {
+    if (draft?.otherServiceType) return Boolean(rule.options?.[draft.otherServiceType]?.configured);
+    return Object.values(rule.options || {}).some((option) => option?.configured);
+  }
+
   return (
     Number.isFinite(rule.basePrice) ||
     Number.isFinite(rule.unitPrice) ||

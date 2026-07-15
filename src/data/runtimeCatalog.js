@@ -1,6 +1,7 @@
 import { gameConfigs, serviceDefinitions } from "./gameConfig.js";
+import { getPricingRule, isPricingConfigured, pricingCatalog } from "./pricing.js";
 
-export const catalogSchemaVersion = 1;
+export const catalogSchemaVersion = 2;
 export const supportedCurrencies = ["HKD", "TWD", "CNY", "USD", "GBP"];
 
 const gameIds = Object.keys(gameConfigs);
@@ -13,21 +14,131 @@ function cleanText(value, maxLength) {
   return typeof value === "string" ? value.trim().slice(0, maxLength) : "";
 }
 
-function cleanPrice(value) {
-  if (value === "" || value === null || value === undefined) return null;
+function cleanNumber(value, fallback = null, { min = 0, max = 1_000_000 } = {}) {
+  if (value === "" || value === null || value === undefined) return fallback;
   const number = Number(value);
-  return Number.isFinite(number) && number >= 0 && number <= 1_000_000 ? number : null;
+  return Number.isFinite(number) && number >= min && number <= max ? number : fallback;
+}
+
+function clone(value) {
+  return JSON.parse(JSON.stringify(value));
+}
+
+function percentageConfig(input, fallback) {
+  return {
+    type: fallback?.type ?? null,
+    value: cleanNumber(input?.value, fallback?.value ?? null, { min: 0, max: 5 }),
+  };
+}
+
+function normalizeRankRule(item, fallback) {
+  const divisionStepPrices = Object.fromEntries(
+    Object.keys(fallback.divisionStepPrices || {}).map((key) => [
+      key,
+      cleanNumber(item.divisionStepPrices?.[key], fallback.divisionStepPrices[key]),
+    ]),
+  );
+  return {
+    ...clone(fallback),
+    configured: item.configured !== false,
+    minimumPrice: cleanNumber(item.minimumPrice, fallback.minimumPrice),
+    divisionStepPrices,
+    starPricing: {
+      bandSize: cleanNumber(item.starPricing?.bandSize, fallback.starPricing.bandSize, { min: 1, max: 100 }),
+      basePerStar: cleanNumber(item.starPricing?.basePerStar, fallback.starPricing.basePerStar),
+      incrementPerBand: cleanNumber(item.starPricing?.incrementPerBand, fallback.starPricing.incrementPerBand),
+    },
+    optionalCharges: {
+      ...clone(fallback.optionalCharges),
+      express: percentageConfig(item.optionalCharges?.express, fallback.optionalCharges.express),
+      preferredRole: percentageConfig(item.optionalCharges?.preferredRole, fallback.optionalCharges.preferredRole),
+      customSchedule: percentageConfig(item.optionalCharges?.customSchedule, fallback.optionalCharges.customSchedule),
+      winRate70: percentageConfig(item.optionalCharges?.winRate70, fallback.optionalCharges.winRate70),
+    },
+    timeRules: {
+      hoursPerDivision: cleanNumber(item.timeRules?.hoursPerDivision, fallback.timeRules.hoursPerDivision, { min: 0.1, max: 100 }),
+      hoursPerTenStarsMin: cleanNumber(item.timeRules?.hoursPerTenStarsMin, fallback.timeRules.hoursPerTenStarsMin, { min: 0.1, max: 100 }),
+      hoursPerTenStarsMax: cleanNumber(item.timeRules?.hoursPerTenStarsMax, fallback.timeRules.hoursPerTenStarsMax, { min: 0.1, max: 100 }),
+      expressTimeMultiplier: cleanNumber(item.timeRules?.expressTimeMultiplier, fallback.timeRules.expressTimeMultiplier, { min: 0.1, max: 1 }),
+    },
+    quoteValidityDays: cleanNumber(item.quoteValidityDays, fallback.quoteValidityDays, { min: 1, max: 90 }),
+  };
+}
+
+function normalizeDuoRule(item, fallback) {
+  return {
+    ...clone(fallback),
+    configured: item.configured !== false,
+    rankPricing: {
+      minimumPrice: cleanNumber(item.rankPricing?.minimumPrice, fallback.rankPricing.minimumPrice),
+      divisionStepPrices: Object.fromEntries(
+        Object.keys(fallback.rankPricing.divisionStepPrices || {}).map((key) => [
+          key,
+          cleanNumber(item.rankPricing?.divisionStepPrices?.[key], fallback.rankPricing.divisionStepPrices[key]),
+        ]),
+      ),
+      starPricing: {
+        bandSize: cleanNumber(item.rankPricing?.starPricing?.bandSize, fallback.rankPricing.starPricing.bandSize, { min: 1, max: 100 }),
+        basePerStar: cleanNumber(item.rankPricing?.starPricing?.basePerStar, fallback.rankPricing.starPricing.basePerStar),
+        incrementPerBand: cleanNumber(item.rankPricing?.starPricing?.incrementPerBand, fallback.rankPricing.starPricing.incrementPerBand),
+      },
+      guaranteedMultiplier: cleanNumber(item.rankPricing?.guaranteedMultiplier, fallback.rankPricing.guaranteedMultiplier, { min: 0, max: 10 }),
+      standardMultiplier: cleanNumber(item.rankPricing?.standardMultiplier, fallback.rankPricing.standardMultiplier, { min: 0, max: 10 }),
+    },
+    matchPricing: {
+      unitPrice: cleanNumber(item.matchPricing?.unitPrice, fallback.matchPricing.unitPrice),
+      minimumQuantity: cleanNumber(item.matchPricing?.minimumQuantity, fallback.matchPricing.minimumQuantity, { min: 1, max: 1000 }),
+      discountThreshold: cleanNumber(item.matchPricing?.discountThreshold, fallback.matchPricing.discountThreshold, { min: 1, max: 1000 }),
+      discountRate: cleanNumber(item.matchPricing?.discountRate, fallback.matchPricing.discountRate, { min: 0, max: 1 }),
+    },
+    quoteValidityDays: cleanNumber(item.quoteValidityDays, fallback.quoteValidityDays, { min: 1, max: 90 }),
+  };
+}
+
+function normalizeOtherRule(item, fallback) {
+  const reviewFallback = fallback.options["review-coaching"];
+  const reviewInput = item.options?.["review-coaching"] || {};
+  return {
+    ...clone(fallback),
+    configured: item.configured !== false,
+    options: {
+      "review-coaching": {
+        ...reviewFallback,
+        configured: reviewInput.configured !== false,
+        unitPrice: cleanNumber(reviewInput.unitPrice, reviewFallback.unitPrice),
+        minimumMinutes: cleanNumber(reviewInput.minimumMinutes, reviewFallback.minimumMinutes, { min: 1, max: 1440 }),
+        bookingDeposit: cleanNumber(
+          reviewInput.bookingDeposit,
+          cleanNumber(reviewInput.unitPrice, reviewFallback.unitPrice) * cleanNumber(reviewInput.minimumMinutes, reviewFallback.minimumMinutes, { min: 1, max: 1440 }),
+        ),
+        freeRescheduleNoticeHours: cleanNumber(reviewInput.freeRescheduleNoticeHours, reviewFallback.freeRescheduleNoticeHours, { min: 0, max: 168 }),
+      },
+      "discord-recorded-review": { configured: false },
+      "hero-coaching": { configured: false },
+    },
+    quoteValidityDays: cleanNumber(item.quoteValidityDays, fallback.quoteValidityDays, { min: 1, max: 90 }),
+  };
+}
+
+function normalizeApprovedRule(item, fallback) {
+  if (fallback.pricingModel === "aov-rank-progression") return normalizeRankRule(item, fallback);
+  if (fallback.pricingModel === "aov-duo") return normalizeDuoRule(item, fallback);
+  if (fallback.pricingModel === "aov-other") return normalizeOtherRule(item, fallback);
+  return null;
 }
 
 function defaultService(gameId, serviceId) {
+  const approved = clone(getPricingRule(gameId, serviceId, pricingCatalog));
+  const completion = approved.estimatedCompletionTime && typeof approved.estimatedCompletionTime === "object"
+    ? approved.estimatedCompletionTime["zh-HK"] || approved.estimatedCompletionTime.en || ""
+    : approved.estimatedCompletionTime || "";
   return {
+    ...approved,
     gameId,
     serviceId,
     enabled: true,
-    configured: false,
-    basePrice: null,
-    priceSuffix: "起",
-    estimatedCompletionTime: "",
+    priceSuffix: approved.configured ? "按所選項目計算" : "查詢報價",
+    estimatedCompletionTime: completion,
     note: "",
   };
 }
@@ -36,16 +147,14 @@ export function createDefaultRuntimeCatalog() {
   return {
     schemaVersion: catalogSchemaVersion,
     currency: "HKD",
-    configured: false,
+    configured: true,
     announcement: "",
     updatedAt: null,
     revision: "default",
     games: Object.fromEntries(
       gameIds.map((gameId) => [
         gameId,
-        Object.fromEntries(
-          serviceIds.map((serviceId) => [serviceId, defaultService(gameId, serviceId)]),
-        ),
+        Object.fromEntries(serviceIds.map((serviceId) => [serviceId, defaultService(gameId, serviceId)])),
       ]),
     ),
   };
@@ -53,38 +162,47 @@ export function createDefaultRuntimeCatalog() {
 
 export function normalizeRuntimeCatalog(input, { preserveRevision = true } = {}) {
   const source = input && typeof input === "object" ? input : {};
+  const isLegacy = Number(source.schemaVersion || 0) < catalogSchemaVersion;
   const currency = supportedCurrencies.includes(source.currency) ? source.currency : "HKD";
   let hasConfiguredService = false;
 
-  const games = Object.fromEntries(
-    gameIds.map((gameId) => {
-      const sourceGame = source.games?.[gameId] ?? {};
-      return [
-        gameId,
-        Object.fromEntries(
-          serviceIds.map((serviceId) => {
-            const fallback = defaultService(gameId, serviceId);
-            const item = sourceGame?.[serviceId] ?? {};
-            const basePrice = cleanPrice(item.basePrice);
-            const configured = Boolean(item.configured) && basePrice !== null && !manualServiceIds.has(serviceId);
-            if (configured) hasConfiguredService = true;
-            return [
-              serviceId,
-              {
-                ...fallback,
-                enabled: item.enabled !== false,
-                configured,
-                basePrice,
-                priceSuffix: cleanText(item.priceSuffix, 24) || fallback.priceSuffix,
-                estimatedCompletionTime: cleanText(item.estimatedCompletionTime, 80),
-                note: cleanText(item.note, 240),
-              },
-            ];
-          }),
-        ),
-      ];
-    }),
-  );
+  const games = Object.fromEntries(gameIds.map((gameId) => [
+    gameId,
+    Object.fromEntries(serviceIds.map((serviceId) => {
+      const fallback = defaultService(gameId, serviceId);
+      const raw = source.games?.[gameId]?.[serviceId] || {};
+      const approvedFallback = getPricingRule(gameId, serviceId, pricingCatalog);
+      const pricingInput = isLegacy ? {} : raw;
+      const approved = normalizeApprovedRule(pricingInput, approvedFallback);
+      let item;
+
+      if (approved) {
+        item = {
+          ...fallback,
+          ...approved,
+          enabled: raw.enabled !== false,
+          priceSuffix: cleanText(raw.priceSuffix, 40) || fallback.priceSuffix,
+          estimatedCompletionTime: raw.estimatedCompletionTime || fallback.estimatedCompletionTime,
+          note: cleanText(raw.note, 240),
+        };
+      } else {
+        const basePrice = cleanNumber(raw.basePrice, null);
+        item = {
+          ...fallback,
+          enabled: raw.enabled !== false,
+          configured: Boolean(raw.configured) && basePrice !== null && !manualServiceIds.has(serviceId),
+          basePrice,
+          priceSuffix: cleanText(raw.priceSuffix, 40) || fallback.priceSuffix,
+          estimatedCompletionTime: cleanText(raw.estimatedCompletionTime, 80),
+          note: cleanText(raw.note, 240),
+        };
+      }
+      if (isPricingConfigured(gameId, serviceId, { configured: true, games: { [gameId]: { [serviceId]: item } } })) {
+        hasConfiguredService = true;
+      }
+      return [serviceId, item];
+    })),
+  ]));
 
   return {
     schemaVersion: catalogSchemaVersion,
@@ -101,9 +219,8 @@ export function getRuntimeService(catalog, gameId, serviceId) {
   return catalog?.games?.[gameId]?.[serviceId] ?? null;
 }
 
-export function isRuntimeServiceConfigured(catalog, gameId, serviceId) {
-  const service = getRuntimeService(catalog, gameId, serviceId);
-  return Boolean(catalog?.configured && service?.configured && Number.isFinite(service.basePrice));
+export function isRuntimeServiceConfigured(catalog, gameId, serviceId, draft = null) {
+  return isPricingConfigured(gameId, serviceId, catalog, draft);
 }
 
 export function runtimeServiceIds() {

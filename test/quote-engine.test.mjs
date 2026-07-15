@@ -37,6 +37,7 @@ const duoRankedDraft = {
   ...shared,
   serviceId: "duo",
   duoMode: "ranked",
+  duoGuarantee: "guaranteed",
   preferredStartTime: "2026-07-16T20:00",
   currentRankId: "diamond",
   currentDivision: "III",
@@ -72,6 +73,7 @@ const otherDraft = {
   ...shared,
   serviceId: "other",
   otherServiceType: "review-coaching",
+  preferredStartTime: "2026-07-16T20:00",
   additionalRequirements: "希望分析兩場排位錄影",
 };
 
@@ -133,6 +135,7 @@ test("each service rejects every missing field from its active field set", () =>
         "targetRankId",
         "targetDivision",
         "targetStars",
+        "duoGuarantee",
         "preferredStartTime",
       ],
     },
@@ -160,7 +163,7 @@ test("each service rejects every missing field from its active field set", () =>
     {
       name: "other",
       draft: otherDraft,
-      fields: ["otherServiceType", "additionalRequirements", "completionTime"],
+      fields: ["otherServiceType", "additionalRequirements", "preferredStartTime"],
     },
   ];
 
@@ -422,4 +425,109 @@ test("dynamic service summaries do not leak fields from inactive branches", () =
   assert.ok(!otherMessage.includes("987650"));
   assert.ok(!otherMessage.includes("HIDDEN-OTHER-HERO"));
   assert.ok(!otherMessage.includes("加急服務:"));
+});
+
+test("approved AOV rank pricing accumulates divisions, star bands and minimum order after surcharges", () => {
+  const oneDivision = calculateQuote({
+    locale: "zh-HK",
+    gameId: "aov",
+    serviceId: "rank",
+    currentRankId: "bronze",
+    currentDivision: "III",
+    currentStars: 0,
+    targetRankId: "bronze",
+    targetDivision: "II",
+    targetStars: 0,
+    completionTime: "三日內",
+    express: true,
+  }, { reference: "AUR-AOV-MINIMUM" });
+  assert.equal(oneDivision.status, "quoted");
+  assert.equal(oneDivision.basePrice, 20);
+  assert.equal(oneDivision.finalTotal, 50);
+
+  const crossDivision = calculateQuote({
+    ...oneDivision.draft,
+    currentRankId: "bronze",
+    currentDivision: "III",
+    targetRankId: "silver",
+    targetDivision: "III",
+    express: false,
+  }, { reference: "AUR-AOV-DIVISIONS" });
+  assert.equal(crossDivision.basePrice, 70); // 20 + 25 + 25
+  assert.equal(crossDivision.finalTotal, 70);
+
+  const tenthStar = calculateQuote({
+    ...oneDivision.draft,
+    currentRankId: "battlefield-legend",
+    currentDivision: null,
+    currentStars: 9,
+    targetRankId: "pioneer-light",
+    targetDivision: null,
+    targetStars: 10,
+    express: false,
+  }, { reference: "AUR-AOV-STAR-10" });
+  assert.equal(tenthStar.basePrice, 25);
+  assert.equal(tenthStar.finalTotal, 50);
+});
+
+test("approved AOV ranked and match duo pricing follows guarantee multipliers and whole-order discount", () => {
+  const ranked = {
+    locale: "zh-HK",
+    gameId: "aov",
+    serviceId: "duo",
+    duoMode: "ranked",
+    preferredStartTime: "2026-07-20T20:00",
+    currentRankId: "bronze",
+    currentDivision: "III",
+    currentStars: 0,
+    targetRankId: "silver",
+    targetDivision: "III",
+    targetStars: 0,
+  };
+  const guaranteed = calculateQuote({ ...ranked, duoGuarantee: "guaranteed" });
+  const standard = calculateQuote({ ...ranked, duoGuarantee: "standard" });
+  assert.equal(guaranteed.status, "quoted");
+  assert.equal(guaranteed.finalTotal, 87.5); // 70 × 1.25
+  assert.equal(standard.finalTotal, 63); // 70 × 0.90
+
+  const tenMatches = calculateQuote({
+    locale: "zh-HK",
+    gameId: "aov",
+    serviceId: "duo",
+    duoMode: "match-5v5",
+    preferredStartTime: "2026-07-20T20:00",
+    quantity: 10,
+  });
+  assert.equal(tenMatches.status, "quoted");
+  assert.equal(tenMatches.basePrice, 250);
+  assert.equal(tenMatches.discount, 25);
+  assert.equal(tenMatches.finalTotal, 225);
+
+  const oneMatch = validateQuoteDraft({ ...tenMatches.draft, quantity: 1 });
+  assert.equal(oneMatch.valid, false);
+  assert.ok(oneMatch.errorCodes.includes("minimumQuantity"));
+});
+
+test("approved AOV review coaching quotes only the booking payment and keeps other options manual", () => {
+  const review = calculateQuote({
+    locale: "zh-HK",
+    gameId: "aov",
+    serviceId: "other",
+    otherServiceType: "review-coaching",
+    preferredStartTime: "2026-07-20T20:00",
+    additionalRequirements: "Discord 1 對 1 講解地圖觀念",
+  });
+  assert.equal(review.status, "quoted");
+  assert.equal(review.amountType, "booking-deposit");
+  assert.equal(review.finalTotal, 37.5);
+  assert.equal(review.unitPrice, 2.5);
+  assert.equal(review.minimumMinutes, 15);
+
+  const discord = calculateQuote({
+    ...review.draft,
+    otherServiceType: "discord-recorded-review",
+    completionTime: "三日內",
+  });
+  assert.equal(discord.status, "manual_review");
+  assert.equal(discord.finalTotal, null);
 });

@@ -18,6 +18,7 @@ import {
   supportedGameIds,
 } from "./data/gameConfig.js";
 import { normalizeRuntimeCatalog, runtimeServiceIds } from "./data/runtimeCatalog.js";
+import { getRankById, getRankLabel } from "./data/ranks.js";
 import { catalogApiUrl } from "./lib/catalogClient.js";
 import "./styles/admin.css";
 
@@ -114,14 +115,124 @@ function Login({ configured, onAuthenticated }) {
   );
 }
 
+function NumberField({ label, value, onChange, step = "0.01", min = "0", suffix = "" }) {
+  return (
+    <label>
+      <span>{label}{suffix ? `（${suffix}）` : ""}</span>
+      <input
+        type="number"
+        min={min}
+        step={step}
+        inputMode="decimal"
+        value={value ?? ""}
+        onChange={(event) => onChange(event.target.value === "" ? null : Number(event.target.value))}
+      />
+    </label>
+  );
+}
+
+function ApprovedRuleEditor({ gameId, item, onChange }) {
+  const patch = (field, value) => onChange({ ...item, [field]: value });
+  const patchNested = (group, field, value) => patch(group, { ...item[group], [field]: value });
+
+  if (item.pricingModel === "aov-rank-progression") {
+    const percentage = (id, label) => (
+      <NumberField
+        key={id}
+        label={label}
+        suffix="%"
+        step="0.1"
+        value={(item.optionalCharges?.[id]?.value ?? 0) * 100}
+        onChange={(value) => patch("optionalCharges", {
+          ...item.optionalCharges,
+          [id]: { type: "percentage", value: Number(value || 0) / 100 },
+        })}
+      />
+    );
+    return (
+      <div className="admin-approved-rule admin-field-wide">
+        <h4>已批准的排位计算规则</h4>
+        <div className="admin-rule-grid">
+          <NumberField label="最低消费" suffix="HKD" value={item.minimumPrice} onChange={(value) => patch("minimumPrice", value)} />
+          <NumberField label="0–9 星每星" suffix="HKD" value={item.starPricing?.basePerStar} onChange={(value) => patchNested("starPricing", "basePerStar", value)} />
+          <NumberField label="每 10 星增加" suffix="HKD／星" value={item.starPricing?.incrementPerBand} onChange={(value) => patchNested("starPricing", "incrementPerBand", value)} />
+          {percentage("express", "加急附加费")}
+          {percentage("preferredRole", "指定分路附加费")}
+          {percentage("customSchedule", "指定时段附加费")}
+          {percentage("winRate70", "保持 70%+ 胜率附加费")}
+          <NumberField label="每小段预计时间" suffix="小时" value={item.timeRules?.hoursPerDivision} onChange={(value) => patchNested("timeRules", "hoursPerDivision", value)} />
+          <NumberField label="报价有效期" suffix="天" step="1" value={item.quoteValidityDays} onChange={(value) => patch("quoteValidityDays", value)} />
+        </div>
+        <h4>各小段价格（由该小段升到下一小段）</h4>
+        <div className="admin-transition-grid">
+          {Object.entries(item.divisionStepPrices || {}).map(([key, value]) => {
+            const [rankId, division] = key.split(":");
+            const rank = getRankById(gameId, rankId);
+            return (
+              <NumberField
+                key={key}
+                label={`${getRankLabel(rank, "zh-CN") || rankId} ${division}`}
+                suffix="HKD"
+                value={value}
+                onChange={(nextValue) => patch("divisionStepPrices", { ...item.divisionStepPrices, [key]: nextValue })}
+              />
+            );
+          })}
+        </div>
+      </div>
+    );
+  }
+
+  if (item.pricingModel === "aov-duo") {
+    return (
+      <div className="admin-approved-rule admin-field-wide">
+        <h4>已批准的陪玩计算规则</h4>
+        <p>排位陪玩自动采用上方“排位代打”的小段及星数价格，再套用以下方案。</p>
+        <div className="admin-rule-grid">
+          <NumberField label="包赢倍率" suffix="倍" value={item.rankPricing?.guaranteedMultiplier} onChange={(value) => patchNested("rankPricing", "guaranteedMultiplier", value)} />
+          <NumberField label="不包赢倍率" suffix="倍" value={item.rankPricing?.standardMultiplier} onChange={(value) => patchNested("rankPricing", "standardMultiplier", value)} />
+          <NumberField label="排位最低消费" suffix="HKD" value={item.rankPricing?.minimumPrice} onChange={(value) => patchNested("rankPricing", "minimumPrice", value)} />
+          <NumberField label="5V5 每局" suffix="HKD" value={item.matchPricing?.unitPrice} onChange={(value) => patchNested("matchPricing", "unitPrice", value)} />
+          <NumberField label="5V5 最少局数" suffix="局" step="1" value={item.matchPricing?.minimumQuantity} onChange={(value) => patchNested("matchPricing", "minimumQuantity", value)} />
+          <NumberField label="折扣门槛" suffix="局" step="1" value={item.matchPricing?.discountThreshold} onChange={(value) => patchNested("matchPricing", "discountThreshold", value)} />
+          <NumberField label="达到门槛折扣" suffix="%" step="0.1" value={(item.matchPricing?.discountRate ?? 0) * 100} onChange={(value) => patchNested("matchPricing", "discountRate", Number(value || 0) / 100)} />
+        </div>
+      </div>
+    );
+  }
+
+  if (item.pricingModel === "aov-other") {
+    const review = item.options?.["review-coaching"] || {};
+    const updateReview = (field, value) => patch("options", {
+      ...item.options,
+      "review-coaching": { ...review, [field]: value },
+    });
+    return (
+      <div className="admin-approved-rule admin-field-wide">
+        <h4>已批准的复盘教学规则</h4>
+        <div className="admin-rule-grid">
+          <NumberField label="每分钟" suffix="HKD" value={review.unitPrice} onChange={(value) => updateReview("unitPrice", value)} />
+          <NumberField label="最低时长" suffix="分钟" step="1" value={review.minimumMinutes} onChange={(value) => updateReview("minimumMinutes", value)} />
+          <NumberField label="预约付款" suffix="HKD" value={review.bookingDeposit} onChange={(value) => updateReview("bookingDeposit", value)} />
+          <NumberField label="免费改期须提前" suffix="小时" step="1" value={review.freeRescheduleNoticeHours} onChange={(value) => updateReview("freeRescheduleNoticeHours", value)} />
+        </div>
+        <p>Discord 录屏及英雄教学仍维持人工报价，不会因这里的复盘价格而自动出价。</p>
+      </div>
+    );
+  }
+
+  return null;
+}
+
 function ServiceEditor({ gameId, serviceId, item, currency, onChange }) {
   const service = getCentralServiceDefinition(serviceId);
   const manualOnly = Boolean(service?.manualOnly);
   const label = getCentralServiceLabel(serviceId, "zh-CN");
   const patch = (field, value) => onChange({ ...item, [field]: value });
+  const isApprovedRule = ["aov-rank-progression", "aov-duo", "aov-other"].includes(item.pricingModel);
 
   return (
-    <article className={`admin-service-card${item.enabled ? "" : " is-hidden"}`}>
+    <article className={`admin-service-card${item.enabled ? "" : " is-hidden"}${isApprovedRule ? " is-rule" : ""}`}>
       <header>
         <div>
           <span>{gameId.toUpperCase()}</span>
@@ -135,7 +246,7 @@ function ServiceEditor({ gameId, serviceId, item, currency, onChange }) {
       </header>
 
       <div className="admin-service-fields">
-        <label>
+        {!isApprovedRule ? <label>
           <span><Tag size={14} /> 公开价格（{currency}）</span>
           <input
             type="number"
@@ -147,7 +258,7 @@ function ServiceEditor({ gameId, serviceId, item, currency, onChange }) {
             placeholder="留空则显示咨询价格"
             onChange={(event) => patch("basePrice", event.target.value === "" ? null : Number(event.target.value))}
           />
-        </label>
+        </label> : null}
         <label>
           <span>价格后缀</span>
           <input value={item.priceSuffix} maxLength="24" placeholder="例如：起／每局／每星" onChange={(event) => patch("priceSuffix", event.target.value)} />
@@ -160,6 +271,7 @@ function ServiceEditor({ gameId, serviceId, item, currency, onChange }) {
           <span>给客户看的备注</span>
           <textarea rows="2" value={item.note} maxLength="240" placeholder="例如：加急订单请先联系客服确认" onChange={(event) => patch("note", event.target.value)} />
         </label>
+        {isApprovedRule ? <ApprovedRuleEditor gameId={gameId} item={item} onChange={onChange} /> : null}
       </div>
 
       <footer>
@@ -167,13 +279,13 @@ function ServiceEditor({ gameId, serviceId, item, currency, onChange }) {
           <input
             type="checkbox"
             checked={item.configured}
-            disabled={manualOnly || !Number.isFinite(item.basePrice)}
+            disabled={manualOnly || (!isApprovedRule && !Number.isFinite(item.basePrice))}
             onChange={(event) => patch("configured", event.target.checked)}
           />
           <span><Check size={13} /></span>
           自动报价时采用此价格
         </label>
-        <small>{manualOnly ? "此服务按规则保留人工确认" : "关闭时只公开展示价格，不自动生成最终报价"}</small>
+        <small>{manualOnly ? "此服务按规则保留人工确认" : isApprovedRule ? "关闭后此服务会恢复为人工确认" : "关闭时只公开展示价格，不自动生成最终报价"}</small>
       </footer>
     </article>
   );
@@ -224,13 +336,24 @@ function Dashboard({ onLogout }) {
   }, [dirty]);
 
   const updateService = (gameId, serviceId, value) => {
-    setCatalog((current) => ({
-      ...current,
-      games: {
-        ...current.games,
-        [gameId]: { ...current.games[gameId], [serviceId]: value },
-      },
-    }));
+    setCatalog((current) => {
+      const nextGame = { ...current.games[gameId], [serviceId]: value };
+      if (gameId === "aov" && serviceId === "rank" && nextGame.duo?.pricingModel === "aov-duo") {
+        nextGame.duo = {
+          ...nextGame.duo,
+          rankPricing: {
+            ...nextGame.duo.rankPricing,
+            minimumPrice: value.minimumPrice,
+            divisionStepPrices: { ...value.divisionStepPrices },
+            starPricing: { ...value.starPricing },
+          },
+        };
+      }
+      return {
+        ...current,
+        games: { ...current.games, [gameId]: nextGame },
+      };
+    });
     setMessage("");
   };
 

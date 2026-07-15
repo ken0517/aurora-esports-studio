@@ -78,7 +78,7 @@ const copyByLocale = {
     targetHeroPowerPoints: "目標英雄戰力分數",
     duoMode: "陪玩模式",
     preferredStartTime: "理想開始時間",
-    preferredStartHint: "請選擇陪玩預約日期和開始時間",
+    preferredStartHint: "請選擇預約日期和開始時間",
     otherServiceType: "其他服務類型",
     optional: "選填",
     select: "請選擇",
@@ -98,6 +98,8 @@ const copyByLocale = {
     whatsapp: "傳送到 WhatsApp",
     expressYes: "需要加急",
     expressNo: "不需要加急",
+    yes: "是",
+    no: "否",
     suggested: "相關建議",
     noPricePromise: "Aurora 客服只會引用已確認的資料；未設定的價錢會交由真人客服確認。",
     privacyWarning: "請勿傳送帳號密碼、驗證碼、付款資料或身分證明。",
@@ -153,6 +155,8 @@ const copyByLocale = {
     whatsapp: "Send to WhatsApp",
     expressYes: "Express required",
     expressNo: "No express service",
+    yes: "Yes",
+    no: "No",
     suggested: "Suggestions",
     noPricePromise: "Aurora support only cites confirmed information. Unconfigured prices are handed to human support.",
     privacyWarning: "Do not send account passwords, verification codes, payment details, or identity documents.",
@@ -188,7 +192,7 @@ const copyByLocale = {
     targetHeroPowerPoints: "目标英雄战力分数",
     duoMode: "陪玩模式",
     preferredStartTime: "理想开始时间",
-    preferredStartHint: "请选择陪玩预约日期和开始时间",
+    preferredStartHint: "请选择预约日期和开始时间",
     otherServiceType: "其他服务类型",
     optional: "选填",
     select: "请选择",
@@ -208,6 +212,8 @@ const copyByLocale = {
     whatsapp: "发送到 WhatsApp",
     expressYes: "需要加急",
     expressNo: "不需要加急",
+    yes: "是",
+    no: "否",
     suggested: "相关建议",
     noPricePromise: "Aurora 客服只会引用已确认的资料；未设置的价格会交由真人客服确认。",
     privacyWarning: "请勿发送账号密码、验证码、付款资料或身份证明。",
@@ -226,6 +232,9 @@ const translationKeys = {
   quantity: "quote.fields.quantity",
   completionTime: "quote.fields.completionTime",
   preferredStartTime: "quote.fields.preferredStartTime",
+  duoGuarantee: "quote.fields.duoGuarantee",
+  customSchedule: "quote.fields.customSchedule",
+  winRate70: "quote.fields.winRate70",
   express: "quote.fields.express",
   preferredHero: "quote.fields.preferredHero",
   preferredRole: "quote.fields.preferredRole",
@@ -241,6 +250,7 @@ const translationKeys = {
   discount: "quote.table.discount",
   estimatedTime: "quote.table.estimatedCompletionTime",
   finalTotal: "quote.table.finalTotal",
+  bookingDeposit: "quote.table.bookingDeposit",
   reference: "quote.table.reference",
 };
 
@@ -282,7 +292,10 @@ function makeDraft(locale) {
     preferredRole: "",
     heroPowerMarkId: null,
     duoMode: null,
+    duoGuarantee: null,
     otherServiceType: null,
+    customSchedule: false,
+    winRate70: false,
     additionalRequirements: "",
   };
 }
@@ -304,8 +317,11 @@ const gameScopedDraftReset = {
   preferredRole: "",
   heroPowerMarkId: null,
   duoMode: null,
+  duoGuarantee: null,
   preferredStartTime: "",
   otherServiceType: null,
+  customSchedule: false,
+  winRate70: false,
   additionalRequirements: "",
 };
 
@@ -326,10 +342,13 @@ const serviceScopedDraftReset = {
   preferredRole: "",
   heroPowerMarkId: null,
   duoMode: null,
+  duoGuarantee: null,
   otherServiceType: null,
   completionTime: "",
   preferredStartTime: "",
   express: null,
+  customSchedule: false,
+  winRate70: false,
   additionalRequirements: "",
 };
 
@@ -378,8 +397,14 @@ function mergeDraftPatch(current, patch) {
     next.heroPowerMarkId = null;
   }
 
-  if (next.serviceId !== "duo") next.duoMode = null;
-  if (!(next.serviceId === "duo" && next.duoMode)) next.preferredStartTime = "";
+  if (next.serviceId !== "duo") {
+    next.duoMode = null;
+    next.duoGuarantee = null;
+  }
+  if (!(next.serviceId === "duo" && next.duoMode === "ranked")) next.duoGuarantee = null;
+  const usesAppointmentStart = (next.serviceId === "duo" && next.duoMode) ||
+    (next.serviceId === "other" && next.otherServiceType === "review-coaching");
+  if (!usesAppointmentStart) next.preferredStartTime = "";
   if (!(next.serviceId === "duo" && next.duoMode === "match-5v5")) {
     next.quantity = null;
     next.points = null;
@@ -392,6 +417,10 @@ function mergeDraftPatch(current, patch) {
   if (!["rank", "peak", "hero-power"].includes(next.serviceId)) next.preferredHero = "";
   if (!["rank", "peak"].includes(next.serviceId)) next.preferredRole = "";
   if (!["rank", "peak", "hero-power"].includes(next.serviceId)) next.express = null;
+  if (next.serviceId !== "rank") {
+    next.customSchedule = false;
+    next.winRate70 = false;
+  }
 
   if (next.gameId) {
     const gameServices = getServicesForGame(next.gameId);
@@ -541,7 +570,7 @@ function Select({ value, onChange, disabled, required, placeholder, children, ..
   return (
     <span className="quote-select">
       <select {...selectProps} value={value ?? ""} onChange={onChange} disabled={disabled} required={required}>
-        <option value="">{placeholder}</option>
+        {placeholder !== undefined ? <option value="">{placeholder}</option> : null}
         {children}
       </select>
       <ChevronDown size={16} aria-hidden="true" />
@@ -871,23 +900,28 @@ export function QuoteAssistant({
   const isDuoRanked = isDuo && draft.duoMode === "ranked";
   const isDuoMatch = isDuo && draft.duoMode === "match-5v5";
   const isOther = draft.serviceId === "other";
+  const isReviewCoaching = isOther && draft.otherServiceType === "review-coaching";
   const showRankRange = draft.serviceId === "rank" || isDuoRanked;
   const showCurrentRank = showRankRange || isHeroPower;
   const showHeroAndRole = draft.serviceId === "rank" || isPeak;
   const showExpress = draft.serviceId === "rank" || isPeak || isHeroPower;
   const duoModes = selectedService?.modes ?? [];
+  const duoGuaranteeOptions = selectedService?.guaranteeOptions ?? [];
   const otherServiceTypes = selectedService?.options ?? [];
   const pricingReady = Boolean(
     draft.gameId &&
       draft.serviceId &&
-      isPricingConfigured(draft.gameId, draft.serviceId, pricingCatalog),
+      isPricingConfigured(draft.gameId, draft.serviceId, pricingCatalog, draft),
   );
 
   const generateQuote = useCallback(() => {
     setFormError("");
     let validation;
     try {
-      validation = validateQuoteDraft({ ...draft, locale: localeId });
+      validation = validateQuoteDraft(
+        { ...draft, locale: localeId },
+        { pricingCatalog },
+      );
     } catch {
       setFormError(ui.incomplete);
       return;
@@ -1220,7 +1254,7 @@ export function QuoteAssistant({
 
           {isDuoMatch ? (
             <Field label={text("quantity", "所需數量")}>
-              <input type="number" min="1" inputMode="numeric" required value={draft.quantity ?? ""} onChange={(event) => updateDraft("quantity", event.target.value)} />
+              <input type="number" min={draft.gameId === "aov" ? "2" : "1"} inputMode="numeric" required value={draft.quantity ?? ""} onChange={(event) => updateDraft("quantity", event.target.value)} />
             </Field>
           ) : null}
 
@@ -1276,7 +1310,7 @@ export function QuoteAssistant({
             </>
           ) : null}
 
-          {isDuo && draft.duoMode ? (
+          {(isDuo && draft.duoMode) || isReviewCoaching ? (
             <Field
               label={text("preferredStartTime", ui.preferredStartTime)}
               hint={draft.preferredStartTime
@@ -1293,7 +1327,22 @@ export function QuoteAssistant({
             </Field>
           ) : null}
 
-          {draft.serviceId && !isDuo ? (
+          {isDuoRanked ? (
+            <Field label={text("duoGuarantee", "勝負方案")}>
+              <Select
+                value={draft.duoGuarantee}
+                onChange={(event) => updateDraft("duoGuarantee", event.target.value || null)}
+                required
+                placeholder={ui.select}
+              >
+                {duoGuaranteeOptions.map((option) => (
+                  <option key={option.id} value={option.id}>{localizeGameValue(option.labels, localeId)}</option>
+                ))}
+              </Select>
+            </Field>
+          ) : null}
+
+          {draft.serviceId && !isDuo && !isReviewCoaching ? (
             <Field label={text("completionTime", "理想完成時間")}>
               <input type="text" required value={draft.completionTime} placeholder={localeId === "en" ? "e.g. within 3 days" : "例如：三日內／今晚開始"} onChange={(event) => updateDraft("completionTime", event.target.value)} />
             </Field>
@@ -1311,6 +1360,29 @@ export function QuoteAssistant({
                 <option value="false">{ui.expressNo}</option>
               </Select>
             </Field>
+          ) : null}
+
+          {draft.serviceId === "rank" ? (
+            <>
+              <Field label={text("customSchedule", "指定時段要求")} optional={ui.optional}>
+                <Select
+                  value={String(Boolean(draft.customSchedule))}
+                  onChange={(event) => updateDraft("customSchedule", event.target.value === "true")}
+                >
+                  <option value="false">{translateFromData(localeId, "common.no")}</option>
+                  <option value="true">{translateFromData(localeId, "common.yes")}</option>
+                </Select>
+              </Field>
+              <Field label={text("winRate70", "全程保持勝率 70% 以上")} optional={ui.optional}>
+                <Select
+                  value={String(Boolean(draft.winRate70))}
+                  onChange={(event) => updateDraft("winRate70", event.target.value === "true")}
+                >
+                  <option value="false">{translateFromData(localeId, "common.no")}</option>
+                  <option value="true">{translateFromData(localeId, "common.yes")}</option>
+                </Select>
+              </Field>
+            </>
           ) : null}
         </div>
 
@@ -1330,12 +1402,16 @@ export function QuoteAssistant({
       ? translateFromData(localeId, "quote.status.quoted")
       : ui.pending;
     const selectedDuoMode = duoModes.find((mode) => mode.id === draft.duoMode);
+    const selectedDuoGuarantee = duoGuaranteeOptions.find((option) => option.id === draft.duoGuarantee);
     const selectedOtherType = otherServiceTypes.find((item) => item.id === draft.otherServiceType);
     const rows = [
       [text("game", "遊戲"), selectedGame ? gameName(selectedGame) : "—"],
       [text("service", "服務"), selectedService ? serviceName(selectedService) : "—"],
       ...(isDuo
         ? [[text("duoMode", ui.duoMode), selectedDuoMode ? localizeGameValue(selectedDuoMode.labels, localeId) : "—"]]
+        : []),
+      ...(isDuoRanked
+        ? [[text("duoGuarantee", "勝負方案"), selectedDuoGuarantee ? localizeGameValue(selectedDuoGuarantee.labels, localeId) : "—"]]
         : []),
       ...(showCurrentRank
         ? [
@@ -1377,13 +1453,22 @@ export function QuoteAssistant({
           ]
         : []),
       ...(showExpress ? [[text("express", "加急服務"), draft.express ? ui.expressYes : ui.expressNo]] : []),
+      ...(draft.serviceId === "rank"
+        ? [
+            [text("customSchedule", "指定時段要求"), draft.customSchedule ? ui.yes : ui.no],
+            [text("winRate70", "全程保持勝率 70% 以上"), draft.winRate70 ? ui.yes : ui.no],
+          ]
+        : []),
       [text("basePrice", "基本價格"), formatValue(quote?.basePrice, localeId, currency, ui.pending)],
       [text("optionalCharges", "附加費用"), formatValue(quote?.optionalCharges, localeId, currency, ui.pending)],
       [text("discount", "折扣"), formatValue(quote?.discount, localeId, currency, ui.pending)],
-      ...(isDuo
+      ...(isDuo || isReviewCoaching
         ? [[text("preferredStartTime", ui.preferredStartTime), formatAppointmentTime(draft.preferredStartTime, localeId) || ui.pending]]
         : [[text("estimatedTime", "預計完成時間"), quote?.estimatedCompletionTime ?? draft.completionTime ?? ui.pending]]),
-      [text("finalTotal", "最終總額"), formatValue(quote?.finalTotal, localeId, currency, ui.pending)],
+      [
+        quote?.amountType === "booking-deposit" ? text("bookingDeposit", "預約付款") : text("finalTotal", "最終總額"),
+        formatValue(quote?.finalTotal, localeId, currency, ui.pending),
+      ],
       [text("quoteStatus", "報價狀態"), statusLabel],
       [text("reference", "報價編號"), quote?.referenceNumber ?? quote?.reference ?? "—"],
     ];
