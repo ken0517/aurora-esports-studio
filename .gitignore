@@ -16,3 +16,4 @@ vite.*.log
 .aurora-ai.*
 
 .vercel/
+.worktrees/
