@@ -60,16 +60,12 @@ function normalizeRankRule(item, fallback) {
     },
     optionalCharges: {
       ...clone(fallback.optionalCharges),
-      express: percentageConfig(item.optionalCharges?.express, fallback.optionalCharges.express),
       preferredRole: percentageConfig(item.optionalCharges?.preferredRole, fallback.optionalCharges.preferredRole),
-      customSchedule: percentageConfig(item.optionalCharges?.customSchedule, fallback.optionalCharges.customSchedule),
-      winRate70: percentageConfig(item.optionalCharges?.winRate70, fallback.optionalCharges.winRate70),
     },
     timeRules: {
       hoursPerDivision: cleanNumber(item.timeRules?.hoursPerDivision, fallback.timeRules.hoursPerDivision, { min: 0.1, max: 100 }),
       hoursPerTenStarsMin: cleanNumber(item.timeRules?.hoursPerTenStarsMin, fallback.timeRules.hoursPerTenStarsMin, { min: 0.1, max: 100 }),
       hoursPerTenStarsMax: cleanNumber(item.timeRules?.hoursPerTenStarsMax, fallback.timeRules.hoursPerTenStarsMax, { min: 0.1, max: 100 }),
-      expressTimeMultiplier: cleanNumber(item.timeRules?.expressTimeMultiplier, fallback.timeRules.expressTimeMultiplier, { min: 0.1, max: 1 }),
     },
     quoteValidityDays: cleanNumber(item.quoteValidityDays, fallback.quoteValidityDays, { min: 1, max: 90 }),
   };

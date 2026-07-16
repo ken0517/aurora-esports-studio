@@ -34,6 +34,11 @@ test("quote context keeps the five-service dependent fields and drops unknown in
         otherServiceType: "hero-coaching",
         currentHeroPowerPoints: 3210,
         targetHeroPowerPoints: 4560,
+        displayCurrency: "TWD",
+        completionTime: "今晚完成",
+        express: true,
+        customSchedule: true,
+        winRate70: true,
         ignoredProviderField: "must-not-pass",
       },
       "zh-HK",
@@ -46,8 +51,14 @@ test("quote context keeps the five-service dependent fields and drops unknown in
       otherServiceType: "hero-coaching",
       currentHeroPowerPoints: 3210,
       targetHeroPowerPoints: 4560,
+      displayCurrency: "TWD",
     },
   );
+});
+
+test("Gemini game context never asks for retired quote fields", () => {
+  const context = JSON.stringify(buildGameContext("zh-HK"));
+  assert.doesNotMatch(context, /completionTime|express|customSchedule|winRate70/);
 });
 
 async function withHttpServer(handler, callback) {

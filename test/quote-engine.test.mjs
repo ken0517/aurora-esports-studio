@@ -127,14 +127,12 @@ test("each service rejects every missing field from its active field set", () =>
         "targetRankId",
         "targetDivision",
         "targetStars",
-        "completionTime",
-        "express",
       ],
     },
     {
       name: "peak",
       draft: peakDraft,
-      fields: ["currentPoints", "targetPoints", "completionTime", "express"],
+      fields: ["currentPoints", "targetPoints"],
     },
     {
       name: "duo ranked",
@@ -168,14 +166,12 @@ test("each service rejects every missing field from its active field set", () =>
         "targetHeroPowerPoints",
         "preferredHero",
         "heroPowerMarkId",
-        "completionTime",
-        "express",
       ],
     },
     {
       name: "other",
       draft: otherDraft,
-      fields: ["otherServiceType", "additionalRequirements", "preferredStartTime"],
+      fields: ["otherServiceType", "preferredStartTime"],
     },
   ];
 
@@ -371,8 +367,7 @@ test("WhatsApp hero-power summary includes new score fields and excludes stale h
     "目標英雄戰力分數: 5000",
     "指定英雄: 鏡",
     "英雄戰力標: 小國標",
-    "預計完成時間: 三日內",
-    "加急服務: 否",
+    "其他要求: HIDDEN-HERO-POWER-REQUIREMENT",
     "報價狀態: 待人工確認",
   ]) {
     assert.ok(message.includes(expected), `missing WhatsApp row: ${expected}\n${message}`);
@@ -385,7 +380,6 @@ test("WhatsApp hero-power summary includes new score fields and excludes stale h
     "987654",
     "876543",
     "765432",
-    "HIDDEN-HERO-POWER-REQUIREMENT",
   ]) {
     assert.ok(!message.includes(hidden), `hidden hero-power field leaked: ${hidden}`);
   }
@@ -403,7 +397,7 @@ test("dynamic service summaries do not leak fields from inactive branches", () =
   assert.ok(rankedMessage.includes("目前段位:"));
   assert.ok(!rankedMessage.includes("所需數量:"));
   assert.ok(!rankedMessage.includes("987654"));
-  assert.ok(!rankedMessage.includes("HIDDEN-RANKED-DUO"));
+  assert.ok(rankedMessage.includes("其他要求: HIDDEN-RANKED-DUO"));
 
   const matchMessage = formatWhatsAppMessage(calculateQuote({
     ...duoMatchDraft,
@@ -703,4 +697,32 @@ test("manual-review quotes never expose invented converted amounts", () => {
   assert.equal(quote.basePrice, null);
   assert.equal(quote.newCustomerDiscount, null);
   assert.equal(quote.finalTotal, null);
+});
+
+test("additional requirements are optional for every service and omitted when blank", () => {
+  const blank = calculateQuote({
+    locale: "zh-HK",
+    gameId: "aov",
+    serviceId: "other",
+    otherServiceType: "review-coaching",
+    preferredStartTime: "2026-07-20T20:00",
+    additionalRequirements: "   ",
+  });
+  assert.equal(blank.status, "quoted");
+  assert.doesNotMatch(formatWhatsAppMessage(blank, "zh-HK"), /其他要求:/);
+
+  const detailed = calculateQuote({
+    locale: "zh-HK",
+    gameId: "aov",
+    serviceId: "rank",
+    currentRankId: "bronze",
+    currentDivision: "III",
+    currentStars: 0,
+    targetRankId: "bronze",
+    targetDivision: "II",
+    targetStars: 0,
+    additionalRequirements: "希望使用指定英雄",
+  });
+  assert.equal(detailed.status, "quoted");
+  assert.match(formatWhatsAppMessage(detailed, "zh-HK"), /其他要求: 希望使用指定英雄/);
 });

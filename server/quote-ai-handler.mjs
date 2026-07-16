@@ -51,18 +51,15 @@ const quoteFields = new Set([
   "targetHeroPowerPoints",
   "quantity",
   "points",
-  "completionTime",
   "preferredStartTime",
-  "express",
   "preferredHero",
   "preferredRole",
   "heroPowerMarkId",
   "duoMode",
   "duoGuarantee",
   "otherServiceType",
-  "customSchedule",
-  "winRate70",
   "additionalRequirements",
+  "displayCurrency",
 ]);
 
 const duoModeIds = serviceDefinitions
@@ -97,18 +94,15 @@ const calculateQuoteDeclaration = {
       targetHeroPowerPoints: { type: "number" },
       quantity: { type: "number" },
       points: { type: "number" },
-      completionTime: { type: "string" },
       preferredStartTime: { type: "string" },
-      express: { type: "boolean" },
       preferredHero: { type: "string" },
       preferredRole: { type: "string" },
       heroPowerMarkId: { type: "string" },
       duoMode: { type: "string", enum: duoModeIds },
       duoGuarantee: { type: "string", enum: duoGuaranteeIds },
       otherServiceType: { type: "string", enum: otherServiceTypeIds },
-      customSchedule: { type: "boolean" },
-      winRate70: { type: "boolean" },
       additionalRequirements: { type: "string" },
+      displayCurrency: { type: "string", enum: ["HKD", "TWD", "CNY"] },
     },
   },
 };
@@ -606,13 +600,14 @@ GAME DATA RULES:
 - Use only the supplied central game configuration. Never mix lanes, ranks, divisions, star ranges, or hero-power marks between games.
 - Treat common lane and mark aliases in the configuration as aliases only for their matching game.
 - Respect service voiceRequired metadata. If the customer says they do not want to use voice or a microphone, never select a service where voiceRequired is true; use the matching non-voice companion service instead.
-- For duo, collect duoMode first. Ranked duo also requires duoGuarantee (guaranteed target or standard win/loss charging). Then collect the appointment preferredStartTime plus that mode's other requiredFields. Do not ask for the appointment time before the customer has chosen a duo mode. For other, collect otherServiceType from the supplied options; live review coaching uses preferredStartTime instead of completionTime.
+- For duo, collect duoMode first. Ranked duo also requires duoGuarantee (guaranteed target or standard win/loss charging). Then collect the appointment preferredStartTime plus that mode's other requiredFields. Do not ask for the appointment time before the customer has chosen a duo mode. For other, collect otherServiceType from the supplied options and use preferredStartTime for the appointment.
 - "green card" or 綠牌 can mean the Arena of Valor green mark.
 - If a customer says 國標 or 国标, ask whether they mean the minor national mark or major national mark.
 - If a customer chooses a mark or lane from the wrong game, explain the valid options for the selected game instead of silently accepting it.
 
 QUOTE AND PRICING RULES:
-- Extract game, service, duoMode, duoGuarantee or otherServiceType, rank/division/stars or points, current and target hero-power points, hero, lane, target mark, preferredStartTime for appointments, completion time where relevant, express preference, specified-time and 70%+ win-rate requests.
+- Extract game, service, duoMode, duoGuarantee or otherServiceType, rank/division/stars or points, current and target hero-power points, hero, lane, target mark, preferredStartTime for appointments, optional additional requirements, and display currency.
+- Do not ask for additional requirements if the customer has none.
 - Once enough structured information is available, call calculate_quote. The function runs on Aurora's server.
 - Never invent, estimate, interpolate, or infer a price, discount, surcharge, completion time, success rate, or availability.
 - A monetary amount may be stated only when the calculate_quote result has status "quoted" and contains that exact non-null amount.

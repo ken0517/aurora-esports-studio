@@ -174,15 +174,13 @@ export const serviceDefinitions = [
       "currentStars",
       "targetRankId",
       "targetStars",
-      "completionTime",
-      "express",
     ],
   },
   {
     id: "peak",
     labels: labels("巔峰賽代打", "Peak ranked progression", "巅峰赛代打"),
     unit: "point",
-    requiredFields: ["gameId", "currentPoints", "targetPoints", "completionTime", "express"],
+    requiredFields: ["gameId", "currentPoints", "targetPoints"],
   },
   {
     id: "duo",
@@ -227,8 +225,6 @@ export const serviceDefinitions = [
       "targetHeroPowerPoints",
       "preferredHero",
       "heroPowerMarkId",
-      "completionTime",
-      "express",
     ],
     manualOnly: true,
   },
@@ -258,20 +254,20 @@ export const serviceDefinitions = [
       {
         id: "review-coaching",
         labels: labels("復盤教學", "Review coaching", "复盘教学"),
-        requiredFields: ["preferredStartTime", "additionalRequirements"],
+        requiredFields: ["preferredStartTime"],
       },
       {
         id: "discord-recorded-review",
         labels: labels("第一視角教學", "First-person coaching", "第一视角教学"),
-        requiredFields: ["preferredStartTime", "additionalRequirements"],
+        requiredFields: ["preferredStartTime"],
       },
       {
         id: "hero-coaching",
         labels: labels("英雄教學", "Hero coaching", "英雄教学"),
-        requiredFields: ["preferredStartTime", "additionalRequirements"],
+        requiredFields: ["preferredStartTime"],
       },
     ],
-    requiredFields: ["gameId", "otherServiceType", "additionalRequirements"],
+    requiredFields: ["gameId", "otherServiceType"],
   },
 ];
 

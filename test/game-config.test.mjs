@@ -151,10 +151,8 @@ test("five service definitions expose the expected central field contracts", () 
       "currentStars",
       "targetRankId",
       "targetStars",
-      "completionTime",
-      "express",
     ],
-    peak: ["gameId", "currentPoints", "targetPoints", "completionTime", "express"],
+    peak: ["gameId", "currentPoints", "targetPoints"],
     duo: ["gameId", "duoMode", "preferredStartTime"],
     "hero-power": [
       "gameId",
@@ -165,9 +163,15 @@ test("five service definitions expose the expected central field contracts", () 
       "targetHeroPowerPoints",
       "preferredHero",
       "heroPowerMarkId",
-      "completionTime",
-      "express",
     ],
-    other: ["gameId", "otherServiceType", "additionalRequirements"],
+    other: ["gameId", "otherServiceType"],
   });
+
+  const retired = new Set(["completionTime", "express", "customSchedule", "winRate70"]);
+  for (const service of serviceDefinitions) {
+    for (const field of service.requiredFields || []) assert.equal(retired.has(field), false);
+    for (const choice of [...(service.modes || []), ...(service.options || [])]) {
+      for (const field of choice.requiredFields || []) assert.equal(retired.has(field), false);
+    }
+  }
 });

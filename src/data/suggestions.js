@@ -54,12 +54,6 @@ export const quoteSuggestions = [
     },
   },
   {
-    id: "diamond-express",
-    labels: text("鑽石加急代打", "Diamond express progression", "钻石加急代打"),
-    keywords: diamondKeywords,
-    draft: { serviceId: "rank", currentRankId: "diamond", express: true },
-  },
-  {
     id: "veteran-to-legend",
     labels: text("星耀升傳說", "Veteran to Legend", "星耀升传说"),
     keywords: veteranKeywords,
@@ -80,12 +74,6 @@ export const quoteSuggestions = [
       currentRankId: "veteran",
       additionalRequirements: text("查詢每星價格", "Ask about the price per star", "查询每星价格"),
     },
-  },
-  {
-    id: "veteran-express",
-    labels: text("星耀加急完成", "Veteran express completion", "星耀加急完成"),
-    keywords: veteranKeywords,
-    draft: { serviceId: "rank", currentRankId: "veteran", express: true },
   },
   {
     id: "veteran-preferred-hero",

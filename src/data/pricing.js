@@ -69,11 +69,8 @@ function unconfiguredRule(gameId, serviceId) {
     rankStepPrices: null,
     pointBands: null,
     optionalCharges: {
-      express: { type: null, value: null },
       preferredHero: { type: null, value: null },
       preferredRole: { type: null, value: null },
-      customSchedule: { type: null, value: null },
-      winRate70: { type: null, value: null },
     },
     discounts: null,
     estimatedCompletionTime: null,
@@ -120,17 +117,13 @@ function approvedRankRule(gameId, multiplier = 1, serviceId = "rank") {
     divisionStepPrices: scaledDivisionStepPrices(multiplier),
     starPricing: approvedStarPricing(multiplier),
     optionalCharges: {
-      express: { type: "percentage", value: 0.25 },
       preferredHero: { type: null, value: null },
       preferredRole: { type: "percentage", value: 0.15 },
-      customSchedule: { type: "percentage", value: 0.15 },
-      winRate70: { type: "percentage", value: 0.15 },
     },
     timeRules: {
       hoursPerDivision: 1,
       hoursPerTenStarsMin: 3,
       hoursPerTenStarsMax: 4,
-      expressTimeMultiplier: 0.75,
     },
     quoteValidityDays: 3,
     estimatedCompletionTime: {
