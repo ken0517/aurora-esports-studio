@@ -38,6 +38,7 @@ import {
   buildWhatsAppUrl,
   calculateQuote,
   createQuoteDraft,
+  formatLineMessage,
   formatQuoteText,
   validateQuoteDraft,
 } from "../lib/quoteEngine";
@@ -96,6 +97,9 @@ const copyByLocale = {
     copy: "複製摘要",
     copied: "已複製",
     whatsapp: "傳送到 WhatsApp",
+    line: "傳送至 LINE",
+    lineCopied: "報價已複製；加入好友後請貼上並傳送。",
+    lineCopyFailed: "瀏覽器未能自動複製。請先按「複製報價」，再前往 LINE。",
     expressYes: "需要加急",
     expressNo: "不需要加急",
     yes: "是",
@@ -153,6 +157,9 @@ const copyByLocale = {
     copy: "Copy summary",
     copied: "Copied",
     whatsapp: "Send to WhatsApp",
+    line: "Send to LINE",
+    lineCopied: "Quote copied. Add Aurora on LINE, then paste and send it.",
+    lineCopyFailed: "Your browser could not copy automatically. Copy the quote first, then open LINE.",
     expressYes: "Express required",
     expressNo: "No express service",
     yes: "Yes",
@@ -210,6 +217,9 @@ const copyByLocale = {
     copy: "复制摘要",
     copied: "已复制",
     whatsapp: "发送到 WhatsApp",
+    line: "发送至 LINE",
+    lineCopied: "报价已复制；添加好友后请粘贴并发送。",
+    lineCopyFailed: "浏览器未能自动复制。请先点击“复制报价”，再前往 LINE。",
     expressYes: "需要加急",
     expressNo: "不需要加急",
     yes: "是",
@@ -609,6 +619,7 @@ export function QuoteAssistant({
   const [quote, setQuote] = useState(null);
   const [formError, setFormError] = useState("");
   const [copied, setCopied] = useState(false);
+  const [lineCopyStatus, setLineCopyStatus] = useState("");
   const portalTarget = typeof document === "undefined" ? null : document.body;
   const [aiStatus, setAiStatus] = useState("checking");
   const [aiMessages, setAiMessages] = useState([]);
@@ -973,6 +984,15 @@ export function QuoteAssistant({
     }
   }, [contactLinks.whatsapp, localeId, quote, quoteText]);
 
+  const lineMessage = useMemo(() => {
+    if (!quote) return "";
+    try {
+      return formatLineMessage(quote, localeId);
+    } catch {
+      return quoteText;
+    }
+  }, [localeId, quote, quoteText]);
+
   const handleCopy = async () => {
     if (!quoteText) return;
     try {
@@ -983,6 +1003,14 @@ export function QuoteAssistant({
     } catch {
       setCopied(false);
     }
+  };
+
+  const handleLineClick = () => {
+    if (!lineMessage) return;
+    setLineCopyStatus("");
+    copyToClipboard(lineMessage)
+      .then(() => setLineCopyStatus("copied"))
+      .catch(() => setLineCopyStatus("failed"));
   };
 
   const sendAiMessage = useCallback(
@@ -1489,8 +1517,22 @@ export function QuoteAssistant({
             {copied ? <Check size={16} /> : <Clipboard size={16} />}{copied ? ui.copied : ui.copy}
           </button>
           <a className="quote-button quote-button--primary" href={whatsappUrl} target="_blank" rel="noreferrer"><Send size={16} />{ui.whatsapp}</a>
+          <a
+            className="quote-button quote-button--secondary"
+            href={contactLinks.line || "https://line.me/ti/p/wWXCT-txMc"}
+            target="_blank"
+            rel="noreferrer"
+            onClick={handleLineClick}
+          >
+            <MessageCircle size={16} />{ui.line}
+          </a>
           <button type="button" className="quote-button quote-button--text" onClick={() => setQuote(null)}>{ui.edit}</button>
         </div>
+        {lineCopyStatus ? (
+          <p className={`quote-line-status quote-line-status--${lineCopyStatus}`} role="status">
+            {lineCopyStatus === "copied" ? ui.lineCopied : ui.lineCopyFailed}
+          </p>
+        ) : null}
       </div>
     );
   };

@@ -478,6 +478,18 @@
   color: #71624f;
 }
 
+.quote-line-status {
+  margin: 12px 0 0;
+  color: var(--quote-muted);
+  font-size: 11px;
+  line-height: 1.55;
+  text-align: right;
+}
+
+.quote-line-status--failed {
+  color: #85342e;
+}
+
 .quote-result {
   padding: 22px 24px 30px;
 }
@@ -913,6 +925,10 @@
 
   .quote-button {
     width: 100%;
+  }
+
+  .quote-line-status {
+    text-align: left;
   }
 
   .quote-result {

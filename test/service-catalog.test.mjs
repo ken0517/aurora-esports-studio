@@ -7,6 +7,7 @@ import {
   serviceDefinitions,
 } from "../src/data/gameConfig.js";
 import { pricingCatalog } from "../src/data/pricing.js";
+import { translate } from "../src/data/translations.js";
 import {
   editorialServiceCatalog,
   getEditorialServicesForGame,
@@ -16,6 +17,14 @@ import {
 
 const expectedServiceIds = ["rank", "peak", "duo", "hero-power", "other"];
 const locales = ["zh-HK", "en", "zh-CN"];
+
+test("all locales expose the LINE quote handoff labels", () => {
+  for (const locale of locales) {
+    assert.notEqual(translate(locale, "quote.actions.line"), "quote.actions.line");
+    assert.notEqual(translate(locale, "quote.actions.lineCopied"), "quote.actions.lineCopied");
+    assert.notEqual(translate(locale, "quote.actions.lineCopyFailed"), "quote.actions.lineCopyFailed");
+  }
+});
 
 test("central, public and pricing catalogues share the same five-service order", () => {
   assert.deepEqual(serviceDefinitions.map((service) => service.id), expectedServiceIds);
