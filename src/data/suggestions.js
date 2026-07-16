@@ -154,7 +154,7 @@ export const quoteSuggestions = [
   },
   {
     id: "ranked-pricing-general",
-    labels: text("排位代打點收費？", "How is ranked progression priced?", "排位代打如何收费？"),
+    labels: text("排位代打如何收費？", "How is ranked progression priced?", "排位代打如何收费？"),
     keywords: {
       "zh-HK": ["排位", "代打", "收費", "幾多錢", "價格"],
       en: ["ranked", "boost", "price", "cost", "quote"],
@@ -164,7 +164,7 @@ export const quoteSuggestions = [
   },
   {
     id: "service-help",
-    labels: text("我唔知自己應該揀邊個服務", "Help me choose a service", "我不知道应该选择哪项服务"),
+    labels: text("我不確定應該選擇哪項服務", "Help me choose a service", "我不知道应该选择哪项服务"),
     keywords: {
       "zh-HK": ["唔知", "揀邊個", "選擇服務", "幫我揀", "推薦"],
       en: ["which service", "help choose", "recommend", "not sure"],

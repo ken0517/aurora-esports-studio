@@ -576,7 +576,7 @@ export function buildSystemInstructions(locale, quoteContext, quoteResult, activ
     ? "English"
     : locale === "zh-CN"
       ? "Simplified Chinese"
-      : "Traditional Chinese with natural Hong Kong Cantonese wording";
+      : "formal written Traditional Chinese suitable for Hong Kong and Taiwan readers";
   const context = {
     studio: "Aurora Esports Studio",
     markets: ["Hong Kong", "Taiwan"],
