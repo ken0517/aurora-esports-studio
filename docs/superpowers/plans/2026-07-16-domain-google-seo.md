@@ -2,7 +2,7 @@
 
 > **For Codex:** Execute each task in order, verify evidence before continuing, and do not expose secrets.
 
-**Goal:** Publish Aurora Esports Studio at `https://auroraesportsstudio.com/`, connect the existing backend safely, and submit the site for Google indexing.
+**Goal:** Publish Aurora Esports Studio at `https://auroraesportstudio.com/`, connect the existing backend safely, and submit the site for Google indexing.
 
 **Architecture:** Keep the React/Vite frontend on GitHub Pages and the AI/admin backend on Vercel. Configure the apex domain as canonical, route `www` to Pages, update public SEO metadata, and use Google Search Console DNS verification.
 
@@ -28,7 +28,7 @@
 - Create: `public/CNAME`
 - Modify: `.github/workflows/deploy-pages.yml`
 
-- [ ] Replace old canonical URLs with `https://auroraesportsstudio.com/`.
+- [ ] Replace old canonical URLs with `https://auroraesportstudio.com/`.
 - [ ] Add absolute Open Graph URL and image metadata.
 - [ ] Update the title, description and structured data with accurate Hong Kong/Taiwan services.
 - [ ] Change the Pages production base path to `/` and preserve the CNAME in the artifact.
@@ -59,7 +59,7 @@
 
 **External systems:** GitHub repository settings and Namecheap Advanced DNS.
 
-- [ ] Set the Pages custom domain to `auroraesportsstudio.com` before DNS changes.
+- [ ] Set the Pages custom domain to `auroraesportstudio.com` before DNS changes.
 - [ ] Add the four official GitHub Pages A records for the apex domain.
 - [ ] Add `www` CNAME pointing to `ken0517.github.io`.
 - [ ] Preserve unrelated TXT/email records and remove only confirmed conflicting parking records.
@@ -77,7 +77,7 @@
 
 **External systems:** Google Search Console and Namecheap DNS.
 
-- [ ] Create the Domain property for `auroraesportsstudio.com`.
+- [ ] Create the Domain property for `auroraesportstudio.com`.
 - [ ] Add the Google-provided TXT verification record without altering unrelated DNS records.
 - [ ] Verify ownership, submit `/sitemap.xml`, and request homepage indexing.
 - [ ] Record any Google propagation delay as pending rather than claiming immediate ranking.

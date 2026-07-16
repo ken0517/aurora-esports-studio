@@ -5,12 +5,12 @@
 
 ## 目標
 
-將 Aurora Esports Studio 的正式入口改為 `https://auroraesportsstudio.com/`，保留現有 GitHub Pages 前台與 Vercel 後台，讓香港及台灣客人可透過正式網域瀏覽、查價及聯絡客服，並提交 Google Search Console 收錄。
+將 Aurora Esports Studio 的正式入口改為 `https://auroraesportstudio.com/`，保留現有 GitHub Pages 前台與 Vercel 後台，讓香港及台灣客人可透過正式網域瀏覽、查價及聯絡客服，並提交 Google Search Console 收錄。
 
 ## 網域與發布
 
-- 主網址使用無 `www` 的 `https://auroraesportsstudio.com/`。
-- `www.auroraesportsstudio.com` 指向同一網站並由平台轉往主網址。
+- 主網址使用無 `www` 的 `https://auroraesportstudio.com/`。
+- `www.auroraesportstudio.com` 指向同一網站並由平台轉往主網址。
 - GitHub Pages 繼續負責公開網站；Vercel 繼續負責 AI、管理後台與資料服務。
 - GitHub Pages 的正式版本改用網站根路徑建置，避免圖片、頁內連結及管理入口仍帶有舊專案子路徑。
 - Namecheap 根網域設定 GitHub Pages 的四筆 A 記錄；`www` 設為指向 `ken0517.github.io` 的 CNAME。
@@ -27,7 +27,7 @@
 ## Google 收錄
 
 - 使用 Search Console 的「網域資源」，以 Namecheap DNS TXT 記錄驗證所有協定及子網域。
-- 驗證後提交 `https://auroraesportsstudio.com/sitemap.xml`，並請求首頁重新建立索引。
+- 驗證後提交 `https://auroraesportstudio.com/sitemap.xml`，並請求首頁重新建立索引。
 - Google 是否及何時顯示網站由 Google 決定，通常需等待數天或更久；本階段只確保網站可被正常抓取及提交。
 - 因工作室沒有可公開接待客人的實體地址，本階段不建立 Google 商家檔案。
 
