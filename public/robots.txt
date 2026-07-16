@@ -3,4 +3,4 @@ Allow: /
 Disallow: /admin
 Disallow: /api/
 
-Sitemap: https://ken0517.github.io/aurora-esports-studio/sitemap.xml
+Sitemap: https://auroraesportsstudio.com/sitemap.xml

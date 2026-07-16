@@ -34,7 +34,7 @@ jobs:
       - name: Build frontend
         run: npm run build
         env:
-          VITE_BASE_PATH: /aurora-esports-studio/
+          VITE_BASE_PATH: /
           VITE_QUOTE_AI_ENDPOINT: ${{ vars.VITE_QUOTE_AI_ENDPOINT }}
           VITE_AURORA_API_BASE_URL: ${{ vars.VITE_AURORA_API_BASE_URL }}
 
