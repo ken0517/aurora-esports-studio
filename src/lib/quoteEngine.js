@@ -932,7 +932,7 @@ export function formatQuoteText(quoteOrDraft, locale = null) {
   return rows.join("\n");
 }
 
-export function formatWhatsAppMessage(quoteOrDraft, locale = null) {
+export function formatContactMessage(quoteOrDraft, locale = null) {
   const quote = quoteOrDraft?.reference || quoteOrDraft?.referenceNumber
     ? quoteOrDraft
     : calculateQuote(quoteOrDraft);
@@ -944,6 +944,14 @@ export function formatWhatsAppMessage(quoteOrDraft, locale = null) {
     "",
     translate(resolvedLocale, "quote.whatsapp.closing"),
   ].join("\n");
+}
+
+export function formatWhatsAppMessage(quoteOrDraft, locale = null) {
+  return formatContactMessage(quoteOrDraft, locale);
+}
+
+export function formatLineMessage(quoteOrDraft, locale = null) {
+  return formatContactMessage(quoteOrDraft, locale);
 }
 
 /**

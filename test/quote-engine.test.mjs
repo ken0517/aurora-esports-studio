@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 
 import {
   calculateQuote,
+  formatLineMessage,
   formatWhatsAppMessage,
   validateQuoteDraft,
 } from "../src/lib/quoteEngine.js";
@@ -85,6 +86,16 @@ const minimalDrafts = {
   "hero-power": heroPowerDraft,
   other: otherDraft,
 };
+
+test("WhatsApp and LINE use the same authoritative quote message", () => {
+  const quote = calculateQuote(duoMatchDraft, { reference: "AUR-LINE-SAME-COPY" });
+  const whatsapp = formatWhatsAppMessage(quote, "zh-HK");
+  const line = formatLineMessage(quote, "zh-HK");
+
+  assert.equal(line, whatsapp);
+  assert.match(line, /AUR-LINE-SAME-COPY/);
+  assert.match(line, /HK\$/);
+});
 
 function withoutField(draft, field) {
   const copy = { ...draft };
