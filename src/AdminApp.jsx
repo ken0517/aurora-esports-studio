@@ -154,10 +154,7 @@ function ApprovedRuleEditor({ gameId, item, onChange }) {
         <h4>已批准的排位計算規則</h4>
         <div className="admin-rule-grid">
           <NumberField label="最低消費" suffix="HKD" value={item.minimumPrice} onChange={(value) => patch("minimumPrice", value)} />
-          {percentage("express", "加急附加費")}
           {percentage("preferredRole", "指定分路附加費")}
-          {percentage("customSchedule", "指定時段附加費")}
-          {percentage("winRate70", "保持 70%+ 勝率附加費")}
           <NumberField label="每小段預計時間" suffix="小時" value={item.timeRules?.hoursPerDivision} onChange={(value) => patchNested("timeRules", "hoursPerDivision", value)} />
           <NumberField label="報價有效期" suffix="天" step="1" value={item.quoteValidityDays} onChange={(value) => patch("quoteValidityDays", value)} />
         </div>
@@ -437,7 +434,28 @@ function Dashboard({ onLogout }) {
         {message ? <p className={`admin-alert${status === "saved" ? " admin-alert--success" : ""}`} role="status">{message}</p> : null}
 
         <section className="admin-global-settings">
-          <label><span>顯示幣種</span><select value={catalog.currency} onChange={(event) => setCatalog({ ...catalog, currency: event.target.value })}>{["HKD", "TWD", "CNY", "USD", "GBP"].map((currency) => <option key={currency}>{currency}</option>)}</select></label>
+          <label><span>中央定價幣種</span><select value={catalog.currency} onChange={(event) => setCatalog({ ...catalog, currency: event.target.value })}>{["HKD", "TWD", "CNY"].map((currency) => <option key={currency}>{currency}</option>)}</select></label>
+          <NumberField
+            label="新人優惠折扣"
+            suffix="%"
+            step="0.1"
+            value={(catalog.newCustomerDiscountRate ?? 0.15) * 100}
+            onChange={(value) => setCatalog({ ...catalog, newCustomerDiscountRate: Number(value || 0) / 100 })}
+          />
+          <NumberField
+            label="新台幣匯率"
+            suffix="1 HKD = TWD"
+            step="0.01"
+            value={catalog.exchangeRates?.TWD ?? 4.25}
+            onChange={(value) => setCatalog({ ...catalog, exchangeRates: { ...catalog.exchangeRates, TWD: Number(value || 0) } })}
+          />
+          <NumberField
+            label="人民幣匯率"
+            suffix="1 HKD = CNY"
+            step="0.01"
+            value={catalog.exchangeRates?.CNY ?? 1}
+            onChange={(value) => setCatalog({ ...catalog, exchangeRates: { ...catalog.exchangeRates, CNY: Number(value || 0) } })}
+          />
           <label><span>全站公告（留空則不顯示）</span><input value={catalog.announcement} maxLength="240" placeholder="例如：本週末訂單名額有限，請提前預約" onChange={(event) => setCatalog({ ...catalog, announcement: event.target.value })} /></label>
         </section>
 

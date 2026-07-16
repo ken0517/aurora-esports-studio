@@ -98,12 +98,10 @@ test("runtime catalogue can produce an authoritative configured quote", () => {
     targetRankId: "veteran",
     targetDivision: "V",
     targetStars: 1,
-    completionTime: "三日内",
-    express: false,
   }, { pricingCatalog: catalog, reference: "AUR-RUNTIME-TEST" });
   assert.equal(quote.status, "quoted");
   assert.equal(quote.finalTotal, 153);
-  assert.equal(quote.estimatedCompletionTime, "3 小时");
+  assert.equal(quote.estimatedCompletionTime, null);
 });
 
 test("admin API requires login and persists published catalogue changes", async () => {

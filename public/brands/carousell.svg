@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" role="img" aria-label="Carousell">
+  <rect x="1" y="1" width="46" height="46" rx="12" fill="#FF2636"/>
+  <circle cx="24" cy="24" r="12" fill="none" stroke="#fff" stroke-width="5"/>
+  <circle cx="24" cy="24" r="3.5" fill="#fff"/>
+  <path d="M24 7v7M24 34v7M7 24h7M34 24h7" stroke="#fff" stroke-width="4" stroke-linecap="round"/>
+</svg>

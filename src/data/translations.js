@@ -52,6 +52,10 @@ const zhHK = {
     quoteControl: "問 Aurora 客服即時查價",
     quoteControlShort: "Aurora 客服即時查價",
     quoteDisclaimer: "Aurora 客服會按已確認的中央資料協助整理報價需求。",
+    newcomerOffer: "新人優惠・全單自動享 85 折",
+    paymentMethods: "支援付款方式",
+    paymentNote: "付款方式及資料由 Aurora 客服確認",
+    payments: { alipay: "支付寶", wechatPay: "微信支付", fps: "轉數快 FPS" },
   },
   stats: {
     eyebrow: "AURORA AT A GLANCE",
@@ -347,6 +351,10 @@ const en = {
     quoteControl: "Ask Aurora Support for a Quote",
     quoteControlShort: "Aurora Support quote",
     quoteDisclaimer: "Aurora Support organises quote requests using approved central data.",
+    newcomerOffer: "Newcomer offer · 15% off every order",
+    paymentMethods: "Supported payment methods",
+    paymentNote: "Payment details are confirmed by Aurora Support",
+    payments: { alipay: "Alipay", wechatPay: "WeChat Pay", fps: "FPS" },
   },
   stats: {
     eyebrow: "AURORA AT A GLANCE",
@@ -429,7 +437,7 @@ const zhCN = {
   locale: { label: "语言", "zh-Hant": "繁體中文", en: "English", "zh-Hans": "简体中文" },
   nav: { games: "游戏专区", services: "服务项目", process: "流程", proof: "实绩", reviews: "玩家反馈", faq: "常见问题", contact: "联系", menu: "菜单", openMenu: "打开菜单", closeMenu: "关闭菜单" },
   hero: {
-    eyebrow: "HK · TW MOBILE ESPORTS STUDIO", title: "传说对决 × 王者荣耀", titleAccent: "", description: "走进 Aurora 的专属战场，为香港及台湾玩家带来更从容、更精准的游戏服务体验。", sideNote: "香港为主 · 台湾亦可咨询", serviceNote: "3 GAMES · 1 TEAM · PRIVATE SERVICE", scroll: "向下探索", quoteControl: "向 Aurora客服查询报价", quoteControlShort: "Aurora客服即时报价", quoteDisclaimer: "Aurora客服会按已确认的中央资料协助整理报价需求。",
+    eyebrow: "HK · TW MOBILE ESPORTS STUDIO", title: "传说对决 × 王者荣耀", titleAccent: "", description: "走进 Aurora 的专属战场，为香港及台湾玩家带来更从容、更精准的游戏服务体验。", sideNote: "香港为主 · 台湾亦可咨询", serviceNote: "3 GAMES · 1 TEAM · PRIVATE SERVICE", scroll: "向下探索", quoteControl: "向 Aurora客服查询报价", quoteControlShort: "Aurora客服即时报价", quoteDisclaimer: "Aurora客服会按已确认的中央资料协助整理报价需求。", newcomerOffer: "新人优惠・全单自动享 85 折", paymentMethods: "支持付款方式", paymentNote: "付款方式及资料由 Aurora 客服确认", payments: { alipay: "支付宝", wechatPay: "微信支付", fps: "转数快 FPS" },
   },
   stats: { eyebrow: "AURORA AT A GLANCE", disclaimer: "工作室累计运营数据；实际结果会按游戏、段位、时段及个别安排而异。", items: [
     { value: sharedStatsValues[0], label: "高端局参考胜率" }, { value: sharedStatsValues[1], label: "累计完成订单" }, { value: sharedStatsValues[2], label: "Carousell 评分" }, { value: sharedStatsValues[3], label: "客服协作时段" },

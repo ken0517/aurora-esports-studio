@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" role="img" aria-label="轉數快 FPS">
+  <defs><linearGradient id="f" x1="2" y1="46" x2="46" y2="2"><stop stop-color="#00A6A6"/><stop offset="1" stop-color="#762B90"/></linearGradient></defs>
+  <rect x="1" y="1" width="46" height="46" rx="12" fill="url(#f)"/>
+  <text x="24" y="22" text-anchor="middle" font-family="Arial,sans-serif" font-size="12" font-weight="800" fill="#fff">FPS</text>
+  <text x="24" y="34" text-anchor="middle" font-family="sans-serif" font-size="9" font-weight="700" fill="#fff">轉數快</text>
+</svg>

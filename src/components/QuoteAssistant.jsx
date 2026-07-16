@@ -86,6 +86,9 @@ const copyByLocale = {
     notApplicable: "不適用",
     pointsHint: "巔峰賽或戰力服務可填",
     pricingPending: "正式價格尚未設定；提交後會轉人工確認，不會顯示估算金額。",
+    pricingConfigured: "已套用 Aurora 正式價格及新人 85 折。",
+    pricingManual: "此項服務需要由 Aurora 客服人工確認，不會顯示估算金額。",
+    displayCurrency: "顯示幣別",
     generate: "整理報價",
     edit: "修改資料",
     reset: "清除表格",
@@ -144,6 +147,9 @@ const copyByLocale = {
     notApplicable: "Not applicable",
     pointsHint: "For peak-ranked or hero-power requests",
     pricingPending: "Official pricing is not configured yet. The request will go to human review and no estimate will be shown.",
+    pricingConfigured: "Aurora official pricing and the 15% newcomer discount are applied.",
+    pricingManual: "Aurora support must confirm this service manually; no estimated amount is shown.",
+    displayCurrency: "Display currency",
     generate: "Prepare quote",
     edit: "Edit details",
     reset: "Clear form",
@@ -202,6 +208,9 @@ const copyByLocale = {
     notApplicable: "不适用",
     pointsHint: "巅峰赛或战力服务可填",
     pricingPending: "正式价格尚未设置；提交后会转人工确认，不会显示估算金额。",
+    pricingConfigured: "已套用 Aurora 正式价格及新人 85 折。",
+    pricingManual: "此项服务需要由 Aurora 客服人工确认，不会显示估算金额。",
+    displayCurrency: "显示币别",
     generate: "整理报价",
     edit: "修改资料",
     reset: "清除表格",
@@ -248,6 +257,7 @@ const translationKeys = {
   basePrice: "quote.table.basePrice",
   optionalCharges: "quote.table.optionalCharges",
   discount: "quote.table.discount",
+  newCustomerDiscount: "quote.table.newCustomerDiscount",
   estimatedTime: "quote.table.estimatedCompletionTime",
   finalTotal: "quote.table.finalTotal",
   bookingDeposit: "quote.table.bookingDeposit",
@@ -1097,6 +1107,17 @@ export function QuoteAssistant({
         }}
       >
         <div className="quote-form__grid">
+          <Field label={ui.displayCurrency}>
+            <Select
+              id="ai-quote-currency"
+              value={draft.displayCurrency}
+              onChange={(event) => updateDraft("displayCurrency", event.target.value)}
+            >
+              <option value="HKD">HKD · 港幣</option>
+              <option value="TWD">TWD · 新台幣</option>
+              <option value="CNY">CNY · 人民幣</option>
+            </Select>
+          </Field>
           <Field label={text("game", "遊戲")}>
             <Select
               id="manual-quote-game"
@@ -1346,7 +1367,12 @@ export function QuoteAssistant({
           ) : null}
         </div>
 
-        {!pricingReady ? <p className="quote-pricing-note"><ShieldCheck size={16} />{ui.pricingPending}</p> : null}
+        {draft.gameId && draft.serviceId ? (
+          <p className={`quote-pricing-note${pricingReady ? " quote-pricing-note--ready" : ""}`}>
+            <ShieldCheck size={16} />
+            {pricingReady ? ui.pricingConfigured : ui.pricingManual}
+          </p>
+        ) : null}
         {formError ? <p className="quote-error" role="alert">{formError}</p> : null}
         <div className="quote-form__actions">
           <button type="button" className="quote-button quote-button--text" onClick={resetForm}>{ui.reset}</button>
@@ -1417,6 +1443,7 @@ export function QuoteAssistant({
       [text("basePrice", "基本價格"), formatValue(quote?.basePrice, localeId, currency, ui.pending)],
       [text("optionalCharges", "附加費用"), formatValue(quote?.optionalCharges, localeId, currency, ui.pending)],
       [text("discount", "折扣"), formatValue(quote?.discount, localeId, currency, ui.pending)],
+      [text("newCustomerDiscount", "新人優惠 85 折"), formatValue(quote?.newCustomerDiscount, localeId, currency, ui.pending)],
       ...(isDuo || isTimedTeaching
         ? [[text("preferredStartTime", ui.preferredStartTime), formatAppointmentTime(draft.preferredStartTime, localeId) || ui.pending]]
         : []),

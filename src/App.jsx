@@ -11,7 +11,6 @@ import {
 } from "lucide-react";
 import QuoteAssistant from "./components/QuoteAssistant";
 import ServicesEditorial from "./components/ServicesEditorial";
-import { Icon } from "./components/IconMap";
 import { getServiceEditorialText } from "./data/serviceCatalog";
 import {
   brand,
@@ -38,6 +37,20 @@ const localeTranslationKeys = {
   en: "locale.en",
   "zh-CN": "locale.zh-Hans",
 };
+
+const brandIconPaths = {
+  whatsapp: "brands/whatsapp.svg",
+  instagram: "brands/instagram.svg",
+  discord: "brands/discord.svg",
+  line: "brands/line.svg",
+  carousell: "brands/carousell.svg",
+};
+
+const paymentIconPaths = [
+  { id: "alipay", src: "brands/alipay.svg", fallback: "Alipay" },
+  { id: "wechatPay", src: "brands/wechat-pay.svg", fallback: "WeChat Pay" },
+  { id: "fps", src: "brands/fps.svg", fallback: "轉數快 FPS" },
+];
 
 const menuItems = [
   { key: "nav.games", fallback: "遊戲", href: "#games" },
@@ -406,8 +419,21 @@ export default function App() {
             </p>
           </motion.div>
 
-          <div className="cinematic-hero__edge cinematic-hero__edge--left">
-            {text("hero.sideNote", "HK · TW · MOBILE ESPORTS")}
+          <div className="hero-promo">
+            <strong>{text("hero.newcomerOffer", "新人優惠・全單自動享 85 折")}</strong>
+            <div className="hero-promo__payments" aria-label={text("hero.paymentMethods", "支援付款方式")}>
+              {paymentIconPaths.map((payment) => (
+                <img
+                  key={payment.id}
+                  src={publicAsset(payment.src)}
+                  alt={text(`hero.payments.${payment.id}`, payment.fallback)}
+                  width="34"
+                  height="34"
+                  loading="eager"
+                />
+              ))}
+            </div>
+            <small>{text("hero.paymentNote", "付款方式及資料由 Aurora 客服確認")}</small>
           </div>
           <nav className="cinematic-hero__socials" aria-label={text("contact.socialLinks", "社交平台")}> 
             {contactChannels.map((channel) => (
@@ -418,7 +444,13 @@ export default function App() {
                 aria-label={text(`contact.channels.${channel.id}.label`, channel.label)}
                 title={text(`contact.channels.${channel.id}.label`, channel.label)}
               >
-                <Icon name={channel.icon} />
+                <img
+                  className="brandIcon"
+                  src={publicAsset(brandIconPaths[channel.id])}
+                  alt=""
+                  width="18"
+                  height="18"
+                />
                 <span>{text(`contact.channels.${channel.id}.label`, channel.label)}</span>
               </ExternalAnchor>
             ))}

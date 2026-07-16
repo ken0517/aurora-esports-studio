@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" role="img" aria-label="LINE">
+  <rect x="1" y="1" width="46" height="46" rx="12" fill="#06C755"/>
+  <path fill="#fff" d="M40 23c0-7.2-7.2-13-16-13S8 15.8 8 23c0 6.5 5.7 11.9 13.5 12.9.5.1 1.2.4 1.4.9.1.4.1 1.1 0 1.5l-.2 1.4c-.1.4-.3 1.7 1.4.9 1.7-.7 9-5.3 12.3-9.1C38.8 28.8 40 26.1 40 23Z"/>
+  <text x="24" y="27" text-anchor="middle" font-family="Arial,sans-serif" font-size="10" font-weight="700" fill="#06C755">LINE</text>
+</svg>
