@@ -16,6 +16,8 @@ import {
 import { pricingCatalog } from "../src/data/pricing.js";
 import { calculateQuote, validateQuoteDraft } from "../src/lib/quoteEngine.js";
 import { createCatalogStore } from "./catalog-store.mjs";
+import { persistConversationTurn } from "./enquiry-api.mjs";
+import { createOperationsStore } from "./operations-store.mjs";
 
 export const DEFAULT_GEMINI_MODEL = "gemini-3.1-flash-lite";
 
@@ -834,6 +836,7 @@ export function createQuoteAiHandler({
   requestTimeoutMs = REQUEST_TIMEOUT_MS,
   calculateQuoteFn = calculateQuote,
   validateQuoteDraftFn = validateQuoteDraft,
+  operationsStore = createOperationsStore({ env }),
   now = () => Date.now(),
 } = {}) {
   const rateBuckets = new Map();
@@ -938,13 +941,30 @@ export function createQuoteAiHandler({
       calculateQuoteFn: calculateWithActiveCatalog,
       validateQuoteDraftFn: validateWithActiveCatalog,
     });
+    const persistReply = async (message) => {
+      try {
+        await persistConversationTurn({
+          store: operationsStore,
+          sessionId: body.sessionId,
+          consent: body.conversationConsent === true,
+          locale,
+          messages,
+          assistantMessage: message,
+          quoteContext,
+        });
+      } catch {
+        // Conversation storage must never prevent customer service from replying.
+      }
+    };
 
     if (promptInjectionDetected(messages.at(-1).content)) {
+      const reply = scopeReply(locale);
+      await persistReply(reply);
       sendJson(
         res,
         200,
         {
-          message: scopeReply(locale),
+          message: reply,
           responseId: null,
           model: settings.model,
           pricingStatus: quoteResult.status,
@@ -955,6 +975,7 @@ export function createQuoteAiHandler({
     }
 
     if (deterministicFollowUp?.message) {
+      await persistReply(deterministicFollowUp.message);
       sendJson(
         res,
         200,
@@ -1061,6 +1082,7 @@ export function createQuoteAiHandler({
       }
       message = ensureManualReviewStatus(message, locale, quoteResult);
       message = enforceCustomerServiceIdentity(message, locale);
+      await persistReply(message);
 
       sendJson(
         res,

@@ -421,6 +421,32 @@
   margin-top: 2px;
 }
 
+.quote-data-consent {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin-top: 14px;
+  padding: 11px 13px;
+  border: 1px solid rgba(166, 125, 69, 0.25);
+  background: rgba(181, 138, 80, 0.06);
+  color: #6f675d;
+  font-size: 12px;
+  line-height: 1.55;
+}
+
+.quote-data-consent input {
+  width: 18px;
+  height: 18px;
+  margin: 1px 0 0;
+  flex: 0 0 auto;
+  accent-color: #9a6a2d;
+}
+
+.quote-data-consent:focus-within {
+  border-color: #b58a50;
+  box-shadow: 0 0 0 2px rgba(181, 138, 80, 0.14);
+}
+
 .quote-error {
   margin: 12px 0 0;
   padding: 10px 12px;

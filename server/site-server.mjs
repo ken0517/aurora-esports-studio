@@ -4,6 +4,7 @@ import { extname, resolve, sep } from "node:path";
 import { fileURLToPath } from "node:url";
 
 import { handleAdminCatalog, handleAdminSession, handlePublicCatalog } from "./admin-api.mjs";
+import { handlePublicEnquiry } from "./enquiry-api.mjs";
 import { handleQuoteAiRequest } from "./quote-ai-handler.mjs";
 
 const projectRoot = resolve(fileURLToPath(new URL("..", import.meta.url)));
@@ -55,6 +56,7 @@ const server = createServer((req, res) => {
   const pathname = new URL(req.url || "/", `http://${req.headers.host || "localhost"}`).pathname;
   let action;
   if (pathname === "/api/catalog") action = handlePublicCatalog(req, res);
+  else if (pathname === "/api/enquiries") action = handlePublicEnquiry(req, res);
   else if (pathname === "/api/admin/session") action = handleAdminSession(req, res);
   else if (pathname === "/api/admin/catalog") action = handleAdminCatalog(req, res);
   else if (pathname === "/api/quote-ai" || pathname === "/api/quote-ai/status") action = handleQuoteAiRequest(req, res);

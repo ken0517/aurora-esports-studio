@@ -10,6 +10,9 @@
     "api/catalog.mjs": {
       "maxDuration": 10
     },
+    "api/enquiries.mjs": {
+      "maxDuration": 10
+    },
     "api/admin/session.mjs": {
       "maxDuration": 10
     },

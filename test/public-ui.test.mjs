@@ -48,3 +48,13 @@ test("admin can edit the newcomer discount and approved exchange rates without r
   assert.doesNotMatch(admin, /加急附加費|指定時段附加費|保持 70%\+ 勝率附加費/);
   assert.doesNotMatch(admin, /"USD", "GBP"/);
 });
+
+test("quote assistant saves only consented conversations and enquiries", async () => {
+  const quote = await source("src/components/QuoteAssistant.jsx");
+  assert.match(quote, /我同意 Aurora 保存本次報價及對話資料/);
+  assert.match(quote, /請勿傳送密碼、驗證碼或付款資料/);
+  assert.match(quote, /conversationConsent/);
+  assert.match(quote, /sessionId/);
+  assert.match(quote, /\/api\/enquiries/);
+  assert.match(quote, /!conversationConsent/);
+});

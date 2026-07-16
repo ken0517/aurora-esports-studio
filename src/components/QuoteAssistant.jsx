@@ -46,6 +46,9 @@ import {
 const AI_ENDPOINT =
   import.meta.env.VITE_QUOTE_AI_ENDPOINT ||
   (import.meta.env.DEV ? "http://localhost:8787/api/quote-ai" : "/api/quote-ai");
+const ENQUIRY_ENDPOINT =
+  import.meta.env.VITE_ENQUIRY_ENDPOINT ||
+  (import.meta.env.DEV ? "http://localhost:8787/api/enquiries" : "/api/enquiries");
 
 const copyByLocale = {
   "zh-HK": {
@@ -108,6 +111,8 @@ const copyByLocale = {
     suggested: "相關建議",
     noPricePromise: "Aurora 客服只會引用已確認的資料；未設定的價錢會交由真人客服確認。",
     privacyWarning: "請勿傳送帳號密碼、驗證碼、付款資料或身分證明。",
+    dataConsent: "我同意 Aurora 保存本次報價及對話資料，以便跟進服務。請勿傳送密碼、驗證碼或付款資料。",
+    consentRequired: "請先同意保存本次對話，Aurora 客服才可以回覆並跟進。",
   },
   en: {
     title: "Aurora private quote",
@@ -169,6 +174,8 @@ const copyByLocale = {
     suggested: "Suggestions",
     noPricePromise: "Aurora support only cites confirmed information. Unconfigured prices are handed to human support.",
     privacyWarning: "Do not send account passwords, verification codes, payment details, or identity documents.",
+    dataConsent: "I agree that Aurora may save this quote and conversation for follow-up. Do not send passwords, verification codes, or payment details.",
+    consentRequired: "Please consent to saving this conversation before Aurora support replies.",
   },
   "zh-CN": {
     title: "Aurora 私人报价",
@@ -230,6 +237,8 @@ const copyByLocale = {
     suggested: "相关建议",
     noPricePromise: "Aurora 客服只会引用已确认的资料；未设置的价格会交由真人客服确认。",
     privacyWarning: "请勿发送账号密码、验证码、付款资料或身份证明。",
+    dataConsent: "我同意 Aurora 保存本次报价及对话资料，以便跟进服务。请勿发送密码、验证码或付款资料。",
+    consentRequired: "请先同意保存本次对话，Aurora 客服才可以回复并跟进。",
   },
 };
 
@@ -585,6 +594,15 @@ function copyToClipboard(text) {
   return Promise.resolve();
 }
 
+function createSessionId() {
+  if (globalThis.crypto?.randomUUID) return globalThis.crypto.randomUUID();
+  return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, (character) => {
+    const random = Math.floor(Math.random() * 16);
+    const value = character === "x" ? random : (random & 0x3) | 0x8;
+    return value.toString(16);
+  });
+}
+
 export function QuoteAssistant({
   locale = "zh-HK",
   t: translate,
@@ -604,6 +622,8 @@ export function QuoteAssistant({
   const [formError, setFormError] = useState("");
   const [copied, setCopied] = useState(false);
   const [lineCopyStatus, setLineCopyStatus] = useState("");
+  const [sessionId, setSessionId] = useState(createSessionId);
+  const [conversationConsent, setConversationConsent] = useState(false);
   const portalTarget = typeof document === "undefined" ? null : document.body;
   const [aiStatus, setAiStatus] = useState("checking");
   const [aiMessages, setAiMessages] = useState([]);
@@ -908,6 +928,26 @@ export function QuoteAssistant({
       isPricingConfigured(draft.gameId, draft.serviceId, pricingCatalog, draft),
   );
 
+  const captureEnquiry = useCallback(async (result) => {
+    if (!conversationConsent || !result) return;
+    try {
+      await fetch(ENQUIRY_ENDPOINT, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Accept: "application/json" },
+        body: JSON.stringify({
+          sessionId,
+          consent: true,
+          source: "manual_quote",
+          locale: localeId,
+          draft,
+          quote: result,
+        }),
+      });
+    } catch {
+      // A storage outage must not block the customer from viewing a quote.
+    }
+  }, [conversationConsent, draft, localeId, sessionId]);
+
   const generateQuote = useCallback(() => {
     setFormError("");
     let validation;
@@ -925,12 +965,14 @@ export function QuoteAssistant({
       return;
     }
     try {
-      setQuote(calculateQuote(
+      const result = calculateQuote(
         { ...draft, locale: localeId },
         { pricingCatalog },
-      ));
+      );
+      setQuote(result);
+      void captureEnquiry(result);
     } catch {
-      setQuote({
+      const result = {
         status: "manual_review",
         requiresManualReview: true,
         draft: { ...draft },
@@ -938,9 +980,11 @@ export function QuoteAssistant({
         optionalCharges: null,
         discount: null,
         finalTotal: null,
-      });
+      };
+      setQuote(result);
+      void captureEnquiry(result);
     }
-  }, [draft, localeId, pricingCatalog, ui.incomplete]);
+  }, [captureEnquiry, draft, localeId, pricingCatalog, ui.incomplete]);
 
   const quoteText = useMemo(() => {
     if (!quote) return "";
@@ -1000,6 +1044,10 @@ export function QuoteAssistant({
     async (rawMessage, nextDraft = draft) => {
       const message = String(rawMessage || "").trim();
       if (!message || aiLoading) return;
+      if (!conversationConsent) {
+        setAiError(ui.consentRequired);
+        return;
+      }
       if (aiStatus !== "online") {
         setAiError(ui.aiSetup);
         return;
@@ -1023,6 +1071,8 @@ export function QuoteAssistant({
           headers: { "Content-Type": "application/json", Accept: "application/json" },
           body: JSON.stringify({
             locale: localeId,
+            sessionId,
+            conversationConsent,
             messages: requestMessages,
             quoteContext: nextDraft,
           }),
@@ -1043,7 +1093,7 @@ export function QuoteAssistant({
         setAiLoading(false);
       }
     },
-    [aiLoading, aiMessages, aiStatus, draft, localeId, ui.aiError, ui.aiSetup],
+    [aiLoading, aiMessages, aiStatus, conversationConsent, draft, localeId, sessionId, ui.aiError, ui.aiSetup, ui.consentRequired],
   );
 
   const chooseSuggestion = useCallback(
@@ -1373,6 +1423,15 @@ export function QuoteAssistant({
             {pricingReady ? ui.pricingConfigured : ui.pricingManual}
           </p>
         ) : null}
+        <label className="quote-data-consent" htmlFor="aurora-data-consent-manual">
+          <input
+            id="aurora-data-consent-manual"
+            type="checkbox"
+            checked={conversationConsent}
+            onChange={(event) => setConversationConsent(event.target.checked)}
+          />
+          <span>{ui.dataConsent}</span>
+        </label>
         {formError ? <p className="quote-error" role="alert">{formError}</p> : null}
         <div className="quote-form__actions">
           <button type="button" className="quote-button quote-button--text" onClick={resetForm}>{ui.reset}</button>
@@ -1503,6 +1562,19 @@ export function QuoteAssistant({
       </div>
       {aiStatus === "unavailable" ? <p className="quote-ai-setup">{ui.aiSetup}</p> : null}
 
+      <label className="quote-data-consent" htmlFor="aurora-data-consent-ai">
+        <input
+          id="aurora-data-consent-ai"
+          type="checkbox"
+          checked={conversationConsent}
+          onChange={(event) => {
+            setConversationConsent(event.target.checked);
+            if (event.target.checked) setAiError("");
+          }}
+        />
+        <span>{ui.dataConsent}</span>
+      </label>
+
       <div className="quote-chat" ref={messageListRef} role="log" aria-live="polite" aria-label={ui.aiTitle}>
         <div className="quote-message quote-message--assistant">
           <span className="quote-message__avatar"><MessageCircle size={15} /></span>
@@ -1574,7 +1646,7 @@ export function QuoteAssistant({
         <button
           type="button"
           className="quote-ai-send"
-          disabled={aiStatus !== "online" || aiLoading || !aiInput.trim()}
+          disabled={aiStatus !== "online" || aiLoading || !aiInput.trim() || !conversationConsent}
           aria-label={ui.send}
           onClick={() => sendAiMessage(aiInput)}
         >
@@ -1584,7 +1656,7 @@ export function QuoteAssistant({
       <div className="quote-ai-footer">
         <p><ShieldCheck size={13} /><span>{ui.noPricePromise} {ui.privacyWarning}</span></p>
         <div>
-          <button type="button" onClick={() => { setAiMessages([]); setAiError(""); setAiInput(""); aiInputRef.current?.focus(); }}><RefreshCw size={14} />{ui.newChat}</button>
+          <button type="button" onClick={() => { setAiMessages([]); setAiError(""); setAiInput(""); setSessionId(createSessionId()); setConversationConsent(false); aiInputRef.current?.focus(); }}><RefreshCw size={14} />{ui.newChat}</button>
           <a href={contactLinks.whatsapp || "https://wa.me/85262243840"} target="_blank" rel="noreferrer"><ExternalLink size={14} />{ui.human}</a>
         </div>
       </div>

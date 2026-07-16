@@ -113,6 +113,7 @@ function createConfiguredHandler({
   calculateQuoteFn,
   validateQuoteDraftFn,
   env = CONFIGURED_ENV,
+  operationsStore,
 } = {}) {
   const fake = createFakeClient(responses || []);
   const clientFactoryCalls = [];
@@ -121,6 +122,7 @@ function createConfiguredHandler({
     requestTimeoutMs,
     calculateQuoteFn,
     validateQuoteDraftFn,
+    operationsStore,
     createClient(options) {
       clientFactoryCalls.push(options);
       return fake.client;
@@ -128,6 +130,44 @@ function createConfiguredHandler({
   });
   return { handler, fake, clientFactoryCalls };
 }
+
+function createConversationStore() {
+  let state = { conversations: [], enquiries: [], orders: [], staff: [], businessRules: {}, revision: "", updatedAt: null };
+  return {
+    configured: true,
+    async read() { return structuredClone(state); },
+    async write(next) { state = structuredClone(next); return structuredClone(state); },
+    get state() { return state; },
+  };
+}
+
+test("AI conversation storage requires consent and redacts sensitive messages", async () => {
+  const operationsStore = createConversationStore();
+  const { handler } = createConfiguredHandler({ operationsStore, responses: [] });
+  await withHttpServer(handler, async (baseUrl) => {
+    const withoutConsent = await postJson(baseUrl, {
+      locale: "zh-HK",
+      sessionId: "88888888-8888-4888-8888-888888888888",
+      conversationConsent: false,
+      messages: [{ role: "user", content: "我想做莉莉安紫標" }],
+      quoteContext: {},
+    });
+    assert.equal(withoutConsent.response.status, 200);
+    assert.equal(operationsStore.state.conversations.length, 0);
+
+    const consented = await postJson(baseUrl, {
+      locale: "zh-HK",
+      sessionId: "88888888-8888-4888-8888-888888888888",
+      conversationConsent: true,
+      messages: [{ role: "user", content: "我想做莉莉安紫標，驗證碼 654321" }],
+      quoteContext: {},
+    });
+    assert.equal(consented.response.status, 200);
+    assert.equal(operationsStore.state.conversations.length, 1);
+    assert.ok(operationsStore.state.conversations[0].consentedAt);
+    assert.doesNotMatch(JSON.stringify(operationsStore.state.conversations[0]), /654321/);
+  });
+});
 
 function responseWithText(text, overrides = {}) {
   return {
