@@ -1,8 +1,10 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { lazy, Suspense, useCallback, useEffect, useMemo, useState } from "react";
 import {
   Check,
   ChevronRight,
+  ClipboardList,
   Clock3,
+  Coins,
   Eye,
   EyeOff,
   LoaderCircle,
@@ -24,6 +26,7 @@ import "./styles/admin.css";
 
 const serviceIds = runtimeServiceIds();
 const homeHref = import.meta.env.BASE_URL || "/";
+const OperationsApp = lazy(() => import("./admin/OperationsApp.jsx"));
 
 async function api(path, options = {}) {
   const response = await fetch(catalogApiUrl(path), {
@@ -316,6 +319,7 @@ function Dashboard({ onLogout }) {
   const [storageConfigured, setStorageConfigured] = useState(true);
   const [status, setStatus] = useState("loading");
   const [message, setMessage] = useState("");
+  const [activeArea, setActiveArea] = useState("catalog");
 
   const load = useCallback(async () => {
     setStatus("loading");
@@ -421,7 +425,12 @@ function Dashboard({ onLogout }) {
         </div>
       </header>
 
-      <main className="admin-main">
+      <nav className="admin-section-tabs" aria-label="後台主要功能">
+        <button className={activeArea === "catalog" ? "is-active" : ""} type="button" onClick={() => setActiveArea("catalog")}><Coins size={17} />價格管理</button>
+        <button className={activeArea === "operations" ? "is-active" : ""} type="button" onClick={() => setActiveArea("operations")}><ClipboardList size={17} />營運管理</button>
+      </nav>
+
+      {activeArea === "catalog" ? <main className="admin-main">
         <section className="admin-page-heading">
           <div><span>SERVICE CATALOG</span><h1>價格與時間管理</h1><p>修改後按下「發布更新」，前台會自動讀取最新內容。</p></div>
           <button className="admin-primary admin-save" type="button" onClick={save} disabled={!dirty || status === "saving" || !storageConfigured}>
@@ -484,7 +493,9 @@ function Dashboard({ onLogout }) {
           <span>{dirty ? "有尚未發布的修改" : "所有修改均已發布"}</span>
           <span>最後更新：{catalog.updatedAt ? new Date(catalog.updatedAt).toLocaleString("zh-HK") : "尚未發布"}</span>
         </footer>
-      </main>
+      </main> : <Suspense fallback={<div className="admin-loading"><LoaderCircle className="admin-spin" /><span>正在開啟營運管理…</span></div>}>
+        <OperationsApp onUnauthorized={onLogout} />
+      </Suspense>}
     </div>
   );
 }
