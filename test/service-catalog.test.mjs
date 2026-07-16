@@ -1,5 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import { readFile } from "node:fs/promises";
 
 import {
   gameConfigs,
@@ -24,6 +25,11 @@ test("all locales expose the LINE quote handoff labels", () => {
     assert.notEqual(translate(locale, "quote.actions.lineCopied"), "quote.actions.lineCopied");
     assert.notEqual(translate(locale, "quote.actions.lineCopyFailed"), "quote.actions.lineCopyFailed");
   }
+});
+
+test("mobile quote actions preserve the approved button order", async () => {
+  const css = await readFile(new URL("../src/styles/quote.css", import.meta.url), "utf8");
+  assert.doesNotMatch(css, /\.quote-result__actions\s*\{[^}]*flex-direction:\s*column-reverse/s);
 });
 
 test("central, public and pricing catalogues share the same five-service order", () => {

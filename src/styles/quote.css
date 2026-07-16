@@ -920,7 +920,14 @@
   .quote-form__actions,
   .quote-result__actions {
     align-items: stretch;
+  }
+
+  .quote-form__actions {
     flex-direction: column-reverse;
+  }
+
+  .quote-result__actions {
+    flex-direction: column;
   }
 
   .quote-button {

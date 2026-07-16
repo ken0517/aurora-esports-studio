@@ -440,6 +440,22 @@ test("dynamic service summaries do not leak fields from inactive branches", () =
   assert.ok(!otherMessage.includes("加急服務:"));
 });
 
+test("contact summaries localize service-specific field labels", () => {
+  const duoMessage = formatWhatsAppMessage(
+    calculateQuote(duoMatchDraft, { reference: "AUR-TEST-DUO-LABEL" }),
+    "zh-HK",
+  );
+  assert.match(duoMessage, /陪玩模式: 5V5 匹配/);
+  assert.doesNotMatch(duoMessage, /quote\.fields\.duoMode/);
+
+  const otherMessage = formatWhatsAppMessage(
+    calculateQuote(otherDraft, { reference: "AUR-TEST-OTHER-LABEL" }),
+    "zh-HK",
+  );
+  assert.match(otherMessage, /其他服務類型:/);
+  assert.doesNotMatch(otherMessage, /quote\.fields\.otherServiceType/);
+});
+
 test("approved AOV rank pricing accumulates divisions, star bands and minimum order after surcharges", () => {
   const oneDivision = calculateQuote({
     locale: "zh-HK",

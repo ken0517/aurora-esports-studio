@@ -34,6 +34,7 @@ test("Aurora understands Cantonese but replies in formal Traditional Chinese", (
 
 test("admin interface uses Traditional Chinese", async () => {
   const source = await readFile(new URL("../src/AdminApp.jsx", import.meta.url), "utf8");
+  const styles = await readFile(new URL("../src/styles/admin.css", import.meta.url), "utf8");
   const simplifiedAdminPhrases = [
     "网站管理后台",
     "管理员密码",
@@ -50,4 +51,6 @@ test("admin interface uses Traditional Chinese", async () => {
   assert.match(source, /網站管理後台/);
   assert.match(source, /價格與時間管理/);
   assert.match(source, /window\.confirm\(/);
+  assert.doesNotMatch(styles, /Noto Sans SC/);
+  assert.match(styles, /\.admin-switch input,\s*\.admin-check input\s*\{[^}]*width:\s*1px/s);
 });

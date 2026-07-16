@@ -1,4 +1,4 @@
-@import url("https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=Noto+Sans+SC:wght@400;500;600&family=Playfair+Display:wght@500;600&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=Noto+Sans+TC:wght@400;500;600&family=Playfair+Display:wght@500;600&display=swap");
 
 :root {
   --admin-ink: #171817;
@@ -8,7 +8,7 @@
   --admin-line: #d9d4ca;
   --admin-muted: #736f68;
   --admin-green: #2f6c4f;
-  font-family: "DM Sans", "Noto Sans SC", sans-serif;
+  font-family: "DM Sans", "Noto Sans TC", sans-serif;
 }
 
 * { box-sizing: border-box; }
@@ -69,7 +69,7 @@ textarea { resize: vertical; line-height: 1.5; }
 .admin-service-card > header div > span { color: var(--admin-gold); font-size: 9px; letter-spacing: .18em; }
 .admin-service-card h3 { margin: 5px 0 0; font-family: "Playfair Display", "Noto Sans TC", serif; font-size: 22px; font-weight: 500; }
 .admin-switch { display: inline-flex; align-items: center; gap: 7px; color: var(--admin-muted); font-size: 11px; cursor: pointer; }
-.admin-switch input, .admin-check input { position: absolute; opacity: 0; pointer-events: none; }
+.admin-switch input, .admin-check input { position: absolute; width: 1px; height: 1px; padding: 0; opacity: 0; pointer-events: none; }
 .admin-switch > span { position: relative; width: 35px; height: 20px; border-radius: 20px; background: #b9b5ad; transition: background .2s; }
 .admin-switch > span::after { position: absolute; top: 3px; left: 3px; width: 14px; height: 14px; border-radius: 50%; background: white; content: ""; transition: transform .2s; }
 .admin-switch input:checked + span { background: var(--admin-green); }
