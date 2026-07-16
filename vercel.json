@@ -18,6 +18,12 @@
     },
     "api/admin/catalog.mjs": {
       "maxDuration": 10
+    },
+    "api/admin/operations.mjs": {
+      "maxDuration": 10
+    },
+    "api/admin/operations/action.mjs": {
+      "maxDuration": 10
     }
   },
   "rewrites": [

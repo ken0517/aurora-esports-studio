@@ -4,6 +4,7 @@ import { extname, resolve, sep } from "node:path";
 import { fileURLToPath } from "node:url";
 
 import { handleAdminCatalog, handleAdminSession, handlePublicCatalog } from "./admin-api.mjs";
+import { handleAdminOperations } from "./operations-api.mjs";
 import { handlePublicEnquiry } from "./enquiry-api.mjs";
 import { handleQuoteAiRequest } from "./quote-ai-handler.mjs";
 
@@ -59,6 +60,7 @@ const server = createServer((req, res) => {
   else if (pathname === "/api/enquiries") action = handlePublicEnquiry(req, res);
   else if (pathname === "/api/admin/session") action = handleAdminSession(req, res);
   else if (pathname === "/api/admin/catalog") action = handleAdminCatalog(req, res);
+  else if (pathname === "/api/admin/operations" || pathname === "/api/admin/operations/action") action = handleAdminOperations(req, res);
   else if (pathname === "/api/quote-ai" || pathname === "/api/quote-ai/status") action = handleQuoteAiRequest(req, res);
   else if (req.method === "GET" || req.method === "HEAD") action = serveFile(req, res, pathname);
   else {

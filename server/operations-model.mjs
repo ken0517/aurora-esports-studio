@@ -172,6 +172,7 @@ function normalizeEnquiry(input) {
 }
 
 function normalizeAppointment(input = {}) {
+  input ||= {};
   const date = cleanDate(input.date);
   const startTime = cleanTime(input.startTime);
   const durationMinutes = cleanNumber(input.durationMinutes, null, { min: 15, max: 24 * 60, integer: true });
