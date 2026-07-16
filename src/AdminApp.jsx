@@ -65,10 +65,10 @@ function Login({ configured, onAuthenticated }) {
     } catch (requestError) {
       setStatus("error");
       setError(requestError.message === "admin-auth-not-configured"
-        ? "服务器还没有设置管理员密码，请按部署说明加入环境变量。"
+        ? "伺服器尚未設定管理員密碼，請按照部署說明加入環境變數。"
         : requestError.status === 429
-          ? "尝试次数过多，请稍后再试。"
-          : "密码不正确，请重新输入。");
+          ? "嘗試次數過多，請稍後再試。"
+          : "密碼不正確，請重新輸入。");
     }
   };
 
@@ -81,14 +81,14 @@ function Login({ configured, onAuthenticated }) {
         </a>
         <div className="admin-login__intro">
           <span><ShieldCheck size={15} /> PRIVATE CONTROL ROOM</span>
-          <h1>网站管理后台</h1>
-          <p>登录后可直接修改公开价格、预计完成时间、服务状态和公告。</p>
+          <h1>網站管理後台</h1>
+          <p>登入後可直接修改公開價格、預計完成時間、服務狀態和公告。</p>
         </div>
         {!configured ? (
-          <p className="admin-alert admin-alert--warning">后台身份验证尚未在服务器配置，部署后请设置管理员密钥。</p>
+          <p className="admin-alert admin-alert--warning">後台身分驗證尚未在伺服器設定，部署後請設定管理員金鑰。</p>
         ) : null}
         <form onSubmit={submit}>
-          <label htmlFor="admin-password">管理员密码</label>
+          <label htmlFor="admin-password">管理員密碼</label>
           <div className="admin-password-field">
             <input
               id="admin-password"
@@ -99,17 +99,17 @@ function Login({ configured, onAuthenticated }) {
               required
               onChange={(event) => setPassword(event.target.value)}
             />
-            <button type="button" onClick={() => setShowPassword((value) => !value)} aria-label={showPassword ? "隐藏密码" : "显示密码"}>
+            <button type="button" onClick={() => setShowPassword((value) => !value)} aria-label={showPassword ? "隱藏密碼" : "顯示密碼"}>
               {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
             </button>
           </div>
           {error ? <p className="admin-form-error" role="alert">{error}</p> : null}
           <button className="admin-primary" type="submit" disabled={status === "loading" || !password}>
             {status === "loading" ? <LoaderCircle className="admin-spin" size={17} /> : <ShieldCheck size={17} />}
-            安全登录
+            安全登入
           </button>
         </form>
-        <small className="admin-login__security">12 小时安全会话 · HttpOnly Cookie · 登录限速保护</small>
+        <small className="admin-login__security">12 小時安全工作階段 · HttpOnly Cookie · 登入限速保護</small>
       </section>
     </main>
   );
@@ -151,17 +151,17 @@ function ApprovedRuleEditor({ gameId, item, onChange }) {
     );
     return (
       <div className="admin-approved-rule admin-field-wide">
-        <h4>已批准的排位计算规则</h4>
+        <h4>已批准的排位計算規則</h4>
         <div className="admin-rule-grid">
-          <NumberField label="最低消费" suffix="HKD" value={item.minimumPrice} onChange={(value) => patch("minimumPrice", value)} />
-          {percentage("express", "加急附加费")}
-          {percentage("preferredRole", "指定分路附加费")}
-          {percentage("customSchedule", "指定时段附加费")}
-          {percentage("winRate70", "保持 70%+ 胜率附加费")}
-          <NumberField label="每小段预计时间" suffix="小时" value={item.timeRules?.hoursPerDivision} onChange={(value) => patchNested("timeRules", "hoursPerDivision", value)} />
-          <NumberField label="报价有效期" suffix="天" step="1" value={item.quoteValidityDays} onChange={(value) => patch("quoteValidityDays", value)} />
+          <NumberField label="最低消費" suffix="HKD" value={item.minimumPrice} onChange={(value) => patch("minimumPrice", value)} />
+          {percentage("express", "加急附加費")}
+          {percentage("preferredRole", "指定分路附加費")}
+          {percentage("customSchedule", "指定時段附加費")}
+          {percentage("winRate70", "保持 70%+ 勝率附加費")}
+          <NumberField label="每小段預計時間" suffix="小時" value={item.timeRules?.hoursPerDivision} onChange={(value) => patchNested("timeRules", "hoursPerDivision", value)} />
+          <NumberField label="報價有效期" suffix="天" step="1" value={item.quoteValidityDays} onChange={(value) => patch("quoteValidityDays", value)} />
         </div>
-        <h4>各 10 星区间价格（每星）</h4>
+        <h4>各 10 星區間價格（每星）</h4>
         <div className="admin-transition-grid">
           {(item.starPricing?.bandPrices || []).map((value, index) => (
             <NumberField
@@ -173,7 +173,7 @@ function ApprovedRuleEditor({ gameId, item, onChange }) {
             />
           ))}
         </div>
-        <h4>各小段价格（由该小段升到下一小段）</h4>
+        <h4>各小段價格（由該小段升到下一小段）</h4>
         <div className="admin-transition-grid">
           {Object.entries(item.divisionStepPrices || {}).map(([key, value]) => {
             const [rankId, division] = key.split(":");
@@ -181,7 +181,7 @@ function ApprovedRuleEditor({ gameId, item, onChange }) {
             return (
               <NumberField
                 key={key}
-                label={`${getRankLabel(rank, "zh-CN") || rankId} ${division}`}
+                label={`${getRankLabel(rank, "zh-HK") || rankId} ${division}`}
                 suffix="HKD"
                 value={value}
                 onChange={(nextValue) => patch("divisionStepPrices", { ...item.divisionStepPrices, [key]: nextValue })}
@@ -196,16 +196,16 @@ function ApprovedRuleEditor({ gameId, item, onChange }) {
   if (item.pricingModel === "aov-duo") {
     return (
       <div className="admin-approved-rule admin-field-wide">
-        <h4>已批准的陪玩计算规则</h4>
-        <p>排位陪玩自动采用上方“排位代打”的小段及星数价格，再套用以下方案。</p>
+        <h4>已批准的陪玩計算規則</h4>
+        <p>排位陪玩自動採用上方「排位代打」的小段及星數價格，再套用以下方案。</p>
         <div className="admin-rule-grid">
-          <NumberField label="包赢倍率" suffix="倍" value={item.rankPricing?.guaranteedMultiplier} onChange={(value) => patchNested("rankPricing", "guaranteedMultiplier", value)} />
-          <NumberField label="不包赢倍率" suffix="倍" value={item.rankPricing?.standardMultiplier} onChange={(value) => patchNested("rankPricing", "standardMultiplier", value)} />
-          <NumberField label="排位最低消费" suffix="HKD" value={item.rankPricing?.minimumPrice} onChange={(value) => patchNested("rankPricing", "minimumPrice", value)} />
+          <NumberField label="包贏倍率" suffix="倍" value={item.rankPricing?.guaranteedMultiplier} onChange={(value) => patchNested("rankPricing", "guaranteedMultiplier", value)} />
+          <NumberField label="不包贏倍率" suffix="倍" value={item.rankPricing?.standardMultiplier} onChange={(value) => patchNested("rankPricing", "standardMultiplier", value)} />
+          <NumberField label="排位最低消費" suffix="HKD" value={item.rankPricing?.minimumPrice} onChange={(value) => patchNested("rankPricing", "minimumPrice", value)} />
           <NumberField label="5V5 每局" suffix="HKD" value={item.matchPricing?.unitPrice} onChange={(value) => patchNested("matchPricing", "unitPrice", value)} />
-          <NumberField label="5V5 最少局数" suffix="局" step="1" value={item.matchPricing?.minimumQuantity} onChange={(value) => patchNested("matchPricing", "minimumQuantity", value)} />
-          <NumberField label="折扣门槛" suffix="局" step="1" value={item.matchPricing?.discountThreshold} onChange={(value) => patchNested("matchPricing", "discountThreshold", value)} />
-          <NumberField label="达到门槛折扣" suffix="%" step="0.1" value={(item.matchPricing?.discountRate ?? 0) * 100} onChange={(value) => patchNested("matchPricing", "discountRate", Number(value || 0) / 100)} />
+          <NumberField label="5V5 最少局數" suffix="局" step="1" value={item.matchPricing?.minimumQuantity} onChange={(value) => patchNested("matchPricing", "minimumQuantity", value)} />
+          <NumberField label="折扣門檻" suffix="局" step="1" value={item.matchPricing?.discountThreshold} onChange={(value) => patchNested("matchPricing", "discountThreshold", value)} />
+          <NumberField label="達到門檻折扣" suffix="%" step="0.1" value={(item.matchPricing?.discountRate ?? 0) * 100} onChange={(value) => patchNested("matchPricing", "discountRate", Number(value || 0) / 100)} />
         </div>
       </div>
     );
@@ -213,13 +213,13 @@ function ApprovedRuleEditor({ gameId, item, onChange }) {
 
   if (item.pricingModel === "aov-other") {
     const teachingOptions = [
-      ["review-coaching", "复盘教学"],
-      ["discord-recorded-review", "第一视角教学"],
-      ["hero-coaching", "英雄教学"],
+      ["review-coaching", "復盤教學"],
+      ["discord-recorded-review", "第一視角教學"],
+      ["hero-coaching", "英雄教學"],
     ];
     return (
       <div className="admin-approved-rule admin-field-wide">
-        <h4>已批准的教学计时规则</h4>
+        <h4>已批准的教學計時規則</h4>
         {teachingOptions.map(([optionId, label]) => {
           const option = item.options?.[optionId] || {};
           const updateOption = (field, value) => patch("options", {
@@ -230,10 +230,10 @@ function ApprovedRuleEditor({ gameId, item, onChange }) {
             <section className="admin-teaching-rule" key={optionId}>
               <h5>{label}</h5>
               <div className="admin-rule-grid">
-                <NumberField label="每分钟" suffix="HKD" value={option.unitPrice} onChange={(value) => updateOption("unitPrice", value)} />
-                <NumberField label="最低时长" suffix="分钟" step="1" value={option.minimumMinutes} onChange={(value) => updateOption("minimumMinutes", value)} />
-                <NumberField label="预约付款" suffix="HKD" value={option.bookingDeposit} onChange={(value) => updateOption("bookingDeposit", value)} />
-                <NumberField label="免费改期须提前" suffix="小时" step="1" value={option.freeRescheduleNoticeHours} onChange={(value) => updateOption("freeRescheduleNoticeHours", value)} />
+                <NumberField label="每分鐘" suffix="HKD" value={option.unitPrice} onChange={(value) => updateOption("unitPrice", value)} />
+                <NumberField label="最低時長" suffix="分鐘" step="1" value={option.minimumMinutes} onChange={(value) => updateOption("minimumMinutes", value)} />
+                <NumberField label="預約付款" suffix="HKD" value={option.bookingDeposit} onChange={(value) => updateOption("bookingDeposit", value)} />
+                <NumberField label="免費改期須提前" suffix="小時" step="1" value={option.freeRescheduleNoticeHours} onChange={(value) => updateOption("freeRescheduleNoticeHours", value)} />
               </div>
             </section>
           );
@@ -248,7 +248,7 @@ function ApprovedRuleEditor({ gameId, item, onChange }) {
 function ServiceEditor({ gameId, serviceId, item, currency, onChange }) {
   const service = getCentralServiceDefinition(serviceId);
   const manualOnly = Boolean(service?.manualOnly);
-  const label = getCentralServiceLabel(serviceId, "zh-CN");
+  const label = getCentralServiceLabel(serviceId, "zh-HK");
   const patch = (field, value) => onChange({ ...item, [field]: value });
   const isApprovedRule = ["aov-rank-progression", "aov-duo", "aov-other"].includes(item.pricingModel);
 
@@ -262,13 +262,13 @@ function ServiceEditor({ gameId, serviceId, item, currency, onChange }) {
         <label className="admin-switch">
           <input type="checkbox" checked={item.enabled} onChange={(event) => patch("enabled", event.target.checked)} />
           <span aria-hidden="true" />
-          {item.enabled ? "已上架" : "已隐藏"}
+          {item.enabled ? "已上架" : "已隱藏"}
         </label>
       </header>
 
       <div className="admin-service-fields">
         {!isApprovedRule ? <label>
-          <span><Tag size={14} /> 公开价格（{currency}）</span>
+          <span><Tag size={14} /> 公開價格（{currency}）</span>
           <input
             type="number"
             min="0"
@@ -276,21 +276,21 @@ function ServiceEditor({ gameId, serviceId, item, currency, onChange }) {
             step="1"
             inputMode="decimal"
             value={item.basePrice ?? ""}
-            placeholder="留空则显示咨询价格"
+            placeholder="留空則顯示查詢價格"
             onChange={(event) => patch("basePrice", event.target.value === "" ? null : Number(event.target.value))}
           />
         </label> : null}
         <label>
-          <span>价格后缀</span>
+          <span>價格後綴</span>
           <input value={item.priceSuffix} maxLength="24" placeholder="例如：起／每局／每星" onChange={(event) => patch("priceSuffix", event.target.value)} />
         </label>
         <label className="admin-field-wide">
-          <span><Clock3 size={14} /> 预计完成时间</span>
-          <input value={item.estimatedCompletionTime} maxLength="80" placeholder="例如：1–3 天／当天开始" onChange={(event) => patch("estimatedCompletionTime", event.target.value)} />
+          <span><Clock3 size={14} /> 預計完成時間</span>
+          <input value={item.estimatedCompletionTime} maxLength="80" placeholder="例如：1–3 天／當天開始" onChange={(event) => patch("estimatedCompletionTime", event.target.value)} />
         </label>
         <label className="admin-field-wide">
-          <span>给客户看的备注</span>
-          <textarea rows="2" value={item.note} maxLength="240" placeholder="例如：加急订单请先联系客服确认" onChange={(event) => patch("note", event.target.value)} />
+          <span>顧客可見備註</span>
+          <textarea rows="2" value={item.note} maxLength="240" placeholder="例如：加急訂單請先聯絡客服確認" onChange={(event) => patch("note", event.target.value)} />
         </label>
         {isApprovedRule ? <ApprovedRuleEditor gameId={gameId} item={item} onChange={onChange} /> : null}
       </div>
@@ -304,9 +304,9 @@ function ServiceEditor({ gameId, serviceId, item, currency, onChange }) {
             onChange={(event) => patch("configured", event.target.checked)}
           />
           <span><Check size={13} /></span>
-          自动报价时采用此价格
+          自動報價時採用此價格
         </label>
-        <small>{manualOnly ? "此服务按规则保留人工确认" : isApprovedRule ? "关闭后此服务会恢复为人工确认" : "关闭时只公开展示价格，不自动生成最终报价"}</small>
+        <small>{manualOnly ? "此服務按規則保留人工確認" : isApprovedRule ? "關閉後此服務會恢復為人工確認" : "關閉時只公開展示價格，不自動產生最終報價"}</small>
       </footer>
     </article>
   );
@@ -331,7 +331,7 @@ function Dashboard({ onLogout }) {
       setStatus("ready");
     } catch (error) {
       if (error.status === 401) return onLogout();
-      setMessage("无法读取服务目录，请检查服务器配置。 ");
+      setMessage("無法讀取服務目錄，請檢查伺服器設定。");
       setStatus("error");
     }
   }, [onLogout]);
@@ -379,6 +379,7 @@ function Dashboard({ onLogout }) {
   };
 
   const save = async () => {
+    if (!window.confirm("確定要發布這次修改嗎？發布後，顧客重新整理網站便會看到最新內容。")) return;
     setStatus("saving");
     setMessage("");
     try {
@@ -390,15 +391,15 @@ function Dashboard({ onLogout }) {
       setCatalog(next);
       setSavedSnapshot(JSON.stringify(next));
       setStatus("saved");
-      setMessage("已发布。客户刷新网站后会看到最新价格和时间。");
+      setMessage("已發布。顧客重新整理網站後便會看到最新價格和時間。");
       window.setTimeout(() => setStatus("ready"), 1800);
     } catch (error) {
       setStatus("error");
       setMessage(error.status === 409
-        ? "其他窗口已经更新过目录。请刷新页面后再修改，避免覆盖新内容。"
+        ? "其他視窗已經更新目錄。請重新整理頁面後再修改，避免覆蓋新內容。"
         : error.message === "catalog-storage-not-configured"
-          ? "服务器还没有连接持久化数据库，当前内容无法安全发布。"
-          : "保存失败，请检查网络后重试。");
+          ? "伺服器尚未連接持久化資料庫，目前內容無法安全發布。"
+          : "儲存失敗，請檢查網路後再試。");
     }
   };
 
@@ -408,7 +409,7 @@ function Dashboard({ onLogout }) {
   };
 
   if (!catalog || status === "loading") {
-    return <div className="admin-loading"><LoaderCircle className="admin-spin" /><span>正在载入 Aurora 后台…</span></div>;
+    return <div className="admin-loading"><LoaderCircle className="admin-spin" /><span>正在載入 Aurora 後台…</span></div>;
   }
 
   return (
@@ -418,37 +419,37 @@ function Dashboard({ onLogout }) {
           <span>A</span><div><strong>Aurora</strong><small>Control Room</small></div>
         </a>
         <div className="admin-topbar__actions">
-          <a href={homeHref} target="_blank" rel="noreferrer"><Eye size={16} /> 查看网站</a>
-          <button type="button" onClick={logout}><LogOut size={16} /> 退出</button>
+          <a href={homeHref} target="_blank" rel="noreferrer"><Eye size={16} /> 查看網站</a>
+          <button type="button" onClick={logout}><LogOut size={16} /> 登出</button>
         </div>
       </header>
 
       <main className="admin-main">
         <section className="admin-page-heading">
-          <div><span>SERVICE CATALOG</span><h1>价格与时间管理</h1><p>修改后点击“发布更新”，前台会自动读取最新内容。</p></div>
+          <div><span>SERVICE CATALOG</span><h1>價格與時間管理</h1><p>修改後按下「發布更新」，前台會自動讀取最新內容。</p></div>
           <button className="admin-primary admin-save" type="button" onClick={save} disabled={!dirty || status === "saving" || !storageConfigured}>
             {status === "saving" ? <LoaderCircle className="admin-spin" size={17} /> : <Save size={17} />}
-            {dirty ? "发布更新" : "内容已同步"}
+            {dirty ? "發布更新" : "內容已同步"}
           </button>
         </section>
 
-        {!storageConfigured ? <p className="admin-alert admin-alert--warning">持久化数据库尚未连接。你可以预览后台，但部署配置完成前不能发布修改。</p> : null}
+        {!storageConfigured ? <p className="admin-alert admin-alert--warning">持久化資料庫尚未連接。你可以預覽後台，但完成部署設定前不能發布修改。</p> : null}
         {message ? <p className={`admin-alert${status === "saved" ? " admin-alert--success" : ""}`} role="status">{message}</p> : null}
 
         <section className="admin-global-settings">
-          <label><span>显示币种</span><select value={catalog.currency} onChange={(event) => setCatalog({ ...catalog, currency: event.target.value })}>{["HKD", "TWD", "CNY", "USD", "GBP"].map((currency) => <option key={currency}>{currency}</option>)}</select></label>
-          <label><span>全站公告（留空则不显示）</span><input value={catalog.announcement} maxLength="240" placeholder="例如：本周末订单名额有限，请提前预约" onChange={(event) => setCatalog({ ...catalog, announcement: event.target.value })} /></label>
+          <label><span>顯示幣種</span><select value={catalog.currency} onChange={(event) => setCatalog({ ...catalog, currency: event.target.value })}>{["HKD", "TWD", "CNY", "USD", "GBP"].map((currency) => <option key={currency}>{currency}</option>)}</select></label>
+          <label><span>全站公告（留空則不顯示）</span><input value={catalog.announcement} maxLength="240" placeholder="例如：本週末訂單名額有限，請提前預約" onChange={(event) => setCatalog({ ...catalog, announcement: event.target.value })} /></label>
         </section>
 
-        <nav className="admin-game-tabs" aria-label="选择游戏">
+        <nav className="admin-game-tabs" aria-label="選擇遊戲">
           {supportedGameIds.map((gameId) => (
             <button key={gameId} type="button" className={gameId === activeGame ? "is-active" : ""} onClick={() => setActiveGame(gameId)}>
-              <span>{getGameLabel(gameId, "zh-CN")}</span><ChevronRight size={15} />
+              <span>{getGameLabel(gameId, "zh-HK")}</span><ChevronRight size={15} />
             </button>
           ))}
         </nav>
 
-        <section className="admin-service-grid" aria-label={`${getGameLabel(activeGame, "zh-CN")}服务设置`}>
+        <section className="admin-service-grid" aria-label={`${getGameLabel(activeGame, "zh-HK")}服務設定`}>
           {serviceIds.map((serviceId) => (
             <ServiceEditor
               key={`${activeGame}-${serviceId}`}
@@ -462,8 +463,8 @@ function Dashboard({ onLogout }) {
         </section>
 
         <footer className="admin-meta">
-          <span>{dirty ? "有尚未发布的修改" : "所有修改均已发布"}</span>
-          <span>最后更新：{catalog.updatedAt ? new Date(catalog.updatedAt).toLocaleString("zh-CN") : "尚未发布"}</span>
+          <span>{dirty ? "有尚未發布的修改" : "所有修改均已發布"}</span>
+          <span>最後更新：{catalog.updatedAt ? new Date(catalog.updatedAt).toLocaleString("zh-HK") : "尚未發布"}</span>
         </footer>
       </main>
     </div>
@@ -487,7 +488,7 @@ export default function AdminApp() {
     return () => window.clearTimeout(timer);
   }, [checkSession]);
 
-  if (session.loading) return <div className="admin-loading"><LoaderCircle className="admin-spin" /><span>正在验证安全会话…</span></div>;
+  if (session.loading) return <div className="admin-loading"><LoaderCircle className="admin-spin" /><span>正在驗證安全工作階段…</span></div>;
   if (!session.authenticated) return <Login configured={session.configured} onAuthenticated={checkSession} />;
   return <Dashboard onLogout={() => setSession((current) => ({ ...current, authenticated: false }))} />;
 }

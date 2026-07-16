@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { readFile } from "node:fs/promises";
 import test from "node:test";
 
 import { buildSystemInstructions } from "../server/quote-ai-handler.mjs";
@@ -29,4 +30,24 @@ test("Aurora understands Cantonese but replies in formal Traditional Chinese", (
   assert.match(instructions, /formal written Traditional Chinese/i);
   assert.match(instructions, /Hong Kong Cantonese/);
   assert.doesNotMatch(instructions, /natural Hong Kong Cantonese wording/);
+});
+
+test("admin interface uses Traditional Chinese", async () => {
+  const source = await readFile(new URL("../src/AdminApp.jsx", import.meta.url), "utf8");
+  const simplifiedAdminPhrases = [
+    "网站管理后台",
+    "管理员密码",
+    "安全登录",
+    "正在载入",
+    "价格与时间管理",
+    "发布更新",
+    "已隐藏",
+  ];
+
+  for (const phrase of simplifiedAdminPhrases) {
+    assert.equal(source.includes(phrase), false, phrase);
+  }
+  assert.match(source, /網站管理後台/);
+  assert.match(source, /價格與時間管理/);
+  assert.match(source, /window\.confirm\(/);
 });
