@@ -4,6 +4,7 @@ import {
   getServiceLabel,
   isPricingConfigured,
   manualOnlyIntents,
+  pricingCatalog,
   pricingCurrency,
 } from "../data/pricing.js";
 import {
@@ -59,6 +60,7 @@ const draftDefaults = {
   customSchedule: false,
   winRate70: false,
   additionalRequirements: "",
+  displayCurrency: "HKD",
 };
 
 const isPresent = (value) => value !== null && value !== undefined && value !== "";
@@ -675,6 +677,12 @@ function baseQuoteResult(draft, validation, options = {}) {
   const targetRank = getRankById(draft.gameId, draft.targetRankId);
   const service = getServiceDefinition(draft.serviceId);
   const reference = options.reference ?? options.referenceNumber ?? createQuoteReference(options.now);
+  const activePricingCatalog = options.pricingCatalog ?? pricingCatalog;
+  const supportedDisplayCurrencies = Object.keys(activePricingCatalog.exchangeRates || { HKD: 1 });
+  const displayCurrency = supportedDisplayCurrencies.includes(draft.displayCurrency)
+    ? draft.displayCurrency
+    : pricingCurrency;
+  const exchangeRate = Number(activePricingCatalog.exchangeRates?.[displayCurrency]) || 1;
   return {
     status: "incomplete",
     requiresManualReview: false,
@@ -683,7 +691,10 @@ function baseQuoteResult(draft, validation, options = {}) {
     referenceNumber: reference,
     createdAt: (options.now instanceof Date ? options.now : new Date()).toISOString(),
     locale: draft.locale,
-    currency: options.pricingCatalog?.currency || pricingCurrency,
+    currency: displayCurrency,
+    sourceCurrency: pricingCurrency,
+    displayCurrency,
+    exchangeRate,
     draft,
     validation,
     service,
@@ -713,9 +724,52 @@ function baseQuoteResult(draft, validation, options = {}) {
     optionalCharges: null,
     optionalChargeItems: [],
     discount: null,
+    serviceDiscount: null,
+    newCustomerDiscount: null,
+    sourceSubtotal: null,
+    sourceFinalTotal: null,
     estimatedCompletionTime: draft.serviceId === "duo" ? null : draft.completionTime || null,
     finalTotal: null,
-    pricing: { currency: options.pricingCatalog?.currency || pricingCurrency, configured: false, rule: null },
+    pricing: { currency: pricingCurrency, configured: false, rule: null },
+  };
+}
+
+function roundMoney(value) {
+  return Number.isFinite(value) ? Math.round((value + Number.EPSILON) * 100) / 100 : value;
+}
+
+function finalizeConfiguredQuote(calculated, catalog, displayCurrency) {
+  const discountRate = Math.min(1, Math.max(0, Number(catalog.newCustomerDiscountRate) || 0));
+  const exchangeRate = Number(catalog.exchangeRates?.[displayCurrency]) || 1;
+  const sourceSubtotal = calculated.finalTotal;
+  const sourceNewCustomerDiscount = sourceSubtotal * discountRate;
+  const sourceFinalTotal = Math.max(0, sourceSubtotal - sourceNewCustomerDiscount);
+  const convert = (value) => Number.isFinite(value) ? roundMoney(value * exchangeRate) : value;
+
+  return {
+    ...calculated,
+    sourceCurrency: pricingCurrency,
+    displayCurrency,
+    currency: displayCurrency,
+    exchangeRate,
+    sourceBasePrice: calculated.basePrice,
+    sourceOptionalCharges: calculated.optionalCharges,
+    sourceServiceDiscount: calculated.discount,
+    sourceSubtotal: roundMoney(sourceSubtotal),
+    sourceNewCustomerDiscount: roundMoney(sourceNewCustomerDiscount),
+    sourceFinalTotal: roundMoney(sourceFinalTotal),
+    basePrice: convert(calculated.basePrice),
+    optionalCharges: convert(calculated.optionalCharges),
+    optionalChargeItems: (calculated.optionalChargeItems || []).map((item) => ({
+      ...item,
+      sourceAmount: item.amount,
+      amount: convert(item.amount),
+    })),
+    serviceDiscount: convert(calculated.discount),
+    discount: convert(calculated.discount),
+    newCustomerDiscount: convert(sourceNewCustomerDiscount),
+    finalTotal: convert(sourceFinalTotal),
+    unitPrice: convert(calculated.unitPrice),
   };
 }
 
@@ -732,7 +786,7 @@ export function calculateQuote(inputDraft, options = {}) {
   }
 
   const isManualIntent = manualOnlyIntents.includes(draft.intent) || service?.manualOnly;
-  const activePricingCatalog = options.pricingCatalog;
+  const activePricingCatalog = options.pricingCatalog ?? pricingCatalog;
   const rule = getPricingRule(draft.gameId, draft.serviceId, activePricingCatalog);
   result.pricing.rule = rule;
   result.pricing.configured = isPricingConfigured(
@@ -766,7 +820,8 @@ export function calculateQuote(inputDraft, options = {}) {
     return result;
   }
 
-  Object.assign(result, calculated, {
+  const finalized = finalizeConfiguredQuote(calculated, activePricingCatalog, result.displayCurrency);
+  Object.assign(result, finalized, {
     status: "quoted",
     requiresManualReview: false,
     reason: null,

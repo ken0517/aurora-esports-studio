@@ -15,6 +15,8 @@ import {
 
 export const pricingVersion = "2026-07-three-games-approved-v2";
 export const pricingCurrency = "HKD";
+export const newCustomerDiscountRate = 0.15;
+export const exchangeRates = Object.freeze({ HKD: 1, TWD: 4.25, CNY: 1 });
 export const supportedGameIds = centralSupportedGameIds;
 
 export const serviceCatalog = serviceDefinitions.map((service) => ({
@@ -157,7 +159,7 @@ function approvedDuoRule(gameId, multiplier = 1, matchUnitPrice = 25) {
     },
     matchPricing: {
       unitPrice: matchUnitPrice,
-      minimumQuantity: 2,
+      minimumQuantity: 1,
       discountThreshold: 10,
       discountRate: 0.1,
     },
@@ -214,6 +216,8 @@ export const pricingCatalog = {
   version: pricingVersion,
   configured: true,
   placeholderValues: false,
+  newCustomerDiscountRate,
+  exchangeRates,
   games: {
     aov: aovRules,
     "hok-cn": hokChinaRules,

@@ -1,8 +1,14 @@
 import { gameConfigs, serviceDefinitions } from "./gameConfig.js";
-import { getPricingRule, isPricingConfigured, pricingCatalog } from "./pricing.js";
+import {
+  exchangeRates,
+  getPricingRule,
+  isPricingConfigured,
+  newCustomerDiscountRate,
+  pricingCatalog,
+} from "./pricing.js";
 
 export const catalogSchemaVersion = 3;
-export const supportedCurrencies = ["HKD", "TWD", "CNY", "USD", "GBP"];
+export const supportedCurrencies = ["HKD", "TWD", "CNY"];
 
 const gameIds = Object.keys(gameConfigs);
 const serviceIds = serviceDefinitions.map((service) => service.id);
@@ -158,6 +164,8 @@ export function createDefaultRuntimeCatalog() {
     schemaVersion: catalogSchemaVersion,
     currency: "HKD",
     configured: true,
+    newCustomerDiscountRate,
+    exchangeRates: { ...exchangeRates },
     announcement: "",
     updatedAt: null,
     revision: "default",
@@ -174,6 +182,12 @@ export function normalizeRuntimeCatalog(input, { preserveRevision = true } = {})
   const source = input && typeof input === "object" ? input : {};
   const isLegacy = Number(source.schemaVersion || 0) < catalogSchemaVersion;
   const currency = supportedCurrencies.includes(source.currency) ? source.currency : "HKD";
+  const normalizedExchangeRates = Object.fromEntries(
+    supportedCurrencies.map((code) => [
+      code,
+      cleanNumber(source.exchangeRates?.[code], exchangeRates[code], { min: 0.01, max: 1000 }),
+    ]),
+  );
   let hasConfiguredService = false;
 
   const games = Object.fromEntries(gameIds.map((gameId) => [
@@ -218,6 +232,12 @@ export function normalizeRuntimeCatalog(input, { preserveRevision = true } = {})
     schemaVersion: catalogSchemaVersion,
     currency,
     configured: hasConfiguredService,
+    newCustomerDiscountRate: cleanNumber(
+      source.newCustomerDiscountRate,
+      newCustomerDiscountRate,
+      { min: 0, max: 1 },
+    ),
+    exchangeRates: normalizedExchangeRates,
     announcement: cleanText(source.announcement, 240),
     updatedAt: typeof source.updatedAt === "string" ? source.updatedAt : null,
     revision: preserveRevision && typeof source.revision === "string" ? source.revision : "default",

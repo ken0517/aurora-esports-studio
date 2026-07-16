@@ -102,7 +102,7 @@ test("runtime catalogue can produce an authoritative configured quote", () => {
     express: false,
   }, { pricingCatalog: catalog, reference: "AUR-RUNTIME-TEST" });
   assert.equal(quote.status, "quoted");
-  assert.equal(quote.finalTotal, 180);
+  assert.equal(quote.finalTotal, 153);
   assert.equal(quote.estimatedCompletionTime, "3 小时");
 });
 

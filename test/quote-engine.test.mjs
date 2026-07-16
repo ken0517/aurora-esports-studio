@@ -227,8 +227,7 @@ test("duo modes validate only their own dynamic fields", () => {
   assert.ok(afterModeSelection.missingFields.includes("preferredStartTime"));
 
   const oneMatch = validateQuoteDraft({ ...duoMatchDraft, quantity: 1 });
-  assert.equal(oneMatch.valid, false);
-  assert.ok(oneMatch.errorCodes.includes("minimumQuantity"));
+  assert.equal(oneMatch.valid, true);
 });
 
 test("duo WhatsApp summary uses the appointment start time instead of completion time", () => {
@@ -472,7 +471,7 @@ test("approved AOV rank pricing accumulates divisions, star bands and minimum or
   }, { reference: "AUR-AOV-MINIMUM" });
   assert.equal(oneDivision.status, "quoted");
   assert.equal(oneDivision.basePrice, 20);
-  assert.equal(oneDivision.finalTotal, 50);
+  assert.equal(oneDivision.finalTotal, 42.5);
 
   const crossDivision = calculateQuote({
     ...oneDivision.draft,
@@ -483,7 +482,7 @@ test("approved AOV rank pricing accumulates divisions, star bands and minimum or
     express: false,
   }, { reference: "AUR-AOV-DIVISIONS" });
   assert.equal(crossDivision.basePrice, 70); // 20 + 25 + 25
-  assert.equal(crossDivision.finalTotal, 70);
+  assert.equal(crossDivision.finalTotal, 59.5);
 
   const tenthStar = calculateQuote({
     ...oneDivision.draft,
@@ -496,7 +495,7 @@ test("approved AOV rank pricing accumulates divisions, star bands and minimum or
     express: false,
   }, { reference: "AUR-AOV-STAR-10" });
   assert.equal(tenthStar.basePrice, 25);
-  assert.equal(tenthStar.finalTotal, 50);
+  assert.equal(tenthStar.finalTotal, 42.5);
 });
 
 test("approved AOV ranked and match duo pricing follows guarantee multipliers and whole-order discount", () => {
@@ -516,8 +515,8 @@ test("approved AOV ranked and match duo pricing follows guarantee multipliers an
   const guaranteed = calculateQuote({ ...ranked, duoGuarantee: "guaranteed" });
   const standard = calculateQuote({ ...ranked, duoGuarantee: "standard" });
   assert.equal(guaranteed.status, "quoted");
-  assert.equal(guaranteed.finalTotal, 87.5); // 70 × 1.25
-  assert.equal(standard.finalTotal, 63); // 70 × 0.90
+  assert.equal(guaranteed.finalTotal, 74.38); // 70 × 1.25 × 0.85
+  assert.equal(standard.finalTotal, 53.55); // 70 × 0.90 × 0.85
 
   const tenMatches = calculateQuote({
     locale: "zh-HK",
@@ -530,11 +529,10 @@ test("approved AOV ranked and match duo pricing follows guarantee multipliers an
   assert.equal(tenMatches.status, "quoted");
   assert.equal(tenMatches.basePrice, 250);
   assert.equal(tenMatches.discount, 25);
-  assert.equal(tenMatches.finalTotal, 225);
+  assert.equal(tenMatches.finalTotal, 191.25);
 
   const oneMatch = validateQuoteDraft({ ...tenMatches.draft, quantity: 1 });
-  assert.equal(oneMatch.valid, false);
-  assert.ok(oneMatch.errorCodes.includes("minimumQuantity"));
+  assert.equal(oneMatch.valid, true);
 });
 
 test("all approved timed teaching options quote the same booking payment", () => {
@@ -548,7 +546,7 @@ test("all approved timed teaching options quote the same booking payment", () =>
   });
   assert.equal(review.status, "quoted");
   assert.equal(review.amountType, "booking-deposit");
-  assert.equal(review.finalTotal, 37.5);
+  assert.equal(review.finalTotal, 31.88);
   assert.equal(review.unitPrice, 2.5);
   assert.equal(review.minimumMinutes, 15);
 
@@ -558,9 +556,9 @@ test("all approved timed teaching options quote the same booking payment", () =>
   });
   const hero = calculateQuote({ ...review.draft, otherServiceType: "hero-coaching" });
   assert.equal(discord.status, "quoted");
-  assert.equal(discord.finalTotal, 37.5);
+  assert.equal(discord.finalTotal, 31.88);
   assert.equal(hero.status, "quoted");
-  assert.equal(hero.finalTotal, 37.5);
+  assert.equal(hero.finalTotal, 31.88);
 });
 
 test("China-server and HOK Global use the approved 85% and 80% rounded rank tables", () => {
@@ -580,10 +578,10 @@ test("China-server and HOK Global use the approved 85% and 80% rounded rank tabl
   const global = calculateQuote({ ...draft, gameId: "hok-global" });
   assert.equal(china.status, "quoted");
   assert.equal(china.basePrice, 130);
-  assert.equal(china.finalTotal, 130);
+  assert.equal(china.finalTotal, 110.5);
   assert.equal(global.status, "quoted");
   assert.equal(global.basePrice, 120);
-  assert.equal(global.finalTotal, 120);
+  assert.equal(global.finalTotal, 102);
 
   const chinaTenthStar = calculateQuote({
     ...draft,
@@ -596,7 +594,7 @@ test("China-server and HOK Global use the approved 85% and 80% rounded rank tabl
     targetStars: 10,
   });
   assert.equal(chinaTenthStar.basePrice, 20);
-  assert.equal(chinaTenthStar.finalTotal, 50);
+  assert.equal(chinaTenthStar.finalTotal, 42.5);
 });
 
 test("China-server and HOK Global duo and teaching rules share the approved structure", () => {
@@ -611,7 +609,7 @@ test("China-server and HOK Global duo and teaching rules share the approved stru
     });
     assert.equal(matches.basePrice, 200);
     assert.equal(matches.discount, 20);
-    assert.equal(matches.finalTotal, 180);
+    assert.equal(matches.finalTotal, 153);
 
     for (const otherServiceType of ["review-coaching", "discord-recorded-review", "hero-coaching"]) {
       const teaching = calculateQuote({
@@ -623,7 +621,86 @@ test("China-server and HOK Global duo and teaching rules share the approved stru
         additionalRequirements: "測試教學需要",
       });
       assert.equal(teaching.status, "quoted");
-      assert.equal(teaching.finalTotal, 37.5);
+      assert.equal(teaching.finalTotal, 31.88);
     }
   }
+});
+
+test("newcomer discount is applied after service rules and minimums", () => {
+  const minimumRank = calculateQuote({
+    locale: "zh-HK",
+    gameId: "aov",
+    serviceId: "rank",
+    currentRankId: "bronze",
+    currentDivision: "III",
+    currentStars: 0,
+    targetRankId: "bronze",
+    targetDivision: "II",
+    targetStars: 0,
+    completionTime: "三日內",
+    express: false,
+    displayCurrency: "HKD",
+  });
+
+  assert.equal(minimumRank.status, "quoted");
+  assert.equal(minimumRank.sourceSubtotal, 50);
+  assert.equal(minimumRank.sourceFinalTotal, 42.5);
+  assert.equal(minimumRank.newCustomerDiscount, 7.5);
+  assert.equal(minimumRank.finalTotal, 42.5);
+
+  const tenMatches = calculateQuote({
+    locale: "zh-HK",
+    gameId: "aov",
+    serviceId: "duo",
+    duoMode: "match-5v5",
+    preferredStartTime: "2026-07-20T20:00",
+    quantity: 10,
+    displayCurrency: "HKD",
+  });
+
+  assert.equal(tenMatches.serviceDiscount, 25);
+  assert.equal(tenMatches.sourceFinalTotal, 191.25);
+  assert.equal(tenMatches.newCustomerDiscount, 33.75);
+  assert.equal(tenMatches.finalTotal, 191.25);
+});
+
+test("configured quotes convert only after HKD pricing is complete", () => {
+  const twd = calculateQuote({
+    locale: "zh-HK",
+    gameId: "aov",
+    serviceId: "duo",
+    duoMode: "match-5v5",
+    preferredStartTime: "2026-07-20T20:00",
+    quantity: 10,
+    displayCurrency: "TWD",
+  });
+  assert.equal(twd.sourceCurrency, "HKD");
+  assert.equal(twd.displayCurrency, "TWD");
+  assert.equal(twd.exchangeRate, 4.25);
+  assert.equal(twd.sourceFinalTotal, 191.25);
+  assert.equal(twd.finalTotal, 812.81);
+
+  const cny = calculateQuote({
+    locale: "zh-HK",
+    gameId: "aov",
+    serviceId: "duo",
+    duoMode: "match-5v5",
+    preferredStartTime: "2026-07-20T20:00",
+    quantity: 1,
+    displayCurrency: "CNY",
+  });
+  assert.equal(cny.status, "quoted");
+  assert.equal(cny.finalTotal, 21.25);
+});
+
+test("manual-review quotes never expose invented converted amounts", () => {
+  const quote = calculateQuote({
+    ...heroPowerDraft,
+    displayCurrency: "TWD",
+  });
+  assert.equal(quote.status, "manual_review");
+  assert.equal(quote.displayCurrency, "TWD");
+  assert.equal(quote.basePrice, null);
+  assert.equal(quote.newCustomerDiscount, null);
+  assert.equal(quote.finalTotal, null);
 });
