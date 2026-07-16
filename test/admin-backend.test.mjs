@@ -85,8 +85,9 @@ test("runtime catalogue can produce an authoritative configured quote", () => {
   catalog.configured = true;
   catalog.currency = "HKD";
   catalog.games["hok-cn"].rank.configured = true;
-  catalog.games["hok-cn"].rank.basePrice = 180;
-  catalog.games["hok-cn"].rank.estimatedCompletionTime = "1–2 天";
+  catalog.games["hok-cn"].rank.divisionStepPrices["diamond:III"] = 60;
+  catalog.games["hok-cn"].rank.divisionStepPrices["diamond:II"] = 60;
+  catalog.games["hok-cn"].rank.divisionStepPrices["diamond:I"] = 60;
   const quote = calculateQuote({
     locale: "zh-CN",
     gameId: "hok-cn",
@@ -102,7 +103,7 @@ test("runtime catalogue can produce an authoritative configured quote", () => {
   }, { pricingCatalog: catalog, reference: "AUR-RUNTIME-TEST" });
   assert.equal(quote.status, "quoted");
   assert.equal(quote.finalTotal, 180);
-  assert.equal(quote.estimatedCompletionTime, "1–2 天");
+  assert.equal(quote.estimatedCompletionTime, "3 小时");
 });
 
 test("admin API requires login and persists published catalogue changes", async () => {

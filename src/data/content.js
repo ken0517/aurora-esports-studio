@@ -115,10 +115,10 @@ export const services = [
     icon: "GraduationCap",
     index: "05",
     title: "其他服務",
-    summary: "復盤教學、Discord 錄屏及英雄教學集中在同一項查詢。",
+    summary: "復盤教學、第一視角教學及英雄教學集中在同一項查詢。",
     description:
       "選擇你需要的訓練方式，再把錄影、英雄、時段或希望改善的重點告訴 Aurora 客服。",
-    points: ["復盤教學", "Discord 錄屏", "英雄教學"],
+    points: ["復盤教學", "第一視角教學", "英雄教學"],
     games: ["aov", "hok-cn", "hok-global"],
     category: "其他服務",
   },
@@ -223,7 +223,7 @@ export const faqs = [
   {
     question: "可以查詢陪打或教學服務嗎？",
     answer:
-      "可以。陪玩帶飛可選排位或 5V5 匹配；復盤教學、Discord 錄屏及英雄教學可在「其他服務」內查詢。",
+      "可以。陪玩帶飛可選排位或 5V5 匹配；復盤教學、第一視角教學及英雄教學可在「其他服務」內查詢。",
   },
 ];
 

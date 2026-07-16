@@ -154,14 +154,24 @@ function ApprovedRuleEditor({ gameId, item, onChange }) {
         <h4>已批准的排位计算规则</h4>
         <div className="admin-rule-grid">
           <NumberField label="最低消费" suffix="HKD" value={item.minimumPrice} onChange={(value) => patch("minimumPrice", value)} />
-          <NumberField label="0–9 星每星" suffix="HKD" value={item.starPricing?.basePerStar} onChange={(value) => patchNested("starPricing", "basePerStar", value)} />
-          <NumberField label="每 10 星增加" suffix="HKD／星" value={item.starPricing?.incrementPerBand} onChange={(value) => patchNested("starPricing", "incrementPerBand", value)} />
           {percentage("express", "加急附加费")}
           {percentage("preferredRole", "指定分路附加费")}
           {percentage("customSchedule", "指定时段附加费")}
           {percentage("winRate70", "保持 70%+ 胜率附加费")}
           <NumberField label="每小段预计时间" suffix="小时" value={item.timeRules?.hoursPerDivision} onChange={(value) => patchNested("timeRules", "hoursPerDivision", value)} />
           <NumberField label="报价有效期" suffix="天" step="1" value={item.quoteValidityDays} onChange={(value) => patch("quoteValidityDays", value)} />
+        </div>
+        <h4>各 10 星区间价格（每星）</h4>
+        <div className="admin-transition-grid">
+          {(item.starPricing?.bandPrices || []).map((value, index) => (
+            <NumberField
+              key={index}
+              label={`${index * 10}–${index * 10 + 9} 星`}
+              suffix="HKD／星"
+              value={value}
+              onChange={(nextValue) => patchNested("starPricing", "bandPrices", item.starPricing.bandPrices.map((price, priceIndex) => priceIndex === index ? nextValue : price))}
+            />
+          ))}
         </div>
         <h4>各小段价格（由该小段升到下一小段）</h4>
         <div className="admin-transition-grid">
@@ -202,21 +212,32 @@ function ApprovedRuleEditor({ gameId, item, onChange }) {
   }
 
   if (item.pricingModel === "aov-other") {
-    const review = item.options?.["review-coaching"] || {};
-    const updateReview = (field, value) => patch("options", {
-      ...item.options,
-      "review-coaching": { ...review, [field]: value },
-    });
+    const teachingOptions = [
+      ["review-coaching", "复盘教学"],
+      ["discord-recorded-review", "第一视角教学"],
+      ["hero-coaching", "英雄教学"],
+    ];
     return (
       <div className="admin-approved-rule admin-field-wide">
-        <h4>已批准的复盘教学规则</h4>
-        <div className="admin-rule-grid">
-          <NumberField label="每分钟" suffix="HKD" value={review.unitPrice} onChange={(value) => updateReview("unitPrice", value)} />
-          <NumberField label="最低时长" suffix="分钟" step="1" value={review.minimumMinutes} onChange={(value) => updateReview("minimumMinutes", value)} />
-          <NumberField label="预约付款" suffix="HKD" value={review.bookingDeposit} onChange={(value) => updateReview("bookingDeposit", value)} />
-          <NumberField label="免费改期须提前" suffix="小时" step="1" value={review.freeRescheduleNoticeHours} onChange={(value) => updateReview("freeRescheduleNoticeHours", value)} />
-        </div>
-        <p>Discord 录屏及英雄教学仍维持人工报价，不会因这里的复盘价格而自动出价。</p>
+        <h4>已批准的教学计时规则</h4>
+        {teachingOptions.map(([optionId, label]) => {
+          const option = item.options?.[optionId] || {};
+          const updateOption = (field, value) => patch("options", {
+            ...item.options,
+            [optionId]: { ...option, [field]: value },
+          });
+          return (
+            <section className="admin-teaching-rule" key={optionId}>
+              <h5>{label}</h5>
+              <div className="admin-rule-grid">
+                <NumberField label="每分钟" suffix="HKD" value={option.unitPrice} onChange={(value) => updateOption("unitPrice", value)} />
+                <NumberField label="最低时长" suffix="分钟" step="1" value={option.minimumMinutes} onChange={(value) => updateOption("minimumMinutes", value)} />
+                <NumberField label="预约付款" suffix="HKD" value={option.bookingDeposit} onChange={(value) => updateOption("bookingDeposit", value)} />
+                <NumberField label="免费改期须提前" suffix="小时" step="1" value={option.freeRescheduleNoticeHours} onChange={(value) => updateOption("freeRescheduleNoticeHours", value)} />
+              </div>
+            </section>
+          );
+        })}
       </div>
     );
   }
@@ -338,7 +359,7 @@ function Dashboard({ onLogout }) {
   const updateService = (gameId, serviceId, value) => {
     setCatalog((current) => {
       const nextGame = { ...current.games[gameId], [serviceId]: value };
-      if (gameId === "aov" && serviceId === "rank" && nextGame.duo?.pricingModel === "aov-duo") {
+      if (serviceId === "rank" && nextGame.duo?.pricingModel === "aov-duo") {
         nextGame.duo = {
           ...nextGame.duo,
           rankPricing: {

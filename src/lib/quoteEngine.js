@@ -357,7 +357,7 @@ export function validateQuoteDraft(inputDraft, options = {}) {
       result.requiresManualReview = true;
       result.manualReviewReasons.push("manual-only-other-option");
     }
-    if (draft.otherServiceType === "review-coaching" && !String(draft.preferredStartTime ?? "").trim()) {
+    if (selectedOption && !String(draft.preferredStartTime ?? "").trim()) {
       addMissing(result, "preferredStartTime", "preferredStartTimeRequired");
     }
   }
@@ -367,7 +367,7 @@ export function validateQuoteDraft(inputDraft, options = {}) {
   }
 
   const usesAppointmentStart = draft.serviceId === "duo" ||
-    (draft.serviceId === "other" && draft.otherServiceType === "review-coaching");
+    (draft.serviceId === "other" && Boolean(draft.otherServiceType));
   if ((service || isHeroPower) && !usesAppointmentStart && !String(draft.completionTime ?? "").trim()) {
     addMissing(result, "completionTime", "completionTimeRequired");
   }
@@ -422,7 +422,16 @@ function perStarPrice(starNumber, starPricing) {
   const increment = starPricing?.incrementPerBand;
   if (![bandSize, base, increment].every(Number.isFinite) || bandSize <= 0 || starNumber < 0) return null;
   // Aurora approved that the 10th star enters the 10–19 price band.
-  return base + Math.floor(starNumber / bandSize) * increment;
+  const bandIndex = Math.floor(starNumber / bandSize);
+  const configuredBandPrice = starPricing?.bandPrices?.[bandIndex];
+  if (Number.isFinite(configuredBandPrice)) return configuredBandPrice;
+  const sourcePrice = base + bandIndex * increment;
+  const multiplier = Number.isFinite(starPricing?.priceMultiplier) ? starPricing.priceMultiplier : 1;
+  const scaledPrice = sourcePrice * multiplier;
+  const roundTo = starPricing?.roundTo;
+  return Number.isFinite(roundTo) && roundTo > 0
+    ? Math.round(scaledPrice / roundTo) * roundTo
+    : scaledPrice;
 }
 
 function calculateAovProgression(ruleLike, draft) {
@@ -588,7 +597,7 @@ function calculateConfiguredPricing(rule, draft) {
 
   if (rule.pricingModel === "aov-other") {
     const option = rule.options?.[draft.otherServiceType];
-    if (!option?.configured || draft.otherServiceType !== "review-coaching") return null;
+    if (!option?.configured) return null;
     const bookingDeposit = Number.isFinite(option.bookingDeposit)
       ? option.bookingDeposit
       : option.unitPrice * option.minimumMinutes;
@@ -878,7 +887,7 @@ export function formatQuoteText(quoteOrDraft, locale = null) {
       `${translate(resolvedLocale, "quote.fields.otherServiceType")}: ${getServiceChoiceLabel(quote.service, "options", draft.otherServiceType, resolvedLocale)}`,
       `${translate(resolvedLocale, "quote.fields.additionalRequirements")}: ${draft.additionalRequirements || "—"}`,
     );
-    if (draft.otherServiceType === "review-coaching") {
+    if (draft.otherServiceType) {
       detailRows.push(
         `${translate(resolvedLocale, "quote.table.preferredStartTime")}: ${formatAppointmentTime(quote.preferredStartTime || draft.preferredStartTime, resolvedLocale)}`,
       );
@@ -894,7 +903,7 @@ export function formatQuoteText(quoteOrDraft, locale = null) {
     `${translate(resolvedLocale, "quote.table.basePrice")}: ${formatMoney(quote.basePrice, currency, resolvedLocale)}`,
     `${translate(resolvedLocale, "quote.table.optionalCharges")}: ${formatMoney(quote.optionalCharges, currency, resolvedLocale)}`,
     `${translate(resolvedLocale, "quote.table.discount")}: ${formatMoney(quote.discount, currency, resolvedLocale)}`,
-    ...(!isDuo && !(isOther && draft.otherServiceType === "review-coaching")
+    ...(!isDuo && !(isOther && draft.otherServiceType)
       ? [`${translate(resolvedLocale, "quote.table.estimatedCompletionTime")}: ${quote.estimatedCompletionTime || draft.completionTime || translate(resolvedLocale, "common.notAvailable")}`]
       : []),
     ...(["rank", "peak", "hero-power"].includes(draft.serviceId)

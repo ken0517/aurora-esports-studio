@@ -161,9 +161,9 @@ export const editorialServiceCatalog = [
       "zh-CN": "其他服务",
     },
     description: {
-      "zh-HK": "包括復盤教學、Discord 錄屏及英雄教學；請告訴 Aurora 客服你的需要。",
-      en: "Includes review coaching, Discord recording and hero coaching. Tell Aurora Support what you need.",
-      "zh-CN": "包括复盘教学、Discord录屏及英雄教学；请告诉 Aurora客服你的需要。",
+      "zh-HK": "包括復盤教學、第一視角教學及英雄教學；請告訴 Aurora 客服你的需要。",
+      en: "Includes review coaching, first-person coaching and hero coaching. Tell Aurora Support what you need.",
+      "zh-CN": "包括复盘教学、第一视角教学及英雄教学；请告诉 Aurora客服你的需要。",
     },
     options: [
       {
@@ -172,7 +172,7 @@ export const editorialServiceCatalog = [
       },
       {
         id: "discord-recorded-review",
-        title: { "zh-HK": "Discord 錄屏", en: "Discord recording", "zh-CN": "Discord 录屏" },
+        title: { "zh-HK": "第一視角教學", en: "First-person coaching", "zh-CN": "第一视角教学" },
       },
       {
         id: "hero-coaching",

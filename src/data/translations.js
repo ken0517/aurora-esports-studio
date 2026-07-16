@@ -131,10 +131,10 @@ const zhHK = {
     },
     other: {
       title: "其他服務",
-      summary: "復盤教學、Discord 錄屏及英雄教學集中在同一項查詢。",
+      summary: "復盤教學、第一視角教學及英雄教學集中在同一項查詢。",
       description: "選擇需要的方式，再把錄影、英雄或改善重點告訴 Aurora 客服。",
       category: "其他服務",
-      points: ["復盤教學", "Discord 錄屏", "英雄教學"],
+      points: ["復盤教學", "第一視角教學", "英雄教學"],
     },
   },
   process: {
@@ -184,7 +184,7 @@ const zhHK = {
     { question: "香港和台灣玩家如何聯絡？", answer: "香港玩家建議使用 WhatsApp 或 Instagram；台灣玩家可使用 LINE、Instagram 或 Discord。" },
     { question: "是否提供售後或補單？", answer: "售後範圍會在開始前按方案說明。若時間或安排出現變動，客服會在原本的私人對話內跟進。" },
     { question: "服務是否有風險？", answer: "任何網上遊戲服務都不應描述為零風險。所有安排先說明流程與限制，並優先提供由玩家本人參與的陪打及訓練方案。" },
-    { question: "可以查詢陪玩或教學服務嗎？", answer: "可以。陪玩帶飛可選排位或 5V5 匹配；復盤教學、Discord 錄屏及英雄教學可在「其他服務」內查詢。" },
+    { question: "可以查詢陪玩或教學服務嗎？", answer: "可以。陪玩帶飛可選排位或 5V5 匹配；復盤教學、第一視角教學及英雄教學可在「其他服務」內查詢。" },
   ],
   contact: {
     eyebrow: "READY WHEN YOU ARE",
@@ -364,7 +364,7 @@ const en = {
     peak: { title: "Peak ranked progression", summary: "For high-rank tempo, current hero pools and point targets.", description: "A high-rank member assesses the score range, queue environment and timing.", category: "Progression", points: ["High-rank assessment", "Current hero pool", "Schedule confirmation"] },
     duo: { title: "Duo queue", summary: "Choose Ranked or 5V5 Match and play alongside a high-rank member.", description: "The player remains involved with live coordination; voice communication is never compulsory.", category: "Play together", points: ["Ranked / 5V5 Match", "Live coordination", "No compulsory voice"] },
     "hero-power": { title: "Hero power mark", summary: "A tailored request based on your selected hero, current and target power, and target mark.", description: "Marks remain specific to each game. Unconfigured pricing goes to human confirmation.", category: "Hero power", points: ["Selected hero", "Current / target power", "Game-specific target mark"] },
-    other: { title: "Other services", summary: "Review coaching, Discord recording and hero coaching in one enquiry.", description: "Choose the format you need and tell Aurora Support about the recording, hero or improvement goal.", category: "Other services", points: ["Review coaching", "Discord recording", "Hero coaching"] },
+    other: { title: "Other services", summary: "Review coaching, first-person coaching and hero coaching in one enquiry.", description: "Choose the format you need and tell Aurora Support about the recording, hero or improvement goal.", category: "Other services", points: ["Review coaching", "First-person coaching", "Hero coaching"] },
   },
   process: { eyebrow: "HOW IT WORKS", title: "Four steps to a clear plan.", description: "We understand the need before confirming the arrangement.", steps: [
     { title: "Send an enquiry", body: "Share the game, server, current rank, target and preferred timing." },
@@ -392,7 +392,7 @@ const en = {
     { question: "How should Hong Kong and Taiwan players contact Aurora?", answer: "WhatsApp or Instagram is recommended for Hong Kong; LINE, Instagram or Discord works well for Taiwan." },
     { question: "Is after-sales support or a make-up service available?", answer: "The applicable after-sales scope is explained before work begins. If timing or arrangements change, support follows up in the original private conversation." },
     { question: "Is the service risk-free?", answer: "No online game service should be described as zero-risk. We explain constraints first and prioritise player-participation duo play and coaching." },
-    { question: "Can I request duo play or coaching?", answer: "Yes. Duo play supports Ranked or 5V5 Match; review coaching, Discord recording and hero coaching are available under Other services." },
+    { question: "Can I request duo play or coaching?", answer: "Yes. Duo play supports Ranked or 5V5 Match; review coaching, first-person coaching and hero coaching are available under Other services." },
   ],
   contact: {
     eyebrow: "READY WHEN YOU ARE", title: "Send us your game, rank and objective.", description: "WhatsApp is recommended for Hong Kong; Taiwan players may use LINE. Other channels are also available.", whatsapp: "Enquire on WhatsApp",
@@ -440,7 +440,7 @@ const zhCN = {
     peak: { title: "巅峰赛代打", summary: "针对高分段节奏、版本英雄池及积分目标安排。", description: "由熟悉高端局节奏的成员评估分数区间、排队环境及时段。", category: "进度服务", points: ["高分段评估", "版本英雄池", "时段与进度确认"] },
     duo: { title: "陪玩带飞", summary: "可选排位或5V5匹配，由高端玩家与你同行。", description: "在玩家本人参与的前提下提供即时协作；可以自然沟通，也可以安静享受游戏。", category: "陪玩服务", points: ["排位／5V5匹配", "即时协作", "不强制语音"] },
     "hero-power": { title: "英雄战力标", summary: "按指定英雄、目前及目标战力与目标标整理专属需求。", description: "目标战力标会按游戏分开选择，未配置正式价格时交由客服人工确认。", category: "战力服务", points: ["指定英雄", "目前／目标战力", "该游戏目标标"] },
-    other: { title: "其他服务", summary: "复盘教学、Discord录屏及英雄教学集中在同一项咨询。", description: "选择需要的方式，再把录像、英雄或改善重点告诉 Aurora客服。", category: "其他服务", points: ["复盘教学", "Discord录屏", "英雄教学"] },
+    other: { title: "其他服务", summary: "复盘教学、第一视角教学及英雄教学集中在同一项咨询。", description: "选择需要的方式，再把录像、英雄或改善重点告诉 Aurora客服。", category: "其他服务", points: ["复盘教学", "第一视角教学", "英雄教学"] },
   },
   process: { eyebrow: "HOW IT WORKS", title: "四个步骤，把目标说清楚。", description: "先了解需要，再确认方案与排期。", steps: [
     { title: "私信咨询", body: "提供游戏、服务器、目前段位、目标及理想时段。" }, { title: "确认报价", body: "客服评估可行性，再确认内容、报价与排期。" }, { title: "安排服务", body: "根据游戏、位置与需求匹配合适成员。" }, { title: "完成跟进", body: "按约定提供进度或训练重点，完成后续协作。" },
@@ -452,7 +452,7 @@ const zhCN = {
   ],
   faq: { eyebrow: "FAQ", title: "开始前，你可能想先知道。", description: "价格、流程、联系方式与服务限制，都在开始前说清楚。" },
   faqs: [
-    { question: "目前支持哪些游戏？", answer: "现时支持《传说对决》、《王者荣耀》国服，以及 Honor of Kings 国际服。" }, { question: "如何下单？", answer: "可通过 WhatsApp、Instagram、Discord、LINE 或 Carousell 私信，提供游戏、段位、目标和时段。" }, { question: "价格为什么会按订单调整？", answer: "网站会显示 Aurora 已发布的公开价格或起价；游戏、服务器、段位、目标、加急要求和时段仍可能影响最终报价。未启用自动报价的项目会由客服人工确认。" }, { question: "香港和台湾玩家如何联系？", answer: "香港玩家建议使用 WhatsApp 或 Instagram；台湾玩家可使用 LINE、Instagram 或 Discord。" }, { question: "是否提供售后或补单？", answer: "售后范围会在开始前按方案说明。如果时间或安排发生变化，客服会在原来的私人对话中跟进。" }, { question: "服务是否有风险？", answer: "任何网上游戏服务都不应描述为零风险。所有安排先说明流程与限制，并优先提供由玩家本人参与的陪玩及训练方案。" }, { question: "可以咨询陪玩或教学服务吗？", answer: "可以。陪玩带飞可选排位或5V5匹配；复盘教学、Discord录屏及英雄教学可在“其他服务”内咨询。" },
+    { question: "目前支持哪些游戏？", answer: "现时支持《传说对决》、《王者荣耀》国服，以及 Honor of Kings 国际服。" }, { question: "如何下单？", answer: "可通过 WhatsApp、Instagram、Discord、LINE 或 Carousell 私信，提供游戏、段位、目标和时段。" }, { question: "价格为什么会按订单调整？", answer: "网站会显示 Aurora 已发布的公开价格或起价；游戏、服务器、段位、目标、加急要求和时段仍可能影响最终报价。未启用自动报价的项目会由客服人工确认。" }, { question: "香港和台湾玩家如何联系？", answer: "香港玩家建议使用 WhatsApp 或 Instagram；台湾玩家可使用 LINE、Instagram 或 Discord。" }, { question: "是否提供售后或补单？", answer: "售后范围会在开始前按方案说明。如果时间或安排发生变化，客服会在原来的私人对话中跟进。" }, { question: "服务是否有风险？", answer: "任何网上游戏服务都不应描述为零风险。所有安排先说明流程与限制，并优先提供由玩家本人参与的陪玩及训练方案。" }, { question: "可以咨询陪玩或教学服务吗？", answer: "可以。陪玩带飞可选排位或5V5匹配；复盘教学、第一视角教学及英雄教学可在“其他服务”内咨询。" },
   ],
   contact: {
     eyebrow: "READY WHEN YOU ARE", title: "把游戏、段位和目标发给我们。", description: "香港玩家建议使用 WhatsApp；台湾玩家可选 LINE。其他渠道同样可以咨询。", whatsapp: "WhatsApp 立即咨询",

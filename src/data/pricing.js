@@ -13,7 +13,7 @@ import {
   supportedGameIds as centralSupportedGameIds,
 } from "./gameConfig.js";
 
-export const pricingVersion = "2026-07-aov-approved-v1";
+export const pricingVersion = "2026-07-three-games-approved-v2";
 export const pricingCurrency = "HKD";
 export const supportedGameIds = centralSupportedGameIds;
 
@@ -79,19 +79,44 @@ function unconfiguredRule(gameId, serviceId) {
   };
 }
 
-function aovRankRule(serviceId = "rank") {
+function roundToNearest(value, step = 5) {
+  return Math.round(value / step) * step;
+}
+
+function scaledDivisionStepPrices(multiplier) {
+  return Object.fromEntries(
+    Object.entries(aovDivisionStepPrices).map(([key, value]) => [
+      key,
+      multiplier === 1 ? value : roundToNearest(value * multiplier),
+    ]),
+  );
+}
+
+function approvedStarPricing(multiplier) {
   return {
-    ...unconfiguredRule("aov", serviceId),
+    bandSize: 10,
+    basePerStar: 20,
+    incrementPerBand: 5,
+    priceMultiplier: multiplier,
+    roundTo: multiplier === 1 ? null : 5,
+    bandPrices: Array.from({ length: 11 }, (_, bandIndex) => {
+      const sourcePrice = 20 + bandIndex * 5;
+      return multiplier === 1 ? sourcePrice : roundToNearest(sourcePrice * multiplier);
+    }),
+  };
+}
+
+function approvedRankRule(gameId, multiplier = 1, serviceId = "rank") {
+  return {
+    ...unconfiguredRule(gameId, serviceId),
     configured: true,
     status: "approved",
     pricingModel: "aov-rank-progression",
     minimumPrice: 50,
-    divisionStepPrices: { ...aovDivisionStepPrices },
-    starPricing: {
-      bandSize: 10,
-      basePerStar: 20,
-      incrementPerBand: 5,
-    },
+    sourcePriceMultiplier: multiplier,
+    sourcePriceRounding: multiplier === 1 ? null : 5,
+    divisionStepPrices: scaledDivisionStepPrices(multiplier),
+    starPricing: approvedStarPricing(multiplier),
     optionalCharges: {
       express: { type: "percentage", value: 0.25 },
       preferredHero: { type: null, value: null },
@@ -115,25 +140,23 @@ function aovRankRule(serviceId = "rank") {
   };
 }
 
-function aovDuoRule() {
+function approvedDuoRule(gameId, multiplier = 1, matchUnitPrice = 25) {
   return {
-    ...unconfiguredRule("aov", "duo"),
+    ...unconfiguredRule(gameId, "duo"),
     configured: true,
     status: "approved",
     pricingModel: "aov-duo",
     rankPricing: {
       minimumPrice: 50,
-      divisionStepPrices: { ...aovDivisionStepPrices },
-      starPricing: {
-        bandSize: 10,
-        basePerStar: 20,
-        incrementPerBand: 5,
-      },
+      sourcePriceMultiplier: multiplier,
+      sourcePriceRounding: multiplier === 1 ? null : 5,
+      divisionStepPrices: scaledDivisionStepPrices(multiplier),
+      starPricing: approvedStarPricing(multiplier),
       guaranteedMultiplier: 1.25,
       standardMultiplier: 0.9,
     },
     matchPricing: {
-      unitPrice: 25,
+      unitPrice: matchUnitPrice,
       minimumQuantity: 2,
       discountThreshold: 10,
       discountRate: 0.1,
@@ -143,27 +166,28 @@ function aovDuoRule() {
   };
 }
 
-function aovOtherRule() {
-  return {
-    ...unconfiguredRule("aov", "other"),
+function approvedTeachingRule(gameId) {
+  const timedTeaching = () => ({
     configured: true,
-    status: "partially-approved",
+    pricingModel: "live-minute",
+    unitPrice: 2.5,
+    minimumMinutes: 15,
+    bookingDeposit: 37.5,
+    rounding: "ceil-minute",
+    freeRescheduleNoticeHours: 4,
+  });
+  return {
+    ...unconfiguredRule(gameId, "other"),
+    configured: true,
+    status: "approved",
     pricingModel: "aov-other",
     options: {
-      "review-coaching": {
-        configured: true,
-        pricingModel: "live-minute",
-        unitPrice: 2.5,
-        minimumMinutes: 15,
-        bookingDeposit: 37.5,
-        rounding: "ceil-minute",
-        freeRescheduleNoticeHours: 4,
-      },
-      "discord-recorded-review": { configured: false },
-      "hero-coaching": { configured: false },
+      "review-coaching": timedTeaching(),
+      "discord-recorded-review": timedTeaching(),
+      "hero-coaching": timedTeaching(),
     },
     quoteValidityDays: 3,
-    internalNote: "Only live Discord review coaching has approved pricing.",
+    internalNote: "Review coaching, first-person teaching and hero coaching share the approved timed rate.",
   };
 }
 
@@ -173,10 +197,17 @@ function unconfiguredRulesForGame(gameId) {
   );
 }
 
-const aovRules = unconfiguredRulesForGame("aov");
-aovRules.rank = aovRankRule();
-aovRules.duo = aovDuoRule();
-aovRules.other = aovOtherRule();
+function approvedRulesForGame(gameId, multiplier, matchUnitPrice) {
+  const rules = unconfiguredRulesForGame(gameId);
+  rules.rank = approvedRankRule(gameId, multiplier);
+  rules.duo = approvedDuoRule(gameId, multiplier, matchUnitPrice);
+  rules.other = approvedTeachingRule(gameId);
+  return rules;
+}
+
+const aovRules = approvedRulesForGame("aov", 1, 25);
+const hokChinaRules = approvedRulesForGame("hok-cn", 0.85, 20);
+const hokGlobalRules = approvedRulesForGame("hok-global", 0.8, 20);
 
 export const pricingCatalog = {
   currency: pricingCurrency,
@@ -185,8 +216,8 @@ export const pricingCatalog = {
   placeholderValues: false,
   games: {
     aov: aovRules,
-    "hok-cn": unconfiguredRulesForGame("hok-cn"),
-    "hok-global": unconfiguredRulesForGame("hok-global"),
+    "hok-cn": hokChinaRules,
+    "hok-global": hokGlobalRules,
   },
 };
 

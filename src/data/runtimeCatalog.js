@@ -1,7 +1,7 @@
 import { gameConfigs, serviceDefinitions } from "./gameConfig.js";
 import { getPricingRule, isPricingConfigured, pricingCatalog } from "./pricing.js";
 
-export const catalogSchemaVersion = 2;
+export const catalogSchemaVersion = 3;
 export const supportedCurrencies = ["HKD", "TWD", "CNY", "USD", "GBP"];
 
 const gameIds = Object.keys(gameConfigs);
@@ -47,6 +47,10 @@ function normalizeRankRule(item, fallback) {
       bandSize: cleanNumber(item.starPricing?.bandSize, fallback.starPricing.bandSize, { min: 1, max: 100 }),
       basePerStar: cleanNumber(item.starPricing?.basePerStar, fallback.starPricing.basePerStar),
       incrementPerBand: cleanNumber(item.starPricing?.incrementPerBand, fallback.starPricing.incrementPerBand),
+      priceMultiplier: cleanNumber(item.starPricing?.priceMultiplier, fallback.starPricing.priceMultiplier ?? 1, { min: 0.01, max: 10 }),
+      roundTo: cleanNumber(item.starPricing?.roundTo, fallback.starPricing.roundTo, { min: 0.01, max: 100 }),
+      bandPrices: fallback.starPricing.bandPrices.map((value, index) =>
+        cleanNumber(item.starPricing?.bandPrices?.[index], value)),
     },
     optionalCharges: {
       ...clone(fallback.optionalCharges),
@@ -81,6 +85,10 @@ function normalizeDuoRule(item, fallback) {
         bandSize: cleanNumber(item.rankPricing?.starPricing?.bandSize, fallback.rankPricing.starPricing.bandSize, { min: 1, max: 100 }),
         basePerStar: cleanNumber(item.rankPricing?.starPricing?.basePerStar, fallback.rankPricing.starPricing.basePerStar),
         incrementPerBand: cleanNumber(item.rankPricing?.starPricing?.incrementPerBand, fallback.rankPricing.starPricing.incrementPerBand),
+        priceMultiplier: cleanNumber(item.rankPricing?.starPricing?.priceMultiplier, fallback.rankPricing.starPricing.priceMultiplier ?? 1, { min: 0.01, max: 10 }),
+        roundTo: cleanNumber(item.rankPricing?.starPricing?.roundTo, fallback.rankPricing.starPricing.roundTo, { min: 0.01, max: 100 }),
+        bandPrices: fallback.rankPricing.starPricing.bandPrices.map((value, index) =>
+          cleanNumber(item.rankPricing?.starPricing?.bandPrices?.[index], value)),
       },
       guaranteedMultiplier: cleanNumber(item.rankPricing?.guaranteedMultiplier, fallback.rankPricing.guaranteedMultiplier, { min: 0, max: 10 }),
       standardMultiplier: cleanNumber(item.rankPricing?.standardMultiplier, fallback.rankPricing.standardMultiplier, { min: 0, max: 10 }),
@@ -96,25 +104,27 @@ function normalizeDuoRule(item, fallback) {
 }
 
 function normalizeOtherRule(item, fallback) {
-  const reviewFallback = fallback.options["review-coaching"];
-  const reviewInput = item.options?.["review-coaching"] || {};
+  const normalizeTimedOption = (optionId) => {
+    const optionFallback = fallback.options[optionId];
+    const optionInput = item.options?.[optionId] || {};
+    const unitPrice = cleanNumber(optionInput.unitPrice, optionFallback.unitPrice);
+    const minimumMinutes = cleanNumber(optionInput.minimumMinutes, optionFallback.minimumMinutes, { min: 1, max: 1440 });
+    return {
+      ...optionFallback,
+      configured: optionInput.configured !== false,
+      unitPrice,
+      minimumMinutes,
+      bookingDeposit: cleanNumber(optionInput.bookingDeposit, unitPrice * minimumMinutes),
+      freeRescheduleNoticeHours: cleanNumber(optionInput.freeRescheduleNoticeHours, optionFallback.freeRescheduleNoticeHours, { min: 0, max: 168 }),
+    };
+  };
   return {
     ...clone(fallback),
     configured: item.configured !== false,
     options: {
-      "review-coaching": {
-        ...reviewFallback,
-        configured: reviewInput.configured !== false,
-        unitPrice: cleanNumber(reviewInput.unitPrice, reviewFallback.unitPrice),
-        minimumMinutes: cleanNumber(reviewInput.minimumMinutes, reviewFallback.minimumMinutes, { min: 1, max: 1440 }),
-        bookingDeposit: cleanNumber(
-          reviewInput.bookingDeposit,
-          cleanNumber(reviewInput.unitPrice, reviewFallback.unitPrice) * cleanNumber(reviewInput.minimumMinutes, reviewFallback.minimumMinutes, { min: 1, max: 1440 }),
-        ),
-        freeRescheduleNoticeHours: cleanNumber(reviewInput.freeRescheduleNoticeHours, reviewFallback.freeRescheduleNoticeHours, { min: 0, max: 168 }),
-      },
-      "discord-recorded-review": { configured: false },
-      "hero-coaching": { configured: false },
+      "review-coaching": normalizeTimedOption("review-coaching"),
+      "discord-recorded-review": normalizeTimedOption("discord-recorded-review"),
+      "hero-coaching": normalizeTimedOption("hero-coaching"),
     },
     quoteValidityDays: cleanNumber(item.quoteValidityDays, fallback.quoteValidityDays, { min: 1, max: 90 }),
   };

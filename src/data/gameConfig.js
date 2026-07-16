@@ -235,9 +235,9 @@ export const serviceDefinitions = [
   {
     id: "other",
     labels: labels(
-      "其他（復盤教學／Discord 錄屏／英雄教學）",
-      "Other (review coaching / Discord recording / hero coaching)",
-      "其他（复盘教学／Discord 录屏／英雄教学）",
+      "其他（復盤教學／第一視角教學／英雄教學）",
+      "Other (review coaching / first-person coaching / hero coaching)",
+      "其他（复盘教学／第一视角教学／英雄教学）",
     ),
     aliases: [
       "其他",
@@ -245,8 +245,11 @@ export const serviceDefinitions = [
       "复盘",
       "復盤教學",
       "复盘教学",
+      "第一視角教學",
+      "第一视角教学",
       "Discord 錄屏",
       "Discord 录屏",
+      "Discord recording",
       "英雄教學",
       "英雄教学",
     ],
@@ -259,15 +262,13 @@ export const serviceDefinitions = [
       },
       {
         id: "discord-recorded-review",
-        labels: labels("Discord 錄屏", "Discord recording", "Discord 录屏"),
-        requiredFields: ["completionTime", "additionalRequirements"],
-        manualOnly: true,
+        labels: labels("第一視角教學", "First-person coaching", "第一视角教学"),
+        requiredFields: ["preferredStartTime", "additionalRequirements"],
       },
       {
         id: "hero-coaching",
         labels: labels("英雄教學", "Hero coaching", "英雄教学"),
-        requiredFields: ["completionTime", "additionalRequirements"],
-        manualOnly: true,
+        requiredFields: ["preferredStartTime", "additionalRequirements"],
       },
     ],
     requiredFields: ["gameId", "otherServiceType", "additionalRequirements"],

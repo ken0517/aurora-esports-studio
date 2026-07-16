@@ -92,14 +92,15 @@ function withoutField(draft, field) {
   return copy;
 }
 
-test("all five services accept their minimum complete field sets and require human review", () => {
+test("all five services accept their minimum complete field sets and use only configured prices", () => {
+  const automatic = new Set(["rank", "duo-ranked", "duo-match", "other"]);
   for (const [name, draft] of Object.entries(minimalDrafts)) {
     const validation = validateQuoteDraft(draft);
     assert.equal(validation.valid, true, `${name}: ${validation.errors.join(" ")}`);
 
     const quote = calculateQuote(draft, { reference: `AUR-TEST-${name.toUpperCase()}` });
-    assert.equal(quote.status, "manual_review", `${name} must not invent a price`);
-    assert.equal(quote.finalTotal, null, `${name} must not expose a total`);
+    assert.equal(quote.status, automatic.has(name) ? "quoted" : "manual_review", `${name} status`);
+    if (!automatic.has(name)) assert.equal(quote.finalTotal, null, `${name} must not expose a total`);
   }
 });
 
@@ -215,7 +216,8 @@ test("duo modes validate only their own dynamic fields", () => {
   assert.ok(afterModeSelection.missingFields.includes("preferredStartTime"));
 
   const oneMatch = validateQuoteDraft({ ...duoMatchDraft, quantity: 1 });
-  assert.equal(oneMatch.valid, true);
+  assert.equal(oneMatch.valid, false);
+  assert.ok(oneMatch.errorCodes.includes("minimumQuantity"));
 });
 
 test("duo WhatsApp summary uses the appointment start time instead of completion time", () => {
@@ -228,7 +230,7 @@ test("duo WhatsApp summary uses the appointment start time instead of completion
 test("all three other-service subcategories validate and retain their selected label", () => {
   const options = [
     ["review-coaching", "復盤教學"],
-    ["discord-recorded-review", "Discord 錄屏"],
+    ["discord-recorded-review", "第一視角教學"],
     ["hero-coaching", "英雄教學"],
   ];
 
@@ -241,7 +243,7 @@ test("all three other-service subcategories validate and retain their selected l
       "zh-HK",
     );
     assert.ok(message.includes(expectedLabel));
-    assert.ok(message.includes("待人工確認"));
+    assert.ok(message.includes("HK$37.5"));
   }
 
   const invalid = validateQuoteDraft({ ...otherDraft, otherServiceType: "voice" });
@@ -508,7 +510,7 @@ test("approved AOV ranked and match duo pricing follows guarantee multipliers an
   assert.ok(oneMatch.errorCodes.includes("minimumQuantity"));
 });
 
-test("approved AOV review coaching quotes only the booking payment and keeps other options manual", () => {
+test("all approved timed teaching options quote the same booking payment", () => {
   const review = calculateQuote({
     locale: "zh-HK",
     gameId: "aov",
@@ -526,8 +528,75 @@ test("approved AOV review coaching quotes only the booking payment and keeps oth
   const discord = calculateQuote({
     ...review.draft,
     otherServiceType: "discord-recorded-review",
-    completionTime: "三日內",
   });
-  assert.equal(discord.status, "manual_review");
-  assert.equal(discord.finalTotal, null);
+  const hero = calculateQuote({ ...review.draft, otherServiceType: "hero-coaching" });
+  assert.equal(discord.status, "quoted");
+  assert.equal(discord.finalTotal, 37.5);
+  assert.equal(hero.status, "quoted");
+  assert.equal(hero.finalTotal, 37.5);
+});
+
+test("China-server and HOK Global use the approved 85% and 80% rounded rank tables", () => {
+  const draft = {
+    locale: "zh-HK",
+    serviceId: "rank",
+    currentRankId: "diamond",
+    currentDivision: "V",
+    currentStars: 0,
+    targetRankId: "diamond",
+    targetDivision: "III",
+    targetStars: 0,
+    completionTime: "三日內",
+    express: false,
+  };
+  const china = calculateQuote({ ...draft, gameId: "hok-cn" });
+  const global = calculateQuote({ ...draft, gameId: "hok-global" });
+  assert.equal(china.status, "quoted");
+  assert.equal(china.basePrice, 130);
+  assert.equal(china.finalTotal, 130);
+  assert.equal(global.status, "quoted");
+  assert.equal(global.basePrice, 120);
+  assert.equal(global.finalTotal, 120);
+
+  const chinaTenthStar = calculateQuote({
+    ...draft,
+    gameId: "hok-cn",
+    currentRankId: "strongest-king",
+    currentDivision: null,
+    currentStars: 9,
+    targetRankId: "extraordinary-king",
+    targetDivision: null,
+    targetStars: 10,
+  });
+  assert.equal(chinaTenthStar.basePrice, 20);
+  assert.equal(chinaTenthStar.finalTotal, 50);
+});
+
+test("China-server and HOK Global duo and teaching rules share the approved structure", () => {
+  for (const gameId of ["hok-cn", "hok-global"]) {
+    const matches = calculateQuote({
+      locale: "zh-HK",
+      gameId,
+      serviceId: "duo",
+      duoMode: "match-5v5",
+      preferredStartTime: "2026-07-20T20:00",
+      quantity: 10,
+    });
+    assert.equal(matches.basePrice, 200);
+    assert.equal(matches.discount, 20);
+    assert.equal(matches.finalTotal, 180);
+
+    for (const otherServiceType of ["review-coaching", "discord-recorded-review", "hero-coaching"]) {
+      const teaching = calculateQuote({
+        locale: "zh-HK",
+        gameId,
+        serviceId: "other",
+        otherServiceType,
+        preferredStartTime: "2026-07-20T20:00",
+        additionalRequirements: "測試教學需要",
+      });
+      assert.equal(teaching.status, "quoted");
+      assert.equal(teaching.finalTotal, 37.5);
+    }
+  }
 });

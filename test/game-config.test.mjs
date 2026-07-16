@@ -136,7 +136,7 @@ test("other service contains exactly the three supported subcategories", () => {
   ]);
   assert.deepEqual(
     zh(other.options),
-    ["復盤教學", "Discord 錄屏", "英雄教學"],
+    ["復盤教學", "第一視角教學", "英雄教學"],
   );
 });
 

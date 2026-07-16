@@ -403,7 +403,7 @@ function mergeDraftPatch(current, patch) {
   }
   if (!(next.serviceId === "duo" && next.duoMode === "ranked")) next.duoGuarantee = null;
   const usesAppointmentStart = (next.serviceId === "duo" && next.duoMode) ||
-    (next.serviceId === "other" && next.otherServiceType === "review-coaching");
+    (next.serviceId === "other" && Boolean(next.otherServiceType));
   if (!usesAppointmentStart) next.preferredStartTime = "";
   if (!(next.serviceId === "duo" && next.duoMode === "match-5v5")) {
     next.quantity = null;
@@ -900,7 +900,7 @@ export function QuoteAssistant({
   const isDuoRanked = isDuo && draft.duoMode === "ranked";
   const isDuoMatch = isDuo && draft.duoMode === "match-5v5";
   const isOther = draft.serviceId === "other";
-  const isReviewCoaching = isOther && draft.otherServiceType === "review-coaching";
+  const isTimedTeaching = isOther && Boolean(draft.otherServiceType);
   const showRankRange = draft.serviceId === "rank" || isDuoRanked;
   const showCurrentRank = showRankRange || isHeroPower;
   const showHeroAndRole = draft.serviceId === "rank" || isPeak;
@@ -1302,7 +1302,7 @@ export function QuoteAssistant({
                 <textarea
                   rows="3"
                   required
-                  placeholder={localeId === "en" ? "Describe the review, recording or coaching you need" : "請說明你想查詢的復盤、錄屏或英雄教學內容"}
+                  placeholder={localeId === "en" ? "Describe the review, first-person or hero coaching you need" : "請說明你想查詢的復盤、第一視角或英雄教學內容"}
                   value={draft.additionalRequirements}
                   onChange={(event) => updateDraft("additionalRequirements", event.target.value)}
                 />
@@ -1310,7 +1310,7 @@ export function QuoteAssistant({
             </>
           ) : null}
 
-          {(isDuo && draft.duoMode) || isReviewCoaching ? (
+          {(isDuo && draft.duoMode) || isTimedTeaching ? (
             <Field
               label={text("preferredStartTime", ui.preferredStartTime)}
               hint={draft.preferredStartTime
@@ -1342,7 +1342,7 @@ export function QuoteAssistant({
             </Field>
           ) : null}
 
-          {draft.serviceId && !isDuo && !isReviewCoaching ? (
+          {draft.serviceId && !isDuo && !isTimedTeaching ? (
             <Field label={text("completionTime", "理想完成時間")}>
               <input type="text" required value={draft.completionTime} placeholder={localeId === "en" ? "e.g. within 3 days" : "例如：三日內／今晚開始"} onChange={(event) => updateDraft("completionTime", event.target.value)} />
             </Field>
@@ -1462,7 +1462,7 @@ export function QuoteAssistant({
       [text("basePrice", "基本價格"), formatValue(quote?.basePrice, localeId, currency, ui.pending)],
       [text("optionalCharges", "附加費用"), formatValue(quote?.optionalCharges, localeId, currency, ui.pending)],
       [text("discount", "折扣"), formatValue(quote?.discount, localeId, currency, ui.pending)],
-      ...(isDuo || isReviewCoaching
+      ...(isDuo || isTimedTeaching
         ? [[text("preferredStartTime", ui.preferredStartTime), formatAppointmentTime(draft.preferredStartTime, localeId) || ui.pending]]
         : [[text("estimatedTime", "預計完成時間"), quote?.estimatedCompletionTime ?? draft.completionTime ?? ui.pending]]),
       [

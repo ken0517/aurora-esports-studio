@@ -143,6 +143,18 @@ function validChinaRankContext(overrides = {}) {
   };
 }
 
+function validChinaPeakContext(overrides = {}) {
+  return {
+    gameId: "hok-cn",
+    serviceId: "peak",
+    currentPoints: 1350,
+    targetPoints: 1500,
+    completionTime: "三日內",
+    express: false,
+    ...overrides,
+  };
+}
+
 function functionCallResponse(args, overrides = {}) {
   return {
     functionCalls: [
@@ -496,8 +508,8 @@ test("unconfigured pricing blocks a model-invented amount and returns human conf
   await withHttpServer(handler, async (baseUrl) => {
     const { response, payload } = await postJson(baseUrl, {
       locale: "zh-CN",
-      messages: [{ role: "user", content: "国服钻石三升星耀五多少钱？" }],
-      quoteContext: validChinaRankContext(),
+      messages: [{ role: "user", content: "国服巅峰赛1350升1500多少钱？" }],
+      quoteContext: validChinaPeakContext(),
     });
     assert.equal(response.status, 200);
     assert.equal(payload.pricingStatus, "manual_review");
@@ -516,7 +528,7 @@ test("manual-review responses always include the exact pending-confirmation stat
     const { response, payload } = await postJson(baseUrl, {
       locale: "zh-CN",
       messages: [{ role: "user", content: "资料完整，请报价。" }],
-      quoteContext: validChinaRankContext(),
+      quoteContext: validChinaPeakContext(),
     });
     assert.equal(response.status, 200);
     assert.equal(payload.pricingStatus, "manual_review");
@@ -535,7 +547,7 @@ test("money guard blocks numeric amounts and unsupported free-price claims", asy
       const { response, payload } = await postJson(baseUrl, {
         locale: "zh-CN",
         messages: [{ role: "user", content: `请报价，模型可能会说 ${amount}` }],
-        quoteContext: validChinaRankContext(),
+        quoteContext: validChinaPeakContext(),
       });
       assert.equal(response.status, 200);
       assert.equal(payload.pricingStatus, "manual_review");
