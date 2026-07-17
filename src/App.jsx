@@ -47,12 +47,6 @@ const brandIconPaths = {
   carousell: "brands/carousell.svg",
 };
 
-const paymentIconPaths = [
-  { id: "alipay", src: "brands/alipay.svg", fallback: "Alipay" },
-  { id: "wechatPay", src: "brands/wechat-pay.svg", fallback: "WeChat Pay" },
-  { id: "fps", src: "brands/fps.svg", fallback: "轉數快 FPS" },
-];
-
 const menuItems = [
   { key: "nav.games", fallback: "遊戲", href: "#games" },
   { key: "nav.services", fallback: "服務", href: "#services" },
@@ -227,6 +221,9 @@ function HeroHeader({ locale, setLocale, menuOpen, setMenuOpen, text }) {
       <a className="hero-wordmark" href="#top" aria-label={brand.fullName}>
         <span className="hero-wordmark__monogram" aria-hidden="true">A</span>
         <span>{brand.fullName}</span>
+        <span className="hero-wordmark__offer">
+          {text("hero.newcomerOffer", "新人優惠・全單自動享 85 折")}
+        </span>
       </a>
 
       <button
@@ -420,22 +417,6 @@ export default function App() {
             </p>
           </motion.div>
 
-          <div className="hero-promo">
-            <strong>{text("hero.newcomerOffer", "新人優惠・全單自動享 85 折")}</strong>
-            <div className="hero-promo__payments" aria-label={text("hero.paymentMethods", "支援付款方式")}>
-              {paymentIconPaths.map((payment) => (
-                <img
-                  key={payment.id}
-                  src={publicAsset(payment.src)}
-                  alt={text(`hero.payments.${payment.id}`, payment.fallback)}
-                  width="34"
-                  height="34"
-                  loading="eager"
-                />
-              ))}
-            </div>
-            <small>{text("hero.paymentNote", "付款方式及資料由 Aurora 客服確認")}</small>
-          </div>
           <nav className="cinematic-hero__socials" aria-label={text("contact.socialLinks", "社交平台")}> 
             {contactChannels.map((channel) => (
               <ExternalAnchor

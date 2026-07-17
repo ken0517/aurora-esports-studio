@@ -29,15 +29,17 @@ test("hero contact dock uses branded images and keeps platform names visible on 
   }
 });
 
-test("homepage promo shows newcomer offer and non-clickable payment marks", async () => {
+test("hero places its newcomer offer under the wordmark without payment marks", async () => {
   const app = await source("src/App.jsx");
-  assert.match(app, /新人優惠・全單自動享 85 折/);
-  for (const id of ["alipay", "wechat-pay", "fps"]) {
-    assert.match(app, new RegExp(`brands/${id}\\.svg`));
-  }
-  const promo = app.match(/<div className="hero-promo"[\s\S]*?<\/div>/)?.[0] || "";
-  assert.ok(promo);
-  assert.doesNotMatch(promo, /<a\b/);
+  const css = await source("src/styles/index.css");
+  const wordmark = app.match(/<a className="hero-wordmark"[\s\S]*?<\/a>/)?.[0] || "";
+  assert.match(wordmark, /hero-wordmark__offer/);
+  assert.doesNotMatch(app, /paymentIconPaths|hero-promo__payments|className="hero-promo"/);
+  assert.match(css, /\.hero-wordmark__offer/);
+  assert.match(
+    css,
+    /\.cinematic-hero__socials\s*\{[\s\S]*?bottom:\s*calc\((?:15[0-9]|1[6-9][0-9]|[2-9][0-9]{2})px/,
+  );
 });
 
 test("admin can edit the newcomer discount and approved exchange rates without retired charges", async () => {
