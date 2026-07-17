@@ -96,7 +96,7 @@ export default function GameLandingPage({ gameId }) {
                   <small>{getServiceEditorialText(service.category, "zh-HK")}</small>
                   <h3>{getServiceEditorialText(service.title, "zh-HK")}</h3>
                   <p>{getServiceEditorialText(service.description, "zh-HK")}</p>
-                  <a href={`${buildQuoteEntryUrl(gameId, "manual")}&quoteService=${service.id}`}>
+                  <a href={buildQuoteEntryUrl(gameId, "manual", service.id)}>
                     查詢報價 <ArrowRight size={15} aria-hidden="true" />
                   </a>
                 </article>

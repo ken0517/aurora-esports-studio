@@ -683,9 +683,12 @@ export function QuoteAssistant({
 
   useEffect(() => {
     const requestText = String(prefillRequest?.text ?? "").trim();
-    if (!requestText) return;
+    const requestedPane = prefillRequest?.pane === "manual" ? "manual" : "ai";
+    const gameId = String(prefillRequest?.gameId ?? "").trim() || null;
+    const serviceId = String(prefillRequest?.serviceId ?? "").trim() || null;
+    if (!requestText && !gameId && !serviceId) return;
 
-    const requestKey = prefillRequest?.id ?? requestText;
+    const requestKey = prefillRequest?.id ?? `${requestedPane}:${gameId}:${serviceId}:${requestText}`;
     if (
       lastPrefillRequestRef.current?.id === requestKey &&
       lastPrefillRequestRef.current?.text === requestText
@@ -694,15 +697,39 @@ export function QuoteAssistant({
     }
 
     lastPrefillRequestRef.current = { id: requestKey, text: requestText };
-    prefillFocusRef.current = true;
-    suppressSuggestionsOnFocusRef.current = true;
-    setAiInput(requestText);
-    setAiError("");
-    setSuggestionsVisible(false);
-    setActiveSuggestion(-1);
-    setMobilePane("ai");
-    setOpenState(true);
-  }, [prefillRequest?.id, prefillRequest?.text, setOpenState]);
+    const frame = window.requestAnimationFrame(() => {
+      if (gameId || serviceId) {
+        setDraft((current) =>
+          mergeDraftPatch(current, {
+            ...(gameId ? { gameId } : {}),
+            ...(serviceId ? { serviceId } : {}),
+          }),
+        );
+      }
+      setAiError("");
+      setSuggestionsVisible(false);
+      setActiveSuggestion(-1);
+      if (requestedPane === "manual") {
+        manualFocusRef.current = true;
+        setMobilePane("manual");
+      } else {
+        prefillFocusRef.current = true;
+        suppressSuggestionsOnFocusRef.current = true;
+        if (requestText) setAiInput(requestText);
+        setMobilePane("ai");
+      }
+      setOpenState(true);
+    });
+
+    return () => window.cancelAnimationFrame(frame);
+  }, [
+    prefillRequest?.gameId,
+    prefillRequest?.id,
+    prefillRequest?.pane,
+    prefillRequest?.serviceId,
+    prefillRequest?.text,
+    setOpenState,
+  ]);
 
   useEffect(() => {
     if (!open || mobilePane !== "ai" || !prefillFocusRef.current) return undefined;

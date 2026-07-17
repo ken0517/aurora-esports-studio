@@ -44,7 +44,10 @@ export default function DeferredQuoteAssistant({ locale = "zh-HK", prefillReques
     return () => window.clearTimeout(timer);
   }, []);
 
-  const effectivePane = initialPane || (prefillRequest?.text ? "ai" : null);
+  const requestedPane = ["manual", "ai"].includes(prefillRequest?.pane)
+    ? prefillRequest.pane
+    : null;
+  const effectivePane = initialPane || requestedPane || (prefillRequest?.text ? "ai" : null);
 
   if (effectivePane) {
     return (

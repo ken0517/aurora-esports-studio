@@ -60,3 +60,9 @@ test("quote assistant saves only consented conversations and enquiries", async (
   assert.match(quote, /\/api\/enquiries/);
   assert.match(quote, /!conversationConsent/);
 });
+
+test("homepage game stories link to the three dedicated service pages", async () => {
+  const app = await source("src/App.jsx");
+  assert.match(app, /buildGameLandingPath/);
+  assert.match(app, /href=\{buildGameLandingPath\(game\.id\)\}/);
+});

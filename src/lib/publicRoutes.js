@@ -17,15 +17,21 @@ export function resolvePublicRoute(pathname = "/") {
   return { type: "home" };
 }
 
-export function buildQuoteEntryUrl(gameId, pane = "manual") {
+const supportedQuoteServices = new Set(["rank", "peak", "duo", "hero-power", "other"]);
+
+export function buildQuoteEntryUrl(gameId, pane = "manual", serviceId = null) {
   const page = getGameLandingPageById(gameId);
   const safePane = pane === "ai" ? "ai" : "manual";
   if (!page) return "/#ai-quote";
-  return `/?quoteGame=${encodeURIComponent(page.gameId)}&quotePane=${safePane}#ai-quote`;
+  const params = new URLSearchParams({
+    quoteGame: page.gameId,
+    quotePane: safePane,
+  });
+  if (supportedQuoteServices.has(serviceId)) params.set("quoteService", serviceId);
+  return `/?${params.toString()}#ai-quote`;
 }
 
 export function buildGameLandingPath(gameId) {
   const page = getGameLandingPageById(gameId);
   return page ? `/${page.slug}/` : "/#games";
 }
-

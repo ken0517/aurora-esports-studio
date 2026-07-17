@@ -11,7 +11,7 @@ import {
 } from "lucide-react";
 import DeferredQuoteAssistant from "./components/DeferredQuoteAssistant";
 import ServicesEditorial from "./components/ServicesEditorial";
-import { getServiceEditorialText } from "./data/serviceCatalog";
+import { getEditorialServicesForGame, getServiceEditorialText } from "./data/serviceCatalog";
 import {
   brand,
   contactChannels,
@@ -25,6 +25,7 @@ import {
 import { supportedLocales, translate } from "./data/translations";
 import { useRuntimeCatalog } from "./hooks/useRuntimeCatalog";
 import { publicAsset } from "./lib/publicAsset.js";
+import { buildGameLandingPath } from "./lib/publicRoutes.js";
 import "./styles/index.css";
 
 const localeFallbackLabels = {
@@ -287,6 +288,46 @@ export default function App() {
     }
   }, [locale]);
 
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const quoteGame = params.get("quoteGame");
+    const quotePane = params.get("quotePane") === "ai" ? "ai" : "manual";
+    const quoteService = params.get("quoteService");
+    const game = games.find((item) => item.id === quoteGame);
+    if (!game) return;
+
+    const service = getEditorialServicesForGame(game.id).find((item) => item.id === quoteService);
+    const gameName = getServiceEditorialText(game.name, locale);
+    const serviceName = service ? getServiceEditorialText(service.title, locale) : "";
+    const question = serviceName
+      ? `我想查詢${gameName}－${serviceName}的報價`
+      : `我想查詢${gameName}的服務報價`;
+
+    params.delete("quoteGame");
+    params.delete("quotePane");
+    params.delete("quoteService");
+    const remainingSearch = params.toString();
+    window.history.replaceState(
+      {},
+      "",
+      `${window.location.pathname}${remainingSearch ? `?${remainingSearch}` : ""}${window.location.hash}`,
+    );
+
+    const frame = window.requestAnimationFrame(() => {
+      setActiveGameId(game.id);
+      serviceQuoteRequestId.current += 1;
+      setServiceQuoteRequest({
+        id: serviceQuoteRequestId.current,
+        pane: quotePane,
+        gameId: game.id,
+        serviceId: service?.id ?? null,
+        text: quotePane === "ai" ? question : "",
+      });
+    });
+
+    return () => window.cancelAnimationFrame(frame);
+  }, [locale]);
+
   useEffect(
     () => () => {
       quoteNavigationCleanupRef.current?.();
@@ -350,13 +391,6 @@ export default function App() {
     },
     [locale, reduceMotion],
   );
-
-  const chooseGame = (gameId) => {
-    setActiveGameId(gameId);
-    window.requestAnimationFrame(() => {
-      document.querySelector("#services")?.scrollIntoView({ behavior: "smooth", block: "start" });
-    });
-  };
 
   return (
     <div className="aurora-editorial">
@@ -518,10 +552,10 @@ export default function App() {
                     <h3>{text(`games.${game.id}.name`, game.name)}</h3>
                     <small>{text(`games.${game.id}.englishName`, game.englishName)}</small>
                     <p>{text(`games.${game.id}.description`, game.description)}</p>
-                    <button type="button" className="editorial-text-link" onClick={() => chooseGame(game.id)}>
+                    <a className="editorial-text-link" href={buildGameLandingPath(game.id)}>
                       {text("games.viewServices", "查看服務")}
                       <ArrowRight aria-hidden="true" />
-                    </button>
+                    </a>
                   </div>
                 </Reveal>
               ))}
