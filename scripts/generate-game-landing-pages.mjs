@@ -70,24 +70,59 @@ function replaceCanonical(source, canonical) {
 function makeStructuredData(page) {
   return {
     "@context": "https://schema.org",
-    "@type": "ProfessionalService",
-    name: `Aurora Esports Studio｜${page.title}`,
-    url: page.canonical,
-    image: `${officialOrigin}/${page.image}`,
-    description: page.seoDescription,
-    areaServed: [
-      { "@type": "Country", name: "Hong Kong" },
-      { "@type": "Country", name: "Taiwan" },
+    "@graph": [
+      {
+        "@type": "ProfessionalService",
+        "@id": `${page.canonical}#service`,
+        name: `Aurora Esports Studio｜${page.title}`,
+        url: page.canonical,
+        image: `${officialOrigin}/${page.image}`,
+        description: page.seoDescription,
+        areaServed: [
+          { "@type": "Country", name: "Hong Kong" },
+          { "@type": "Country", name: "Taiwan" },
+        ],
+        availableLanguage: ["zh-Hant", "zh-Hans", "en"],
+        serviceType: ["排位代打", "陪玩帶飛", "巔峰賽代打", "英雄戰力標", "遊戲教學"],
+        audience: { "@type": "Audience", audienceType: page.audience },
+        contactPoint: {
+          "@type": "ContactPoint",
+          contactType: "customer service",
+          url: "https://wa.me/85262243840",
+          availableLanguage: ["Chinese", "English"],
+        },
+      },
+      {
+        "@type": "FAQPage",
+        "@id": `${page.canonical}#faq`,
+        mainEntity: page.faqs.map((faq) => ({
+          "@type": "Question",
+          name: faq.question,
+          acceptedAnswer: {
+            "@type": "Answer",
+            text: faq.answer,
+          },
+        })),
+      },
+      {
+        "@type": "BreadcrumbList",
+        "@id": `${page.canonical}#breadcrumb`,
+        itemListElement: [
+          {
+            "@type": "ListItem",
+            position: 1,
+            name: "Aurora Esports Studio",
+            item: `${officialOrigin}/`,
+          },
+          {
+            "@type": "ListItem",
+            position: 2,
+            name: page.title,
+            item: page.canonical,
+          },
+        ],
+      },
     ],
-    availableLanguage: ["zh-Hant", "zh-Hans", "en"],
-    serviceType: ["排位代打", "陪玩帶飛", "巔峰賽代打", "英雄戰力標", "遊戲教學"],
-    audience: { "@type": "Audience", audienceType: page.audience },
-    contactPoint: {
-      "@type": "ContactPoint",
-      contactType: "customer service",
-      url: "https://wa.me/85262243840",
-      availableLanguage: ["Chinese", "English"],
-    },
   };
 }
 

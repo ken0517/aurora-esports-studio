@@ -60,6 +60,16 @@ test("production build generates crawler-ready game landing page documents", asy
   assert.match(generator, /ProfessionalService/);
 });
 
+test("game landing documents expose FAQ and breadcrumb structured data", async () => {
+  const generator = await read("scripts/generate-game-landing-pages.mjs");
+
+  assert.match(generator, /FAQPage/);
+  assert.match(generator, /BreadcrumbList/);
+  assert.match(generator, /mainEntity/);
+  assert.match(generator, /itemListElement/);
+  assert.match(generator, /page\.faqs/);
+});
+
 test("GitHub Pages builds from the root and preserves the custom domain", async () => {
   const [workflow, cname] = await Promise.all([
     read(".github/workflows/deploy-pages.yml"),
