@@ -35,11 +35,11 @@
 **Interfaces:**
 - Produces: `initializeAnalytics`, `trackPageView`, `trackQuoteEntry`, `trackServiceQuote`, `trackQuoteResult`, `trackContactClick`.
 
-- [ ] **Step 1:** Write tests proving invalid configuration is a no-op, a valid `G-` ID loads once, and sensitive keys are removed.
-- [ ] **Step 2:** Run `node --test test/analytics.test.mjs` and verify failure because the module is missing.
-- [ ] **Step 3:** Implement the minimal module with an event allowlist and safe parameter allowlist.
-- [ ] **Step 4:** Run `node --test test/analytics.test.mjs` and verify all analytics tests pass.
-- [ ] **Step 5:** Commit the analytics core.
+- [x] **Step 1:** Write tests proving invalid configuration is a no-op, a valid `G-` ID loads once, and sensitive keys are removed.
+- [x] **Step 2:** Run `node --test test/analytics.test.mjs` and verify failure because the module is missing.
+- [x] **Step 3:** Implement the minimal module with an event allowlist and safe parameter allowlist.
+- [x] **Step 4:** Run `node --test test/analytics.test.mjs` and verify all analytics tests pass.
+- [x] **Step 5:** Commit the analytics core.
 
 ### Task 3: UI event wiring
 
@@ -54,11 +54,11 @@
 **Interfaces:**
 - Consumes: the analytics helpers from Task 2.
 
-- [ ] **Step 1:** Write source-level tests for page view, quote entry, service quote, quote status and contact click instrumentation.
-- [ ] **Step 2:** Run `node --test test/analytics-ui.test.mjs` and verify the assertions fail.
-- [ ] **Step 3:** Add the smallest helper calls and data attributes required by the tests.
-- [ ] **Step 4:** Run the focused tests, then `npm test`.
-- [ ] **Step 5:** Commit the UI wiring.
+- [x] **Step 1:** Write source-level tests for page view, quote entry, service quote, quote status and contact click instrumentation.
+- [x] **Step 2:** Run `node --test test/analytics-ui.test.mjs` and verify the assertions fail.
+- [x] **Step 3:** Add the smallest helper calls and data attributes required by the tests.
+- [x] **Step 4:** Run the focused tests, then `npm test`.
+- [x] **Step 5:** Commit the UI wiring.
 
 ### Task 4: Production configuration and verification
 
@@ -67,8 +67,8 @@
 - Modify: `.github/workflows/deploy-pages.yml`
 - Modify: `README.md`
 
-- [ ] **Step 1:** Document `VITE_GA_MEASUREMENT_ID` as an optional public configuration value.
-- [ ] **Step 2:** Pass the repository variable into the Pages build without exposing any secret.
-- [ ] **Step 3:** Run `npm test`, `npm run lint`, and `npm run build`.
-- [ ] **Step 4:** Push the verified changes and confirm the Pages deployment succeeds.
-- [ ] **Step 5:** Confirm the production site remains functional when the variable is absent or configured.
+- [x] **Step 1:** Document `VITE_GA_MEASUREMENT_ID` as an optional public configuration value.
+- [x] **Step 2:** Pass the repository variable into the Pages build without exposing any secret.
+- [x] **Step 3:** Run `npm test`, `npm run lint`, and `npm run build`.
+- [x] **Step 4:** Push the verified changes and confirm the Pages deployment succeeds.
+- [x] **Step 5:** Confirm the production site remains functional when the variable is absent or configured.
