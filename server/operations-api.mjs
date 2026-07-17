@@ -203,10 +203,13 @@ function applyAction(current, body) {
   } else if (body.action === "update_order") {
     const order = state.orders.find((item) => item.id === body.orderId);
     if (!order) throw new Error("order-not-found");
+    const staffId = body.order?.staffId || null;
+    if (staffId && !state.staff.some((item) => item.id === staffId && item.active)) throw new Error("staff-not-found");
     order.customerName = cleanText(body.order?.customerName, 100) || null;
     order.contactMethod = cleanText(body.order?.contactMethod, 30) || null;
     order.contactValue = cleanText(body.order?.contactValue, 200) || null;
     order.internalNotes = cleanText(body.order?.internalNotes, 4_000) || null;
+    order.staffId = staffId;
     order.updatedAt = now;
     result.orderId = order.id;
   } else if (body.action === "upsert_staff") {

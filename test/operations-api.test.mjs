@@ -96,6 +96,24 @@ test("administrator can convert enquiries, manage appointments and receive overl
     assert.equal(staffResult.response.status, 200);
     const staffId = staffResult.payload.staff.id;
 
+    const combinedUpdate = await request(origin, "/action", {
+      method: "POST",
+      body: {
+        action: "update_order",
+        orderId: firstOrder.id,
+        order: {
+          customerName: "Rapid edit customer",
+          contactMethod: "whatsapp",
+          contactValue: "",
+          internalNotes: "",
+          staffId,
+        },
+      },
+    });
+    assert.equal(combinedUpdate.response.status, 200);
+    assert.equal(combinedUpdate.payload.order.customerName, "Rapid edit customer");
+    assert.equal(combinedUpdate.payload.order.staffId, staffId);
+
     const businessResult = await request(origin, "/action", { method: "POST", body: { action: "update_business_rules", businessRules: { ...staffResult.payload.state.businessRules, dailyCapacity: 1, retentionDays: 90 } } });
     assert.equal(businessResult.response.status, 200);
 

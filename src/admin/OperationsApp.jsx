@@ -70,7 +70,7 @@ export default function OperationsApp({ onUnauthorized }) {
         {panels.map(([id, label, Icon]) => <button className={activePanel === id ? "is-active" : ""} type="button" key={id} onClick={() => setActivePanel(id)}><Icon size={17} />{label}</button>)}
       </nav>
       {activePanel === "conversations" ? <ConversationsPanel state={state} onAction={action} busy={status === "saving"} /> : null}
-      {activePanel === "orders" ? <OrdersPanel key={state.revision} state={state} onAction={action} busy={status === "saving"} warnings={warnings} /> : null}
+      {activePanel === "orders" ? <OrdersPanel state={state} onAction={action} busy={status === "saving"} warnings={warnings} /> : null}
       {activePanel === "staff" ? <StaffRulesPanel key={state.revision} state={state} onAction={action} busy={status === "saving"} /> : null}
     </main>
   );

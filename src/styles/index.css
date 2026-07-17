@@ -1708,3 +1708,24 @@ img {
     transition-duration: 0.01ms !important;
   }
 }
+/* Lightweight first-screen quote controls; full assistant styles load on demand. */
+.app-shell-loading { display: grid; min-height: 100svh; place-items: center; background: #111; color: #f7f2e7; font: 600 13px/1.4 sans-serif; letter-spacing: .16em; text-transform: uppercase; }
+.quote-entry-control--placeholder { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); overflow: hidden; border: 1px solid rgba(255,255,255,.35); border-radius: 999px; background: rgba(5,7,9,.72); color: white; }
+.quote-entry-control--placeholder .quote-entry-choice { display: grid; min-height: 78px; grid-template-columns: auto 1fr auto; align-items: center; gap: 13px; border: 0; background: transparent; color: inherit; padding: 10px 18px; text-align: left; cursor: pointer; }
+.quote-entry-control--placeholder .quote-entry-choice + .quote-entry-choice { border-left: 1px solid rgba(255,255,255,.22); }
+.quote-entry-control--placeholder .quote-entry-choice__icon { display: grid; width: 42px; height: 42px; place-items: center; border: 1px solid rgba(255,255,255,.32); border-radius: 50%; }
+.quote-entry-control--placeholder .quote-entry-copy { display: grid; gap: 3px; }
+.quote-entry-control--placeholder .quote-entry-copy strong { font-size: 14px; }
+.quote-entry-control--placeholder .quote-entry-copy small { color: rgba(255,255,255,.65); font-size: 11px; }
+.quote-deferred-loading { display: flex; min-height: 80px; align-items: center; justify-content: center; gap: 9px; border: 1px solid rgba(255,255,255,.35); border-radius: 999px; background: rgba(5,7,9,.72); color: white; }
+.quote-deferred-loading svg { animation: quote-placeholder-spin .8s linear infinite; }
+@keyframes quote-placeholder-spin { to { transform: rotate(360deg); } }
+
+@media (max-width: 767px) {
+  .quote-entry-control--placeholder { grid-template-columns: 1fr 1fr; border-radius: 28px; }
+  .quote-entry-control--placeholder .quote-entry-choice { min-height: 92px; grid-template-columns: auto 1fr; gap: 9px; padding: 10px 12px; }
+  .quote-entry-control--placeholder .quote-entry-choice__arrow { display: none; }
+  .quote-entry-control--placeholder .quote-entry-choice__icon { width: 34px; height: 34px; }
+  .quote-entry-control--placeholder .quote-entry-copy strong { font-size: 12px; line-height: 1.35; }
+  .quote-entry-control--placeholder .quote-entry-copy small { font-size: 9px; }
+}

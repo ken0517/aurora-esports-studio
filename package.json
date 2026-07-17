@@ -9,6 +9,7 @@
     "build": "vite build",
     "lint": "eslint . --max-warnings=0",
     "test": "node --test",
+    "test:performance": "node --test test/performance-budget.test.mjs",
     "preview": "vite preview --host 0.0.0.0",
     "preview:full": "node --env-file-if-exists=.env.local server/site-server.mjs",
     "pages:admin-redirect": "node scripts/create-pages-admin-redirect.mjs",

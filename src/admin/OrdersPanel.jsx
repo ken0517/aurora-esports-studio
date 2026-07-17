@@ -36,13 +36,26 @@ export default function OrdersPanel({ state, onAction, busy, warnings }) {
   const availableStaff = useMemo(() => state.staff.filter((staff) => staff.active &&
     (!staff.gameIds.length || staff.gameIds.includes(selected?.gameId)) &&
     (!staff.serviceIds.length || staff.serviceIds.includes(selected?.serviceId))), [selected, state.staff]);
-  const patch = (field, value) => setDrafts((current) => ({ ...current, [selected.id]: { ...draft, [field]: value } }));
-  const patchAppointment = (field, value) => setDrafts((current) => ({ ...current, [selected.id]: { ...draft, appointment: { ...draft.appointment, [field]: value } } }));
+  const patch = (field, value) => setDrafts((current) => {
+    const currentDraft = current[selected.id] || draft;
+    return { ...current, [selected.id]: { ...currentDraft, [field]: value } };
+  });
+  const patchAppointment = (field, value) => setDrafts((current) => {
+    const currentDraft = current[selected.id] || draft;
+    return {
+      ...current,
+      [selected.id]: {
+        ...currentDraft,
+        appointment: { ...currentDraft.appointment, [field]: value },
+      },
+    };
+  });
 
-  const saveDetails = async () => {
-    await onAction({ action: "update_order", orderId: selected.id, order: draft });
-    await onAction({ action: "assign_staff", orderId: selected.id, staffId: draft.staffId || null });
-  };
+  const saveDetails = () => onAction({
+    action: "update_order",
+    orderId: selected.id,
+    order: { ...draft, staffId: draft.staffId || null },
+  });
   const saveAppointment = () => onAction({
     action: "update_appointment",
     orderId: selected.id,

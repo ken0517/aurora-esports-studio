@@ -29,6 +29,7 @@ test("conversation panel offers required filters, consent context and enquiry co
 
 test("orders panel covers all statuses, appointments, staff and conflict warnings", async () => {
   const panel = await source("src/admin/OrdersPanel.jsx");
+  const operations = await source("src/admin/OperationsApp.jsx");
   for (const status of [
     "new_enquiry",
     "awaiting_details",
@@ -44,7 +45,9 @@ test("orders panel covers all statuses, appointments, staff and conflict warning
     assert.match(panel, new RegExp(copy));
   }
   assert.match(panel, /update_appointment/);
-  assert.match(panel, /assign_staff/);
+  assert.match(panel, /action: "update_order"[\s\S]*staffId: draft\.staffId/);
+  assert.doesNotMatch(panel, /await onAction\(\{ action: "assign_staff"/);
+  assert.doesNotMatch(operations, /<OrdersPanel key=\{state\.revision\}/);
 });
 
 test("staff and business rules panel covers availability, closures, capacity and retention", async () => {
@@ -62,4 +65,3 @@ test("operations admin layout has a mobile single-column treatment", async () =>
   assert.match(styles, /@media \(max-width: 820px\)[\s\S]*\.admin-operations-layout[^{]*\{[^}]*grid-template-columns:\s*1fr/);
   assert.match(styles, /\.admin-action-button/);
 });
-

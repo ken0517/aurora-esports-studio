@@ -9,7 +9,7 @@ import {
   MessageCircle,
   X,
 } from "lucide-react";
-import QuoteAssistant from "./components/QuoteAssistant";
+import DeferredQuoteAssistant from "./components/DeferredQuoteAssistant";
 import ServicesEditorial from "./components/ServicesEditorial";
 import { getServiceEditorialText } from "./data/serviceCatalog";
 import {
@@ -25,6 +25,7 @@ import {
 import { supportedLocales, translate } from "./data/translations";
 import { useRuntimeCatalog } from "./hooks/useRuntimeCatalog";
 import { publicAsset } from "./lib/publicAsset.js";
+import "./styles/index.css";
 
 const localeFallbackLabels = {
   "zh-HK": "繁體中文",
@@ -378,11 +379,11 @@ export default function App() {
             <picture>
               <source
                 media="(max-width: 767px)"
-                srcSet={publicAsset("assets/generated/hero-mobile.png")}
+                srcSet={publicAsset("assets/generated/hero-mobile.webp")}
               />
               <motion.img
                 className="cinematic-hero__image cinematic-hero__image--responsive"
-                src={publicAsset("assets/generated/hero-desktop.png")}
+                src={publicAsset("assets/generated/hero-desktop.webp")}
                 alt=""
                 width="1672"
                 height="941"
@@ -457,7 +458,7 @@ export default function App() {
           </nav>
 
           <div className="cinematic-hero__quote" id="ai-quote">
-            <QuoteAssistant
+            <DeferredQuoteAssistant
               className="hero-quote-assistant"
               locale={locale}
               t={t}
@@ -525,6 +526,7 @@ export default function App() {
                       width="1200"
                       height="1800"
                       loading="lazy"
+                      decoding="async"
                     />
                   </div>
                   <div className="game-story__copy">

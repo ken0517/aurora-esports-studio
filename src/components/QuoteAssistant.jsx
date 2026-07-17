@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
+import "../styles/quote.css";
 import {
   ArrowRight,
   Check,
@@ -611,12 +612,13 @@ export function QuoteAssistant({
   onOpenChange,
   prefillRequest,
   pricingCatalog,
+  initialPane = null,
 }) {
   const reduceMotion = useReducedMotion();
   const localeId = normalizedLocale(locale);
   const ui = copyByLocale[localeId] ?? copyByLocale["zh-HK"];
-  const [open, setOpen] = useState(false);
-  const [mobilePane, setMobilePane] = useState("manual");
+  const [open, setOpen] = useState(Boolean(initialPane));
+  const [mobilePane, setMobilePane] = useState(initialPane || "manual");
   const [draft, setDraft] = useState(() => makeDraft(localeId));
   const [quote, setQuote] = useState(null);
   const [formError, setFormError] = useState("");
