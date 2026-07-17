@@ -34,7 +34,30 @@ test("robots and sitemap advertise the official Aurora domain", async () => {
 
   assert.match(robots, new RegExp(`Sitemap: ${officialOrigin}/sitemap\\.xml`));
   assert.match(sitemap, new RegExp(`<loc>${officialOrigin}/</loc>`));
+  assert.match(sitemap, new RegExp(`<loc>${officialOrigin}/arena-of-valor-boosting/</loc>`));
+  assert.match(sitemap, new RegExp(`<loc>${officialOrigin}/honor-of-kings-cn-boosting/</loc>`));
+  assert.match(sitemap, new RegExp(`<loc>${officialOrigin}/honor-of-kings-global-boosting/</loc>`));
   assert.doesNotMatch(`${robots}\n${sitemap}`, /ken0517\.github\.io\/aurora-esports-studio/);
+});
+
+test("production build generates crawler-ready game landing page documents", async () => {
+  const [packageJson, generator] = await Promise.all([
+    read("package.json"),
+    read("scripts/generate-game-landing-pages.mjs"),
+  ]);
+
+  assert.match(packageJson, /vite build && node scripts\/generate-game-landing-pages\.mjs/);
+  assert.match(generator, /gameLandingPages/);
+  assert.match(generator, /<title>/);
+  assert.match(generator, /name="description"/);
+  assert.match(generator, /rel="canonical"/);
+  assert.match(generator, /property="og:title"/);
+  assert.match(generator, /property="og:description"/);
+  assert.match(generator, /property="og:url"/);
+  assert.match(generator, /name="twitter:title"/);
+  assert.match(generator, /name="twitter:description"/);
+  assert.match(generator, /application\/ld\+json/);
+  assert.match(generator, /ProfessionalService/);
 });
 
 test("GitHub Pages builds from the root and preserves the custom domain", async () => {

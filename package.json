@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "vite --host 0.0.0.0",
     "ai:server": "node --env-file-if-exists=.env.local server/quote-ai-server.mjs",
-    "build": "vite build",
+    "build": "vite build && node scripts/generate-game-landing-pages.mjs",
     "lint": "eslint . --max-warnings=0",
     "test": "node --test",
     "test:performance": "node --test test/performance-budget.test.mjs",
