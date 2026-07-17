@@ -30,10 +30,10 @@
 **Interfaces:**
 - Produces: per-page `searchGuide`, `faqs`, `relatedGameIds`, and optional `caseStudies` records with `image`, `alt`, `width`, `height`, `title`, and `description`.
 
-- [ ] **Step 1:** Add a failing test requiring natural Hong Kong/Taiwan search copy, at least five FAQs per page, all three related game IDs, and exactly three AOV case records.
-- [ ] **Step 2:** Run `node --test test/game-landing-pages.test.mjs`; expect the new assertions to fail because those fields do not exist.
-- [ ] **Step 3:** Copy the three supplied JPEG files into `public/assets/cases/` and add the complete data fields to `gameLandingPages.js`.
-- [ ] **Step 4:** Run the focused test; expect all data assertions to pass.
+- [x] **Step 1:** Add a failing test requiring natural Hong Kong/Taiwan search copy, at least five FAQs per page, all three related game IDs, and exactly three AOV case records.
+- [x] **Step 2:** Run `node --test test/game-landing-pages.test.mjs`; expect the new assertions to fail because those fields do not exist.
+- [x] **Step 3:** Copy the three supplied JPEG files into `public/assets/cases/` and add the complete data fields to `gameLandingPages.js`.
+- [x] **Step 4:** Run the focused test; expect all data assertions to pass.
 
 ### Task 2: Shared evidence and related-game UI
 
@@ -46,10 +46,10 @@
 - Consumes: `searchGuide`, `caseStudies`, and `relatedGameIds` from Task 1.
 - Produces: accessible `#case-studies`, search guide and related-game sections using existing quote URLs.
 
-- [ ] **Step 1:** Add failing source-level assertions for an optional case gallery, `loading="lazy"`, fixed image dimensions, privacy/result disclaimer and internal game-page links.
-- [ ] **Step 2:** Run the focused test; expect failures for the missing markup.
-- [ ] **Step 3:** Implement the three shared sections and responsive styling without changing existing sections.
-- [ ] **Step 4:** Run the focused test; expect all UI assertions to pass.
+- [x] **Step 1:** Add failing source-level assertions for an optional case gallery, `loading="lazy"`, fixed image dimensions, privacy/result disclaimer and internal game-page links.
+- [x] **Step 2:** Run the focused test; expect failures for the missing markup.
+- [x] **Step 3:** Implement the three shared sections and responsive styling without changing existing sections.
+- [x] **Step 4:** Run the focused test; expect all UI assertions to pass.
 
 ### Task 3: Crawler-readable structured data
 
@@ -61,18 +61,18 @@
 - Consumes: each page's `faqs`, title, canonical URL and game metadata.
 - Produces: one JSON-LD `@graph` containing `ProfessionalService`, `FAQPage` and `BreadcrumbList` nodes.
 
-- [ ] **Step 1:** Add a failing build-output assertion for `FAQPage`, `BreadcrumbList` and all page-specific FAQ questions.
-- [ ] **Step 2:** Run `node --test test/domain-seo.test.mjs`; expect failure because the generator currently emits only the service node.
-- [ ] **Step 3:** Update the generator to emit the three-node graph without adding reviews or ratings.
-- [ ] **Step 4:** Run `npm run build` and the focused SEO test; expect all generated pages to contain the approved structured data.
+- [x] **Step 1:** Add a failing build-output assertion for `FAQPage`, `BreadcrumbList` and all page-specific FAQ questions.
+- [x] **Step 2:** Run `node --test test/domain-seo.test.mjs`; expect failure because the generator currently emits only the service node.
+- [x] **Step 3:** Update the generator to emit the three-node graph without adding reviews or ratings.
+- [x] **Step 4:** Run `npm run build` and the focused SEO test; expect all generated pages to contain the approved structured data.
 
 ### Task 4: Verification, publication and search monitoring
 
 **Files:**
 - Modify: this plan only to mark completed steps.
 
-- [ ] **Step 1:** Run `npm test`, `npm run lint`, `npm run build`, and `git diff --check`; require zero failures or warnings.
-- [ ] **Step 2:** Inspect desktop and mobile layouts locally, including all three AOV case images and all related-page links.
+- [x] **Step 1:** Run `npm test`, `npm run lint`, `npm run build`, and `git diff --check`; require zero failures or warnings.
+- [x] **Step 2:** Inspect desktop and mobile layouts locally, including all three AOV case images and all related-page links.
 - [ ] **Step 3:** Commit and push the verified implementation to `main`, then require a successful GitHub Pages workflow.
 - [ ] **Step 4:** Verify the homepage, three game pages and sitemap all return HTTP 200.
 - [ ] **Step 5:** Inspect Search Console for the homepage and three game pages; record indexed or pending state without repeatedly submitting pending URLs.
