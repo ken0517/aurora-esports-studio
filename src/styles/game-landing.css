@@ -74,6 +74,12 @@ body { margin: 0; }
 .game-landing-service p { min-height: 100px; color: #766c5f; font-size: 14px; line-height: 1.8; }
 .game-landing-service a { display: inline-flex; align-items: center; gap: 12px; font-size: 13px; font-weight: 700; }
 
+.game-landing-search-guide { background: #eee6d9; }
+.game-landing-search-guide__layout { display: grid; grid-template-columns: .82fr 1.18fr; gap: 9vw; align-items: start; }
+.game-landing-search-guide__copy { padding-top: 8px; }
+.game-landing-search-guide__copy p { margin: 0 0 22px; color: #655c50; font-size: 16px; line-height: 2; }
+.game-landing-search-guide__copy a { display: inline-flex; align-items: center; gap: 14px; margin-top: 12px; padding-bottom: 8px; border-bottom: 1px solid var(--landing-ink); font-size: 13px; font-weight: 700; }
+
 .game-landing-details { background: #22201c; color: #f5efe5; }
 .game-landing-details__layout { display: grid; grid-template-columns: 1.1fr .9fr; gap: 8vw; align-items: start; }
 .game-landing-details .game-landing-section__heading > p:last-of-type { color: rgba(255,255,255,.62); }
@@ -83,6 +89,21 @@ body { margin: 0; }
 .game-landing-details__lists small { color: #d2ad73; font-size: 10px; letter-spacing: .18em; }
 .game-landing-details__lists ul { display: grid; gap: 0; margin: 24px 0 0; padding: 0; list-style: none; }
 .game-landing-details__lists li { padding: 13px 0; border-top: 1px solid rgba(255,255,255,.12); font-family: Georgia, "Noto Serif TC", serif; font-size: 18px; }
+
+.game-landing-cases { background: #171511; color: #f7f1e7; }
+.game-landing-cases .game-landing-section__heading { max-width: 850px; }
+.game-landing-cases .game-landing-section__heading > p:last-child { color: rgba(255,255,255,.62); }
+.game-landing-cases__grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 26px; margin-top: 64px; }
+.game-landing-case { min-width: 0; margin: 0; border: 1px solid rgba(255,255,255,.16); background: rgba(255,255,255,.035); }
+.game-landing-case--wide { grid-column: 1 / -1; }
+.game-landing-case__media { overflow: hidden; background: #0e0d0b; }
+.game-landing-case__media img { display: block; width: 100%; height: auto; transition: transform .5s ease; }
+.game-landing-case:hover .game-landing-case__media img { transform: scale(1.012); }
+.game-landing-case figcaption { display: grid; grid-template-columns: 42px minmax(0, 1fr); gap: 18px; padding: 24px; }
+.game-landing-case figcaption > span { color: #c59a61; font-family: Georgia, serif; font-size: 12px; }
+.game-landing-case h3 { margin: 0 0 10px; font-family: Georgia, "Noto Serif TC", serif; font-size: 23px; font-weight: 400; }
+.game-landing-case p { margin: 0; color: rgba(255,255,255,.6); font-size: 13px; line-height: 1.8; }
+.game-landing-cases__disclaimer { margin: 32px 0 0; padding-top: 22px; border-top: 1px solid rgba(255,255,255,.14); color: rgba(255,255,255,.48); font-size: 12px; line-height: 1.8; }
 
 .game-landing-process__grid { display: grid; grid-template-columns: repeat(4, 1fr); margin-top: 68px; border-top: 1px solid var(--landing-line); }
 .game-landing-process__grid article { padding: 30px 28px 0 0; }
@@ -97,6 +118,14 @@ body { margin: 0; }
 .game-landing-faq__list summary { padding: 25px 0; cursor: pointer; font-family: Georgia, "Noto Serif TC", serif; font-size: 20px; }
 .game-landing-faq__list p { margin: 0 0 26px; color: #6f665a; line-height: 1.8; }
 
+.game-landing-related { background: var(--landing-paper); }
+.game-landing-related__grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0; margin-top: 58px; border-top: 1px solid var(--landing-line); border-left: 1px solid var(--landing-line); }
+.game-landing-related__grid > a { min-height: 220px; padding: 30px; border-right: 1px solid var(--landing-line); border-bottom: 1px solid var(--landing-line); transition: background .2s ease; }
+.game-landing-related__grid > a:hover { background: #f1eadf; }
+.game-landing-related__grid small { color: var(--landing-gold); font-size: 10px; letter-spacing: .16em; }
+.game-landing-related__grid h3 { max-width: 420px; margin: 42px 0 28px; font-family: Georgia, "Noto Serif TC", serif; font-size: 27px; font-weight: 400; line-height: 1.35; }
+.game-landing-related__grid span { display: inline-flex; align-items: center; gap: 10px; font-size: 12px; font-weight: 700; }
+
 .game-landing-cta { padding: 110px 0; background: var(--landing-paper); text-align: center; }
 .game-landing-cta .game-landing-shell { display: grid; justify-items: center; }
 .game-landing-cta .game-landing__actions { justify-content: center; }
@@ -107,7 +136,7 @@ body { margin: 0; }
 @media (max-width: 960px) {
   .game-landing__header nav a:not(.game-landing__header-cta) { display: none; }
   .game-landing-services__grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .game-landing-details__layout, .game-landing-faq__layout { grid-template-columns: 1fr; }
+  .game-landing-search-guide__layout, .game-landing-details__layout, .game-landing-faq__layout { grid-template-columns: 1fr; }
   .game-landing-process__grid { grid-template-columns: repeat(2, 1fr); gap: 35px 0; }
 }
 
@@ -132,14 +161,22 @@ body { margin: 0; }
   .game-landing-service { min-height: 0; padding: 28px 24px; }
   .game-landing-service p { min-height: 0; }
   .game-landing-details__lists { grid-template-columns: 1fr; }
+  .game-landing-cases__grid { grid-template-columns: 1fr; gap: 18px; margin-top: 42px; }
+  .game-landing-case--wide { grid-column: auto; }
+  .game-landing-case figcaption { grid-template-columns: 30px minmax(0, 1fr); padding: 20px; }
+  .game-landing-case h3 { font-size: 21px; }
   .game-landing-process__grid { grid-template-columns: 1fr; }
   .game-landing-process__grid article { padding-right: 0; }
   .game-landing-faq__list summary { font-size: 18px; }
+  .game-landing-related__grid { grid-template-columns: 1fr; margin-top: 42px; }
+  .game-landing-related__grid > a { min-height: 190px; padding: 26px 22px; }
+  .game-landing-related__grid h3 { margin-top: 32px; font-size: 24px; }
   .game-landing-footer { flex-direction: column; gap: 10px; }
 }
 
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }
   .game-landing__button { transition: none; }
+  .game-landing-case__media img { transition: none; }
 }
 

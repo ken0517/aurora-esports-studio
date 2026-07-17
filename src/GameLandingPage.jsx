@@ -7,7 +7,7 @@ import {
   getServiceEditorialText,
 } from "./data/serviceCatalog.js";
 import { trackContactClick, trackQuoteEntry, trackServiceQuote } from "./lib/analytics.js";
-import { buildQuoteEntryUrl } from "./lib/publicRoutes.js";
+import { buildGameLandingPath, buildQuoteEntryUrl } from "./lib/publicRoutes.js";
 import { publicAsset } from "./lib/publicAsset.js";
 import "./styles/game-landing.css";
 
@@ -39,6 +39,10 @@ export default function GameLandingPage({ gameId }) {
 
   if (!page) return null;
 
+  const relatedPages = page.relatedGameIds
+    .map((relatedGameId) => getGameLandingPageById(relatedGameId))
+    .filter((relatedPage) => relatedPage && relatedPage.gameId !== gameId);
+
   const handleQuoteClick = (method, serviceId) => {
     trackQuoteEntry({ method, gameId, serviceId });
     if (serviceId) trackServiceQuote({ gameId, serviceId });
@@ -53,6 +57,7 @@ export default function GameLandingPage({ gameId }) {
         </a>
         <nav aria-label="頁面導覽">
           <a href="#services">服務</a>
+          {page.caseStudies?.length ? <a href="#case-studies">實際紀錄</a> : null}
           <a href="#details">遊戲資料</a>
           <a href="#faq">常見問題</a>
           <a className="game-landing__header-cta" href={buildQuoteEntryUrl(gameId, "manual")} onClick={() => handleQuoteClick("manual")}>填寫報價</a>
@@ -111,6 +116,21 @@ export default function GameLandingPage({ gameId }) {
           </div>
         </section>
 
+        <section className="game-landing-section game-landing-search-guide" aria-labelledby="search-guide-title">
+          <div className="game-landing-shell game-landing-search-guide__layout">
+            <div className="game-landing-section__heading">
+              <p className="game-landing__eyebrow">HONG KONG · TAIWAN</p>
+              <h2 id="search-guide-title">{page.searchGuide.title}</h2>
+            </div>
+            <div className="game-landing-search-guide__copy">
+              {page.searchGuide.paragraphs.map((paragraph) => <p key={paragraph}>{paragraph}</p>)}
+              <a href={buildQuoteEntryUrl(gameId, "manual")} onClick={() => handleQuoteClick("manual")}>
+                整理遊戲資料並查詢報價 <ArrowRight size={16} aria-hidden="true" />
+              </a>
+            </div>
+          </div>
+        </section>
+
         <section className="game-landing-section game-landing-details" id="details">
           <div className="game-landing-shell game-landing-details__layout">
             <div className="game-landing-section__heading">
@@ -131,6 +151,41 @@ export default function GameLandingPage({ gameId }) {
             </div>
           </div>
         </section>
+
+        {page.caseStudies?.length ? (
+          <section className="game-landing-section game-landing-cases" id="case-studies" aria-labelledby="case-studies-title">
+            <div className="game-landing-shell">
+              <div className="game-landing-section__heading">
+                <p className="game-landing__eyebrow">REAL GAME RECORDS</p>
+                <h2 id="case-studies-title">《傳說對決》實際遊戲紀錄。</h2>
+                <p>以下圖片由 Aurora 提供，展示近期賽季、段位及排位對局紀錄；玩家可識別資料會按需要隱藏。</p>
+              </div>
+              <div className="game-landing-cases__grid">
+                {page.caseStudies.map((caseStudy, index) => (
+                  <figure className={`game-landing-case${index === 0 ? " game-landing-case--wide" : ""}`} key={caseStudy.image}>
+                    <div className="game-landing-case__media">
+                      <img
+                        src={publicAsset(caseStudy.image)}
+                        alt={caseStudy.alt}
+                        width={caseStudy.width}
+                        height={caseStudy.height}
+                        loading="lazy"
+                        decoding="async"
+                      />
+                    </div>
+                    <figcaption>
+                      <span>0{index + 1}</span>
+                      <div><h3>{caseStudy.title}</h3><p>{caseStudy.description}</p></div>
+                    </figcaption>
+                  </figure>
+                ))}
+              </div>
+              <p className="game-landing-cases__disclaimer">
+                實際遊戲紀錄只用於說明服務經驗；每次結果會因玩家狀況、段位及對局環境而異，並不代表固定勝率或結果保證。
+              </p>
+            </div>
+          </section>
+        ) : null}
 
         <section className="game-landing-section game-landing-process">
           <div className="game-landing-shell">
@@ -160,6 +215,25 @@ export default function GameLandingPage({ gameId }) {
                   <summary>{faq.question}</summary>
                   <p>{faq.answer}</p>
                 </details>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        <section className="game-landing-section game-landing-related" aria-labelledby="related-games-title">
+          <div className="game-landing-shell">
+            <div className="game-landing-section__heading">
+              <p className="game-landing__eyebrow">EXPLORE AURORA</p>
+              <h2 id="related-games-title">查看其他遊戲服務。</h2>
+              <p>每款遊戲使用獨立段位、分路及戰力標設定，切換頁面後不會混用資料。</p>
+            </div>
+            <div className="game-landing-related__grid">
+              {relatedPages.map((relatedPage) => (
+                <a href={buildGameLandingPath(relatedPage.gameId)} key={relatedPage.gameId}>
+                  <small>{relatedPage.eyebrow}</small>
+                  <h3>{relatedPage.title}</h3>
+                  <span>查看服務 <ArrowRight size={15} aria-hidden="true" /></span>
+                </a>
               ))}
             </div>
           </div>

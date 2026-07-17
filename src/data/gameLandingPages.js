@@ -13,6 +13,40 @@ export const gameLandingPages = Object.freeze([
     image: "assets/generated/game-aov-user.webp",
     imageAlt: "Aurora 傳說對決遊戲服務實績",
     audience: "香港及台灣《傳說對決》玩家",
+    searchGuide: {
+      title: "香港及台灣傳說對決代打、陪玩查詢",
+      paragraphs: [
+        "如果你正在尋找香港傳說對決代打、排位上分或傳說對決陪玩服務，可以先在 Aurora 報價表選擇目前段位、目標段位、星數、指定英雄及分路。系統會依照已確認的中央價格規則整理暫估報價，無法自動計算的要求則交由客服確認。",
+        "台灣玩家同樣可以使用繁體中文填寫資料，並透過 LINE 確認；香港玩家可直接使用 WhatsApp。服務範圍包括排位代打、陪玩帶飛、巔峰賽、英雄戰力標，以及第一視角教學或復盤等其他需求。",
+      ],
+    },
+    relatedGameIds: ["aov", "hok-cn", "hok-global"],
+    caseStudies: [
+      {
+        image: "assets/cases/aov-season-record.jpeg",
+        alt: "傳說對決 2025 賽季實際對局、勝場與勝率紀錄",
+        width: 1029,
+        height: 513,
+        title: "賽季對局與勝率紀錄",
+        description: "畫面顯示 2025 賽季共 336 場、243 勝及 72.3% 勝率，作為近期實際遊戲紀錄展示。",
+      },
+      {
+        image: "assets/cases/aov-highest-rank.jpeg",
+        alt: "傳說對決上賽季最高段位永恆冥獄幻刃 165 星紀錄",
+        width: 1138,
+        height: 570,
+        title: "上賽季最高段位紀錄",
+        description: "畫面顯示上賽季最高段位為永恆冥獄幻刃 165 星，用以說明高端排位對局經驗。",
+      },
+      {
+        image: "assets/cases/aov-ranked-history.jpeg",
+        alt: "傳說對決近期排位賽勝利及打野表現紀錄",
+        width: 1290,
+        height: 593,
+        title: "近期排位對局紀錄",
+        description: "畫面顯示多場近期排位勝利、評分及打野表現，作為實際排位遊戲紀錄展示。",
+      },
+    ],
     rankSummary: "支援中央報價表內已設定的青銅、白銀、黃金、鉑金、鑽石、星耀及傳說以上段位。",
     lanes: ["凱撒路", "打野", "中路", "魔龍路", "輔助"],
     marks: ["綠標", "藍標", "紫標", "紅標", "全服標"],
@@ -30,6 +64,14 @@ export const gameLandingPages = Object.freeze([
         question: "英雄戰力標會即時顯示價格嗎？",
         answer: "戰力標需要按英雄、目前戰力、目標戰力與標誌確認，因此會交由 Aurora 客服人工報價。",
       },
+      {
+        question: "香港與台灣玩家可以用甚麼方式聯絡？",
+        answer: "香港玩家可使用 WhatsApp，台灣玩家可使用 LINE；兩者都可以先在網站完成報價表，再把整理好的資料交給客服確認。",
+      },
+      {
+        question: "傳說對決服務是否保證勝率或指定結果？",
+        answer: "不會保證固定勝率或每場結果。實際表現會受段位、對局環境、英雄選擇及配對狀況影響，所有安排以客服確認內容為準。",
+      },
     ],
   },
   {
@@ -38,7 +80,7 @@ export const gameLandingPages = Object.freeze([
     canonical: "https://auroraesportstudio.com/honor-of-kings-cn-boosting/",
     seoTitle: "王者榮耀國服代打・陪玩｜Aurora Esports Studio",
     seoDescription:
-      "Aurora 提供王者榮耀國服排位代打、陪玩帶飛、巔峰賽及英雄戰力標需求整理，支援香港及台灣玩家查詢。",
+      "Aurora 提供香港王者榮耀國服代打、排位上分、陪玩帶飛、巔峰賽及英雄戰力標需求整理，支援香港及台灣玩家查詢。",
     eyebrow: "HONOR OF KINGS · CHINA SERVER",
     title: "王者榮耀國服代打與陪玩服務",
     intro:
@@ -46,6 +88,14 @@ export const gameLandingPages = Object.freeze([
     image: "assets/generated/game-hok-cn-user.webp",
     imageAlt: "Aurora 王者榮耀國服遊戲服務實績",
     audience: "需要王者榮耀國服服務的香港及台灣玩家",
+    searchGuide: {
+      title: "香港及台灣王者榮耀國服代打查詢",
+      paragraphs: [
+        "Aurora 的王者榮耀國服代打頁面把國服段位、分級、王者星數、指定英雄及分路分開處理，避免與 HOK 國際服資料混用。排位代打與陪玩帶飛可按網站已確認規則整理暫估報價。",
+        "如果你需要國服巔峰賽代打、小國標、大國標或其他特殊安排，網站會先收集目標分數、英雄及位置，再顯示待人工確認。香港玩家可使用 WhatsApp，台灣玩家亦可透過 LINE 聯絡 Aurora 客服。",
+      ],
+    },
+    relatedGameIds: ["aov", "hok-cn", "hok-global"],
     rankSummary: "支援倔強青銅至至尊星耀，以及最強王者至傳奇王者的中央段位設定。",
     lanes: ["對抗路", "打野", "中路", "發育路", "輔助"],
     marks: ["銅標", "銀標", "金標", "小國標", "大國標"],
@@ -63,6 +113,14 @@ export const gameLandingPages = Object.freeze([
         question: "是否可以指定分路或英雄？",
         answer: "可以在報價表填寫指定英雄、對抗路、打野、中路、發育路或輔助，客服會按要求確認安排。",
       },
+      {
+        question: "王者榮耀國服與 HOK 國際服會使用同一組資料嗎？",
+        answer: "不會。國服與國際服擁有各自的段位、星數區間及英雄戰力標，切換遊戲時網站會載入對應設定。",
+      },
+      {
+        question: "國服代打報價可以直接透過 WhatsApp 或 LINE 確認嗎？",
+        answer: "可以。完成網站報價表後，可把同一份資料交給 WhatsApp 或 LINE 客服確認；網站顯示的自動金額屬暫估報價。",
+      },
     ],
   },
   {
@@ -71,7 +129,7 @@ export const gameLandingPages = Object.freeze([
     canonical: "https://auroraesportstudio.com/honor-of-kings-global-boosting/",
     seoTitle: "HOK 國際服代打・陪玩｜Aurora Esports Studio",
     seoDescription:
-      "Aurora 為香港及台灣玩家提供 Honor of Kings 國際服排位代打、陪玩帶飛、巔峰賽及英雄戰力標查詢。",
+      "Aurora 為香港及台灣玩家提供 HOK／Honor of Kings 國際服排位代打、上分、陪玩帶飛、巔峰賽及英雄戰力標查詢。",
     eyebrow: "HONOR OF KINGS · GLOBAL SERVER",
     title: "HOK 國際服代打與陪玩服務",
     intro:
@@ -79,6 +137,14 @@ export const gameLandingPages = Object.freeze([
     image: "assets/generated/game-hok-global-user.webp",
     imageAlt: "Aurora HOK 國際服遊戲服務實績",
     audience: "香港及台灣 Honor of Kings 國際服玩家",
+    searchGuide: {
+      title: "香港及台灣 HOK 國際服代打、陪玩查詢",
+      paragraphs: [
+        "HOK 國際服代打與王者榮耀國服並非同一套段位資料。Aurora 會按 Honor of Kings 國際服的目前段位、分級、王者星數、指定英雄與分路整理排位代打或陪玩帶飛需求。",
+        "國際服巔峰賽與英雄戰力標需要依照分數、英雄、戰區及目標標誌人工確認。香港玩家可使用 WhatsApp，台灣玩家可使用 LINE；亦可以先使用網站報價表整理全部資料。",
+      ],
+    },
+    relatedGameIds: ["aov", "hok-cn", "hok-global"],
     rankSummary: "支援倔強青銅至至尊星耀，以及最強王者、無雙王者、榮耀王者與傳奇王者。",
     lanes: ["對抗路", "打野", "中路", "發育路", "輔助"],
     marks: ["銅標", "銀標", "金標", "小國標", "大國標", "紅標"],
@@ -95,6 +161,14 @@ export const gameLandingPages = Object.freeze([
       {
         question: "如何聯絡 Aurora 確認服務？",
         answer: "香港客戶可使用 WhatsApp，台灣客戶可使用 LINE；亦可先填寫網站報價表整理資料。",
+      },
+      {
+        question: "HOK 國際服排位代打會顯示哪一種貨幣？",
+        answer: "報價表預設顯示港幣，也可切換台幣或人民幣。換算只會在港幣價格完成後進行，人工報價項目不會自行產生金額。",
+      },
+      {
+        question: "國際服可以查詢陪玩帶飛或第一視角教學嗎？",
+        answer: "可以。陪玩帶飛可按排位或 5V5 匹配整理需求；第一視角教學及復盤可在其他服務中選擇。",
       },
     ],
   },
