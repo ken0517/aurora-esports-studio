@@ -6,6 +6,7 @@ import {
   getEditorialServicesForGame,
   getServiceEditorialText,
 } from "./data/serviceCatalog.js";
+import { trackContactClick, trackQuoteEntry, trackServiceQuote } from "./lib/analytics.js";
 import { buildQuoteEntryUrl } from "./lib/publicRoutes.js";
 import { publicAsset } from "./lib/publicAsset.js";
 import "./styles/game-landing.css";
@@ -38,6 +39,11 @@ export default function GameLandingPage({ gameId }) {
 
   if (!page) return null;
 
+  const handleQuoteClick = (method, serviceId) => {
+    trackQuoteEntry({ method, gameId, serviceId });
+    if (serviceId) trackServiceQuote({ gameId, serviceId });
+  };
+
   return (
     <div className={`game-landing game-landing--${gameId}`}>
       <header className="game-landing__header">
@@ -49,7 +55,7 @@ export default function GameLandingPage({ gameId }) {
           <a href="#services">服務</a>
           <a href="#details">遊戲資料</a>
           <a href="#faq">常見問題</a>
-          <a className="game-landing__header-cta" href={buildQuoteEntryUrl(gameId, "manual")}>填寫報價</a>
+          <a className="game-landing__header-cta" href={buildQuoteEntryUrl(gameId, "manual")} onClick={() => handleQuoteClick("manual")}>填寫報價</a>
         </nav>
       </header>
 
@@ -71,10 +77,10 @@ export default function GameLandingPage({ gameId }) {
             <h1 id="game-landing-title">{page.title}</h1>
             <p className="game-landing-hero__intro">{page.intro}</p>
             <div className="game-landing__actions">
-              <a className="game-landing__button game-landing__button--light" href={buildQuoteEntryUrl(gameId, "manual")}>
+              <a className="game-landing__button game-landing__button--light" href={buildQuoteEntryUrl(gameId, "manual")} onClick={() => handleQuoteClick("manual")}>
                 填寫報價表 <ArrowRight size={17} aria-hidden="true" />
               </a>
-              <a className="game-landing__button game-landing__button--outline" href={buildQuoteEntryUrl(gameId, "ai")}>
+              <a className="game-landing__button game-landing__button--outline" href={buildQuoteEntryUrl(gameId, "ai")} onClick={() => handleQuoteClick("ai")}>
                 問 Aurora 客服 <MessageCircle size={17} aria-hidden="true" />
               </a>
             </div>
@@ -96,7 +102,7 @@ export default function GameLandingPage({ gameId }) {
                   <small>{getServiceEditorialText(service.category, "zh-HK")}</small>
                   <h3>{getServiceEditorialText(service.title, "zh-HK")}</h3>
                   <p>{getServiceEditorialText(service.description, "zh-HK")}</p>
-                  <a href={buildQuoteEntryUrl(gameId, "manual", service.id)}>
+                  <a href={buildQuoteEntryUrl(gameId, "manual", service.id)} onClick={() => handleQuoteClick("manual", service.id)}>
                     查詢報價 <ArrowRight size={15} aria-hidden="true" />
                   </a>
                 </article>
@@ -165,9 +171,9 @@ export default function GameLandingPage({ gameId }) {
             <h2>告訴 Aurora 你的目標。</h2>
             <p>先整理遊戲、段位與服務資料，再選擇 WhatsApp 或 LINE 確認安排。</p>
             <div className="game-landing__actions">
-              <a className="game-landing__button game-landing__button--dark" href={buildQuoteEntryUrl(gameId, "manual")}>建立專屬報價 <ArrowRight size={17} /></a>
-              <a className="game-landing__text-link" href={contactLinks.whatsapp} target="_blank" rel="noreferrer">WhatsApp</a>
-              <a className="game-landing__text-link" href={contactLinks.line} target="_blank" rel="noreferrer">LINE</a>
+              <a className="game-landing__button game-landing__button--dark" href={buildQuoteEntryUrl(gameId, "manual")} onClick={() => handleQuoteClick("manual")}>建立專屬報價 <ArrowRight size={17} /></a>
+              <a className="game-landing__text-link" href={contactLinks.whatsapp} target="_blank" rel="noreferrer" onClick={() => trackContactClick("whatsapp")}>WhatsApp</a>
+              <a className="game-landing__text-link" href={contactLinks.line} target="_blank" rel="noreferrer" onClick={() => trackContactClick("line")}>LINE</a>
             </div>
           </div>
         </section>

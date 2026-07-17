@@ -24,6 +24,11 @@ import {
 } from "./data/content";
 import { supportedLocales, translate } from "./data/translations";
 import { useRuntimeCatalog } from "./hooks/useRuntimeCatalog";
+import {
+  trackContactClick,
+  trackQuoteEntry,
+  trackServiceQuote,
+} from "./lib/analytics.js";
 import { publicAsset } from "./lib/publicAsset.js";
 import { buildGameLandingPath } from "./lib/publicRoutes.js";
 import "./styles/index.css";
@@ -81,9 +86,14 @@ const proofItems = [
   },
 ];
 
-function ExternalAnchor({ children, ...props }) {
+function ExternalAnchor({ children, analyticsChannel, onClick, ...props }) {
+  const handleClick = (event) => {
+    if (analyticsChannel) trackContactClick(analyticsChannel);
+    onClick?.(event);
+  };
+
   return (
-    <a target="_blank" rel="noreferrer" {...props}>
+    <a target="_blank" rel="noreferrer" onClick={handleClick} {...props}>
       {children}
     </a>
   );
@@ -186,7 +196,7 @@ function OverlayMenu({ onClose, text }) {
 
       <div className="editorial-menu__footer">
         <span>{text("hero.sideNote", "HK · TW · MOBILE ESPORTS")}</span>
-        <ExternalAnchor href={contactLinks.whatsapp}>
+        <ExternalAnchor href={contactLinks.whatsapp} analyticsChannel="whatsapp">
           {text("contact.whatsapp", "WhatsApp 查詢")}
           <ExternalLink aria-hidden="true" />
         </ExternalAnchor>
@@ -314,6 +324,7 @@ export default function App() {
     );
 
     const frame = window.requestAnimationFrame(() => {
+      trackQuoteEntry({ method: quotePane, gameId: game.id, serviceId: service?.id });
       setActiveGameId(game.id);
       serviceQuoteRequestId.current += 1;
       setServiceQuoteRequest({
@@ -337,6 +348,7 @@ export default function App() {
 
   const handleServiceQuote = useCallback(
     ({ service, game, locale: requestLocale = locale }) => {
+      trackServiceQuote({ gameId: game?.id, serviceId: service?.id });
       const gameName = getServiceEditorialText(game?.name, requestLocale);
       const serviceName = getServiceEditorialText(service?.title, requestLocale);
       const question =
@@ -456,6 +468,7 @@ export default function App() {
               <ExternalAnchor
                 key={channel.id}
                 href={channel.href}
+                analyticsChannel={channel.id}
                 className="cinematic-hero__social-link"
                 aria-label={text(`contact.channels.${channel.id}.label`, channel.label)}
                 title={text(`contact.channels.${channel.id}.label`, channel.label)}
@@ -607,7 +620,7 @@ export default function App() {
                   "我們不以示意圖片假裝真實戰績。你可以按遊戲、伺服器及目標，私訊索取已打碼的近期紀錄。",
                 )}
               />
-              <ExternalAnchor className="editorial-button editorial-button--light" href={contactLinks.whatsapp}>
+              <ExternalAnchor className="editorial-button editorial-button--light" href={contactLinks.whatsapp} analyticsChannel="whatsapp">
                 {text("proof.request", "索取近期紀錄")}
                 <ArrowRight aria-hidden="true" />
               </ExternalAnchor>
@@ -705,7 +718,7 @@ export default function App() {
                   "香港玩家建議使用 WhatsApp；台灣玩家可選 LINE。其他平台同樣可以查詢。",
                 )}
               </p>
-              <ExternalAnchor className="editorial-button editorial-button--dark" href={contactLinks.whatsapp}>
+              <ExternalAnchor className="editorial-button editorial-button--dark" href={contactLinks.whatsapp} analyticsChannel="whatsapp">
                 <MessageCircle aria-hidden="true" />
                 {text("contact.whatsapp", "WhatsApp 立即查詢")}
               </ExternalAnchor>
@@ -714,7 +727,7 @@ export default function App() {
             <div className="contact-links">
               {contactChannels.map((channel, index) => (
                 <Reveal key={channel.id} delay={index * 0.035}>
-                  <ExternalAnchor href={channel.href} className="contact-link-row">
+                  <ExternalAnchor href={channel.href} className="contact-link-row" analyticsChannel={channel.id}>
                     <span>0{index + 1}</span>
                     <div>
                       <strong>{text(`contact.channels.${channel.id}.label`, channel.label)}</strong>

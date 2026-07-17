@@ -160,6 +160,12 @@ UPSTASH_REDIS_REST_TOKEN=...
 
 GitHub Pages 的 `/admin/` 会在构建时生成一个无索引跳转页，默认安全跳转到 `https://aurora-esports-api.vercel.app/admin`。如 Vercel 项目域名改变，请设置 GitHub 仓库变量 `VITE_AURORA_ADMIN_URL`。
 
+## Google 搜寻与访客统计
+
+正式域名已经通过 Google Search Console 管理，并使用 `https://auroraesportstudio.com/sitemap.xml` 提交公开页面。Google 是否以及何时显示页面由 Google 决定，提交索引不代表保证排名。
+
+如要启用 Google Analytics 4，请在 GitHub 仓库变量中设置公开变量 `VITE_GA_MEASUREMENT_ID`（格式为 `G-XXXXXXXXXX`）。网站只记录页面浏览、报价入口、报价结果状态及联络渠道；不会把顾客填写的段位、英雄、留言、聊天内容、电话号码或付款资料传送到 Google。未设置时统计功能会自动停用，不影响网站使用。
+
 Backend 未部署和验证前，不应宣称 Gemini AI 已在正式网站上线。
 
 ## 上线前仍需确认

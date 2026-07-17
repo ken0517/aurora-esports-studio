@@ -37,6 +37,7 @@ jobs:
           VITE_BASE_PATH: /
           VITE_QUOTE_AI_ENDPOINT: ${{ vars.VITE_QUOTE_AI_ENDPOINT }}
           VITE_AURORA_API_BASE_URL: ${{ vars.VITE_AURORA_API_BASE_URL }}
+          VITE_GA_MEASUREMENT_ID: ${{ vars.VITE_GA_MEASUREMENT_ID }}
 
       - name: Add secure admin redirect
         run: npm run pages:admin-redirect

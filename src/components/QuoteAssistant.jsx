@@ -43,6 +43,7 @@ import {
   formatQuoteText,
   validateQuoteDraft,
 } from "../lib/quoteEngine";
+import { trackContactClick, trackQuoteResult } from "../lib/analytics.js";
 
 const AI_ENDPOINT =
   import.meta.env.VITE_QUOTE_AI_ENDPOINT ||
@@ -645,6 +646,7 @@ export function QuoteAssistant({
   const prefillFocusRef = useRef(false);
   const manualFocusRef = useRef(false);
   const suppressSuggestionsOnFocusRef = useRef(false);
+  const trackedQuoteRef = useRef("");
 
   const text = useCallback(
     (key, fallback) => {
@@ -1040,6 +1042,18 @@ export function QuoteAssistant({
     }
   }, [contactLinks.whatsapp, localeId, quote, quoteText]);
 
+  useEffect(() => {
+    if (!quote) return;
+    const quoteKey = String(quote.referenceNumber || quote.reference || `${draft.gameId}:${draft.serviceId}:${quote.status}`);
+    if (trackedQuoteRef.current === quoteKey) return;
+    trackedQuoteRef.current = quoteKey;
+    trackQuoteResult({
+      gameId: draft.gameId,
+      serviceId: draft.serviceId,
+      status: quote.status || (quote.requiresManualReview ? "manual_review" : "quoted"),
+    });
+  }, [draft.gameId, draft.serviceId, quote]);
+
   const lineMessage = useMemo(() => {
     if (!quote) return "";
     try {
@@ -1062,6 +1076,7 @@ export function QuoteAssistant({
   };
 
   const handleLineClick = () => {
+    trackContactClick("line");
     if (!lineMessage) return;
     setLineCopyStatus("");
     copyToClipboard(lineMessage)
@@ -1558,7 +1573,7 @@ export function QuoteAssistant({
           <button type="button" className="quote-button quote-button--secondary" onClick={handleCopy}>
             {copied ? <Check size={16} /> : <Clipboard size={16} />}{copied ? ui.copied : ui.copy}
           </button>
-          <a className="quote-button quote-button--primary" href={whatsappUrl} target="_blank" rel="noreferrer"><Send size={16} />{ui.whatsapp}</a>
+          <a className="quote-button quote-button--primary" href={whatsappUrl} target="_blank" rel="noreferrer" onClick={() => trackContactClick("whatsapp")}><Send size={16} />{ui.whatsapp}</a>
           <a
             className="quote-button quote-button--secondary"
             href={contactLinks.line || "https://line.me/ti/p/wWXCT-txMc"}

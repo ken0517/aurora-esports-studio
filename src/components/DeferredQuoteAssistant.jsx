@@ -1,5 +1,6 @@
 import { lazy, Suspense, useEffect, useState } from "react";
 import { ArrowRight, LoaderCircle, MessageCircle, UserRound } from "lucide-react";
+import { trackQuoteEntry } from "../lib/analytics.js";
 
 const LazyQuoteAssistant = lazy(() => import("./QuoteAssistant.jsx"));
 
@@ -49,6 +50,24 @@ export default function DeferredQuoteAssistant({ locale = "zh-HK", prefillReques
     : null;
   const effectivePane = initialPane || requestedPane || (prefillRequest?.text ? "ai" : null);
 
+  const openManualQuote = () => {
+    trackQuoteEntry({
+      method: "manual",
+      gameId: prefillRequest?.gameId,
+      serviceId: prefillRequest?.serviceId,
+    });
+    setInitialPane("manual");
+  };
+
+  const openSupportQuote = () => {
+    trackQuoteEntry({
+      method: "ai",
+      gameId: prefillRequest?.gameId,
+      serviceId: prefillRequest?.serviceId,
+    });
+    setInitialPane("ai");
+  };
+
   if (effectivePane) {
     return (
       <Suspense fallback={<div className="quote-deferred-loading" role="status"><LoaderCircle aria-hidden="true" />{copy.loading}</div>}>
@@ -59,12 +78,12 @@ export default function DeferredQuoteAssistant({ locale = "zh-HK", prefillReques
 
   return (
     <div className="quote-entry-control quote-entry-control--placeholder" role="group" aria-label={copy.label}>
-      <button type="button" className="quote-entry-choice quote-entry-choice--manual" onClick={() => setInitialPane("manual")}>
+      <button type="button" className="quote-entry-choice quote-entry-choice--manual" onClick={openManualQuote}>
         <span className="quote-entry-choice__icon" aria-hidden="true"><UserRound size={18} /></span>
         <span className="quote-entry-copy"><strong>{copy.manual}</strong><small>{copy.manualHint}</small></span>
         <ArrowRight className="quote-entry-choice__arrow" size={18} aria-hidden="true" />
       </button>
-      <button type="button" className="quote-entry-choice quote-entry-choice--support" onClick={() => setInitialPane("ai")}>
+      <button type="button" className="quote-entry-choice quote-entry-choice--support" onClick={openSupportQuote}>
         <span className="quote-entry-choice__icon" aria-hidden="true"><MessageCircle size={18} /></span>
         <span className="quote-entry-copy"><strong>{copy.support}</strong><small>{copy.supportHint}</small></span>
         <ArrowRight className="quote-entry-choice__arrow" size={18} aria-hidden="true" />
