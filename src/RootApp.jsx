@@ -2,8 +2,9 @@ import { lazy, Suspense } from "react";
 
 const App = lazy(() => import("./App.jsx"));
 const AdminApp = lazy(() => import("./AdminApp.jsx"));
+const GameLandingPage = lazy(() => import("./GameLandingPage.jsx"));
 
-export default function RootApp({ isAdmin }) {
+export default function RootApp({ route = { type: "home" }, isAdmin = route.type === "admin" }) {
   return (
     <Suspense
       fallback={(
@@ -24,7 +25,11 @@ export default function RootApp({ isAdmin }) {
         </div>
       )}
     >
-      {isAdmin ? <AdminApp /> : <App />}
+      {isAdmin
+        ? <AdminApp />
+        : route.type === "game"
+          ? <GameLandingPage gameId={route.gameId} />
+          : <App />}
     </Suspense>
   );
 }

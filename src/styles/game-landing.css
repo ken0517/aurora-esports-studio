@@ -1,0 +1,145 @@
+:root {
+  --landing-ink: #1c1a17;
+  --landing-ivory: #f4efe5;
+  --landing-paper: #fbf8f1;
+  --landing-gold: #a87a3e;
+  --landing-line: rgba(73, 58, 39, 0.22);
+}
+
+* { box-sizing: border-box; }
+
+html { scroll-behavior: smooth; }
+
+body { margin: 0; }
+
+.game-landing {
+  min-height: 100vh;
+  background: var(--landing-ivory);
+  color: var(--landing-ink);
+  font-family: "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", sans-serif;
+}
+
+.game-landing a { color: inherit; text-decoration: none; }
+
+.game-landing__header {
+  position: absolute;
+  inset: 0 0 auto;
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 84px;
+  padding: 0 4vw;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.18);
+  color: #fff;
+}
+
+.game-landing__brand { display: flex; align-items: center; gap: 12px; }
+.game-landing__brand > span { display: grid; place-items: center; width: 36px; height: 36px; border: 1px solid rgba(255,255,255,.55); border-radius: 50%; font-family: Georgia, serif; }
+.game-landing__brand strong { font-family: Georgia, "Times New Roman", serif; font-size: 15px; font-weight: 500; letter-spacing: .16em; text-transform: uppercase; }
+.game-landing__header nav { display: flex; align-items: center; gap: 28px; font-size: 13px; letter-spacing: .08em; }
+.game-landing__header-cta { padding: 11px 18px; border: 1px solid rgba(255,255,255,.7); border-radius: 999px; }
+
+.game-landing-hero { position: relative; display: grid; min-height: min(820px, 100svh); overflow: hidden; color: #fff; }
+.game-landing-hero__media, .game-landing-hero__overlay { position: absolute; inset: 0; }
+.game-landing-hero__media img { width: 100%; height: 100%; object-fit: cover; object-position: center 33%; }
+.game-landing-hero__overlay { background: linear-gradient(90deg, rgba(15, 12, 20, .86) 0%, rgba(15, 12, 20, .62) 48%, rgba(15, 12, 20, .28) 100%), linear-gradient(0deg, rgba(15, 12, 20, .62), transparent 45%); }
+.game-landing-hero__copy { position: relative; z-index: 2; align-self: center; width: min(760px, 70vw); margin: 92px 0 36px 8vw; }
+.game-landing__back { display: inline-flex; gap: 8px; align-items: center; margin-bottom: 52px; font-size: 12px; letter-spacing: .08em; opacity: .82; }
+.game-landing__eyebrow { margin: 0 0 20px; color: var(--landing-gold); font-size: 11px; font-weight: 700; letter-spacing: .24em; text-transform: uppercase; }
+.game-landing-hero .game-landing__eyebrow { color: #d9bc8b; }
+.game-landing-hero h1 { max-width: 760px; margin: 0; font-family: Georgia, "Noto Serif TC", serif; font-size: clamp(48px, 6vw, 92px); font-weight: 400; letter-spacing: -.035em; line-height: 1.04; }
+.game-landing-hero__intro { max-width: 650px; margin: 30px 0 0; color: rgba(255,255,255,.78); font-size: 17px; line-height: 1.9; }
+.game-landing__actions { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin-top: 36px; }
+.game-landing__button { display: inline-flex; align-items: center; justify-content: center; gap: 30px; min-height: 52px; padding: 0 24px; border: 1px solid transparent; border-radius: 999px; font-size: 13px; font-weight: 650; letter-spacing: .05em; transition: transform .2s ease, background .2s ease, color .2s ease; }
+.game-landing__button:hover { transform: translateY(-2px); }
+.game-landing__button--light { background: #f8f4eb; color: #1d1914 !important; }
+.game-landing__button--outline { border-color: rgba(255,255,255,.55); color: #fff !important; }
+.game-landing__button--outline:hover { background: rgba(255,255,255,.1); }
+.game-landing__button--dark { background: #211d17; color: #fff !important; }
+.game-landing-hero__audience { position: absolute; z-index: 2; right: 4vw; bottom: 26px; margin: 0; color: rgba(255,255,255,.58); font-size: 10px; letter-spacing: .14em; text-transform: uppercase; }
+
+.game-landing-shell { width: min(1220px, calc(100% - 64px)); margin: 0 auto; }
+.game-landing-section { padding: 120px 0; }
+.game-landing-section__heading { max-width: 780px; }
+.game-landing-section__heading h2, .game-landing-cta h2 { margin: 0; font-family: Georgia, "Noto Serif TC", serif; font-size: clamp(38px, 5vw, 68px); font-weight: 400; letter-spacing: -.035em; line-height: 1.16; }
+.game-landing-section__heading > p:last-child, .game-landing-cta > .game-landing-shell > p { color: #756b5d; font-size: 16px; line-height: 1.9; }
+
+.game-landing-services { background: var(--landing-paper); }
+.game-landing-services__grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); margin-top: 68px; border-top: 1px solid var(--landing-line); border-left: 1px solid var(--landing-line); }
+.game-landing-service { min-height: 330px; padding: 34px; border-right: 1px solid var(--landing-line); border-bottom: 1px solid var(--landing-line); }
+.game-landing-service > span { float: right; color: #a99d8d; font-family: Georgia, serif; font-size: 13px; }
+.game-landing-service small { color: var(--landing-gold); font-size: 11px; letter-spacing: .16em; }
+.game-landing-service h3 { margin: 35px 0 18px; font-family: Georgia, "Noto Serif TC", serif; font-size: 30px; font-weight: 400; }
+.game-landing-service p { min-height: 100px; color: #766c5f; font-size: 14px; line-height: 1.8; }
+.game-landing-service a { display: inline-flex; align-items: center; gap: 12px; font-size: 13px; font-weight: 700; }
+
+.game-landing-details { background: #22201c; color: #f5efe5; }
+.game-landing-details__layout { display: grid; grid-template-columns: 1.1fr .9fr; gap: 8vw; align-items: start; }
+.game-landing-details .game-landing-section__heading > p:last-of-type { color: rgba(255,255,255,.62); }
+.game-landing__notice { display: flex; gap: 12px; align-items: flex-start; margin-top: 32px; padding: 18px 0; border-top: 1px solid rgba(255,255,255,.18); color: #d4c5ae; font-size: 13px; line-height: 1.7; }
+.game-landing-details__lists { display: grid; grid-template-columns: 1fr 1fr; gap: 28px; }
+.game-landing-details__lists > div { padding: 28px; border: 1px solid rgba(255,255,255,.18); }
+.game-landing-details__lists small { color: #d2ad73; font-size: 10px; letter-spacing: .18em; }
+.game-landing-details__lists ul { display: grid; gap: 0; margin: 24px 0 0; padding: 0; list-style: none; }
+.game-landing-details__lists li { padding: 13px 0; border-top: 1px solid rgba(255,255,255,.12); font-family: Georgia, "Noto Serif TC", serif; font-size: 18px; }
+
+.game-landing-process__grid { display: grid; grid-template-columns: repeat(4, 1fr); margin-top: 68px; border-top: 1px solid var(--landing-line); }
+.game-landing-process__grid article { padding: 30px 28px 0 0; }
+.game-landing-process__grid span { color: var(--landing-gold); font-size: 11px; }
+.game-landing-process__grid h3 { margin: 36px 0 14px; font-family: Georgia, "Noto Serif TC", serif; font-size: 24px; font-weight: 400; }
+.game-landing-process__grid p { color: #776e61; font-size: 14px; line-height: 1.8; }
+
+.game-landing-faq { background: #e9e1d4; }
+.game-landing-faq__layout { display: grid; grid-template-columns: .75fr 1.25fr; gap: 8vw; }
+.game-landing-faq__list details { border-top: 1px solid var(--landing-line); }
+.game-landing-faq__list details:last-child { border-bottom: 1px solid var(--landing-line); }
+.game-landing-faq__list summary { padding: 25px 0; cursor: pointer; font-family: Georgia, "Noto Serif TC", serif; font-size: 20px; }
+.game-landing-faq__list p { margin: 0 0 26px; color: #6f665a; line-height: 1.8; }
+
+.game-landing-cta { padding: 110px 0; background: var(--landing-paper); text-align: center; }
+.game-landing-cta .game-landing-shell { display: grid; justify-items: center; }
+.game-landing-cta .game-landing__actions { justify-content: center; }
+.game-landing__text-link { padding: 13px 5px; border-bottom: 1px solid var(--landing-ink); font-size: 13px; font-weight: 700; }
+.game-landing-footer { display: flex; justify-content: space-between; padding: 26px 4vw; background: #171511; color: rgba(255,255,255,.65); font-size: 11px; letter-spacing: .08em; }
+.game-landing-footer a { color: #fff; font-family: Georgia, serif; letter-spacing: .14em; text-transform: uppercase; }
+
+@media (max-width: 960px) {
+  .game-landing__header nav a:not(.game-landing__header-cta) { display: none; }
+  .game-landing-services__grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .game-landing-details__layout, .game-landing-faq__layout { grid-template-columns: 1fr; }
+  .game-landing-process__grid { grid-template-columns: repeat(2, 1fr); gap: 35px 0; }
+}
+
+@media (max-width: 760px) {
+  .game-landing__header { min-height: 70px; padding: 0 18px; }
+  .game-landing__brand strong { max-width: 130px; font-size: 10px; line-height: 1.4; }
+  .game-landing__header-cta { padding: 10px 14px; font-size: 11px; }
+  .game-landing-hero { min-height: 820px; }
+  .game-landing-hero__media img { object-position: center top; }
+  .game-landing-hero__overlay { background: linear-gradient(0deg, rgba(15,12,20,.9) 0%, rgba(15,12,20,.36) 65%, rgba(15,12,20,.56) 100%); }
+  .game-landing-hero__copy { align-self: end; width: auto; margin: 0 22px 105px; }
+  .game-landing__back { margin-bottom: 28px; }
+  .game-landing-hero h1 { font-size: clamp(42px, 13vw, 58px); }
+  .game-landing-hero__intro { margin-top: 20px; font-size: 14px; line-height: 1.75; }
+  .game-landing__actions { align-items: stretch; }
+  .game-landing__button { flex: 1 1 100%; gap: 18px; }
+  .game-landing-hero__audience { right: 22px; bottom: 24px; left: 22px; }
+  .game-landing-shell { width: calc(100% - 36px); }
+  .game-landing-section { padding: 78px 0; }
+  .game-landing-section__heading h2, .game-landing-cta h2 { font-size: 40px; }
+  .game-landing-services__grid { grid-template-columns: 1fr; margin-top: 44px; }
+  .game-landing-service { min-height: 0; padding: 28px 24px; }
+  .game-landing-service p { min-height: 0; }
+  .game-landing-details__lists { grid-template-columns: 1fr; }
+  .game-landing-process__grid { grid-template-columns: 1fr; }
+  .game-landing-process__grid article { padding-right: 0; }
+  .game-landing-faq__list summary { font-size: 18px; }
+  .game-landing-footer { flex-direction: column; gap: 10px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  .game-landing__button { transition: none; }
+}
+

@@ -40,3 +40,21 @@ test("landing page copy is formal Traditional Chinese and does not make unsuppor
 
   assert.doesNotMatch(data, /香港第一|全港第一|百分百保證|保證上分/);
 });
+
+test("root app lazy-loads one shared responsive game landing page", async () => {
+  const [rootApp, page, css] = await Promise.all([
+    source("src/RootApp.jsx"),
+    source("src/GameLandingPage.jsx"),
+    source("src/styles/game-landing.css"),
+  ]);
+
+  assert.match(rootApp, /lazy\(\(\) => import\("\.\/GameLandingPage\.jsx"\)\)/);
+  assert.match(rootApp, /route\.type === "game"/);
+  assert.match(page, /getEditorialServicesForGame/);
+  assert.match(page, /getGameLandingPageById/);
+  assert.match(page, /buildQuoteEntryUrl/);
+  assert.match(page, /width="1200"[\s\S]*height="1800"[\s\S]*fetchPriority="high"/);
+  assert.match(page, /WhatsApp/);
+  assert.match(page, /LINE/);
+  assert.match(css, /@media \(max-width: 760px\)/);
+});

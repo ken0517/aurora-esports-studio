@@ -1,12 +1,12 @@
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import RootApp from "./RootApp.jsx";
+import { resolvePublicRoute } from "./lib/publicRoutes.js";
 
-const normalizedPath = window.location.pathname.replace(/\/+$/, "");
-const isAdmin = normalizedPath.endsWith("/admin");
+const route = resolvePublicRoute(window.location.pathname);
 
 createRoot(document.getElementById("root")).render(
   <StrictMode>
-    <RootApp isAdmin={isAdmin} />
+    <RootApp route={route} />
   </StrictMode>,
 );
