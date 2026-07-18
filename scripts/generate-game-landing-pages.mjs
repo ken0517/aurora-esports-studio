@@ -88,7 +88,7 @@ function makeStructuredData(page) {
         contactPoint: {
           "@type": "ContactPoint",
           contactType: "customer service",
-          url: "https://wa.me/85262243840",
+          url: "https://wa.me/447442619658",
           availableLanguage: ["Chinese", "English"],
         },
       },

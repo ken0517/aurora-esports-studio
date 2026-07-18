@@ -1033,11 +1033,11 @@ export function QuoteAssistant({
   }, [draft.currentPoints, draft.targetPoints, localeId, quote, ui]);
 
   const whatsappUrl = useMemo(() => {
-    if (!quote) return contactLinks.whatsapp || "https://wa.me/85262243840";
+    if (!quote) return contactLinks.whatsapp || "https://wa.me/447442619658";
     try {
       return buildWhatsAppUrl(quote, localeId, contactLinks.whatsapp);
     } catch {
-      const base = contactLinks.whatsapp || "https://wa.me/85262243840";
+      const base = contactLinks.whatsapp || "https://wa.me/447442619658";
       return `${base}${base.includes("?") ? "&" : "?"}text=${encodeURIComponent(quoteText)}`;
     }
   }, [contactLinks.whatsapp, localeId, quote, quoteText]);
@@ -1701,7 +1701,7 @@ export function QuoteAssistant({
         <p><ShieldCheck size={13} /><span>{ui.noPricePromise} {ui.privacyWarning}</span></p>
         <div>
           <button type="button" onClick={() => { setAiMessages([]); setAiError(""); setAiInput(""); setSessionId(createSessionId()); setConversationConsent(false); aiInputRef.current?.focus(); }}><RefreshCw size={14} />{ui.newChat}</button>
-          <a href={contactLinks.whatsapp || "https://wa.me/85262243840"} target="_blank" rel="noreferrer"><ExternalLink size={14} />{ui.human}</a>
+          <a href={contactLinks.whatsapp || "https://wa.me/447442619658"} target="_blank" rel="noreferrer"><ExternalLink size={14} />{ui.human}</a>
         </div>
       </div>
     </>

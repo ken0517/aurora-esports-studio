@@ -27,7 +27,7 @@ import {
   translate,
 } from "../data/translations.js";
 
-export const DEFAULT_WHATSAPP_URL = "https://wa.me/85262243840";
+export const DEFAULT_WHATSAPP_URL = "https://wa.me/447442619658";
 
 const draftDefaults = {
   locale: defaultLocale,
@@ -969,7 +969,7 @@ export function buildWhatsAppUrl(quoteOrDraft, localeOrOptions = {}, legacyBaseU
     : localeOrOptions ?? {};
   const locale = normalizeLocale(options.locale ?? quoteOrDraft?.locale ?? quoteOrDraft?.draft?.locale);
   const message = options.message ?? formatWhatsAppMessage(quoteOrDraft, locale);
-  const phoneNumber = String(options.phoneNumber ?? "85262243840").replace(/\D/g, "");
+  const phoneNumber = String(options.phoneNumber ?? "447442619658").replace(/\D/g, "");
   const baseUrl = options.baseUrl || (phoneNumber ? `https://wa.me/${phoneNumber}` : DEFAULT_WHATSAPP_URL);
   const separator = baseUrl.includes("?") ? "&" : "?";
   return `${baseUrl}${separator}text=${encodeURIComponent(message)}`;

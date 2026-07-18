@@ -9,7 +9,7 @@ export const brand = {
 export const contactLinks = {
   instagram:
     "https://www.instagram.com/ken._0517?igsh=MXhuNTByOXU3ZjVtdA%3D%3D&utm_source=qr",
-  whatsapp: "https://wa.me/85262243840",
+  whatsapp: "https://wa.me/447442619658",
   line: "https://line.me/ti/p/wWXCT-txMc",
   carousell: "https://carousell.app.link/BWYWpLY692b",
   discord: "https://discord.gg/ZW9mwQRQud",
