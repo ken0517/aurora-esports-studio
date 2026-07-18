@@ -73,6 +73,8 @@
 
 - [x] **Step 1:** Run `npm test`, `npm run lint`, `npm run build`, and `git diff --check`; require zero failures or warnings.
 - [x] **Step 2:** Inspect desktop and mobile layouts locally, including all three AOV case images and all related-page links.
-- [ ] **Step 3:** Commit and push the verified implementation to `main`, then require a successful GitHub Pages workflow.
-- [ ] **Step 4:** Verify the homepage, three game pages and sitemap all return HTTP 200.
-- [ ] **Step 5:** Inspect Search Console for the homepage and three game pages; record indexed or pending state without repeatedly submitting pending URLs.
+- [x] **Step 3:** Commit and push the verified implementation to `main`, then require a successful GitHub Pages workflow.
+- [x] **Step 4:** Verify the homepage, three game pages and sitemap all return HTTP 200.
+- [x] **Step 5:** Inspect Search Console for the homepage and three game pages; record indexed or pending state without repeatedly submitting pending URLs.
+
+**Search Console check — 2026-07-18:** The homepage, Arena of Valor page, Honor of Kings China page and Honor of Kings Global page are all reported as indexed and eligible to appear in Google Search. The sitemap and every production URL returned HTTP 200 after deployment.
