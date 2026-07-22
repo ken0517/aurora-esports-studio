@@ -2,6 +2,30 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
 
+test("public brand data centralises real markets, languages, and review evidence", async () => {
+  const { publicBrandIdentity } = await import("../src/data/publicBrand.js");
+
+  assert.equal(publicBrandIdentity.primaryMarket.id, "hong-kong");
+  assert.deepEqual(
+    publicBrandIdentity.serviceMarkets.map((market) => market.id),
+    ["hong-kong", "taiwan", "macau"],
+  );
+  assert.deepEqual(
+    publicBrandIdentity.supportedLanguages.map((language) => language.id),
+    ["zh-Hant", "zh-Hans", "en"],
+  );
+  assert.equal(publicBrandIdentity.reviews.platform, "Carousell");
+  assert.equal(publicBrandIdentity.reviews.profile, "@klg_studio");
+  assert.equal(publicBrandIdentity.reviews.rating, 5);
+  assert.equal(publicBrandIdentity.reviews.count, 30);
+  assert.equal(publicBrandIdentity.reviews.verifiedOn, "2026-07-22");
+  assert.equal(publicBrandIdentity.reviews.excerpts.length, 4);
+  assert.doesNotMatch(
+    JSON.stringify(publicBrandIdentity),
+    /鈭僑|5 years|Fighter Studio|擛亙ㄚ撌乩?摰?/,
+  );
+});
+
 async function source(path) {
   return readFile(new URL(`../${path}`, import.meta.url), "utf8");
 }
