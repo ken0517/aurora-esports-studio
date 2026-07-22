@@ -40,6 +40,28 @@ test("robots and sitemap advertise the official Aurora domain", async () => {
   assert.doesNotMatch(`${robots}\n${sitemap}`, /ken0517\.github\.io\/aurora-esports-studio/);
 });
 
+test("public crawler files explicitly expose only public Aurora pages", async () => {
+  const [robots, sitemap, llms] = await Promise.all([
+    read("public/robots.txt"),
+    read("public/sitemap.xml"),
+    read("public/llms.txt").catch(() => ""),
+  ]);
+
+  for (const agent of ["OAI-SearchBot", "ChatGPT-User", "Googlebot", "*"]) {
+    const escapedAgent = agent === "*" ? "\\*" : agent;
+    assert.match(robots, new RegExp(`User-agent: ${escapedAgent}`));
+  }
+  assert.match(robots, /Disallow: \/admin/);
+  assert.match(robots, /Disallow: \/api\//);
+
+  for (const path of ["about-aurora", "service-process-safety"]) {
+    assert.match(sitemap, new RegExp(`${officialOrigin}/${path}/`));
+    assert.match(llms, new RegExp(`${officialOrigin}/${path}/`));
+  }
+  assert.doesNotMatch(`${sitemap}\n${llms}`, /\/admin|\/api\//);
+  assert.match(llms, /experimental|實驗性/);
+});
+
 test("production build generates crawler-ready game landing page documents", async () => {
   const [packageJson, generator] = await Promise.all([
     read("package.json"),
