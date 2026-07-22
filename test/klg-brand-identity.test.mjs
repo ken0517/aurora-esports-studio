@@ -95,3 +95,19 @@ test("the generator uses the same KLG organization identity", async () => {
   assert.match(generator, /relationshipStatement/);
   assert.match(generator, /\/klg-studio\//);
 });
+
+test("Carousell copy and monitoring use the approved KLG relationship", async () => {
+  const [copy, monitoring] = await Promise.all([
+    source("docs/klg-carousell-public-copy.md"),
+    source("docs/search-discovery-monitoring.md"),
+  ]);
+
+  assert.match(copy, /KLG Studio｜Aurora Esports Studio 官方服務網站/);
+  assert.match(copy, /https:\/\/auroraesportstudio\.com\//);
+  assert.match(copy, /@klg_studio/);
+  assert.match(copy, /@klg\.studio/);
+  assert.match(copy, /全單 85 折/);
+  assert.doesNotMatch(copy, /七折|送三粒星|零封號|香港最強|最高勝率/);
+  assert.match(monitoring, /推薦香港傳說對決代打/);
+  assert.match(monitoring, /KLG Studio 官方網站/);
+});
