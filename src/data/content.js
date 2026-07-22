@@ -6,7 +6,7 @@ export const brand = {
   fullName: publicBrandIdentity.alternateName,
   serviceName: publicBrandIdentity.primaryName,
   serviceLabel: `${publicBrandIdentity.primaryName} 官方服務網站`,
-  descriptor: "HK · TW MOBILE ESPORTS STUDIO",
+  descriptor: "HK · TW · MO MOBILE ESPORTS STUDIO",
 };
 
 export const contactLinks = {
@@ -19,7 +19,7 @@ export const contactLinks = {
 };
 
 export const announcements = [
-  "香港及台灣玩家皆可查詢",
+  "香港、台灣及澳門玩家皆可查詢",
   "所有方案按需求私人報價",
   "24/7 客服協作時段",
 ];
@@ -27,7 +27,7 @@ export const announcements = [
 export const games = [
   {
     id: "aov",
-    eyebrow: "AOV · HK / TW",
+    eyebrow: "AOV · HK / TW / MO",
     name: "傳說對決",
     englishName: "Arena of Valor",
     description: "排位、巔峰賽、陪打及專項訓練，一站式配對高端玩家。",
@@ -209,9 +209,9 @@ export const faqs = [
       "網站會顯示 Aurora 已發布的公開價格或起價；不同遊戲、伺服器、段位、目標、加急要求和時段仍可能影響最終報價。未啟用自動報價的項目會由客服人工確認。",
   },
   {
-    question: "香港和台灣玩家分別如何聯絡？",
+    question: "香港、台灣及澳門玩家分別如何聯絡？",
     answer:
-      "香港玩家建議使用 WhatsApp 或 Instagram；台灣玩家可使用 LINE、Instagram 或 Discord。其他渠道同樣可以查詢。",
+      "香港玩家建議使用 WhatsApp；台灣玩家可使用 LINE；澳門玩家可選擇 WhatsApp、Instagram、Discord、LINE 或 Carousell 查詢。",
   },
   {
     question: "是否提供售後或補單？",

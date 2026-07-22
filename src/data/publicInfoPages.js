@@ -1,6 +1,7 @@
 import { publicBrandIdentity } from "./publicBrand.js";
 
 const officialOrigin = publicBrandIdentity.officialOrigin;
+const marketStatement = publicBrandIdentity.marketStatement;
 
 export const publicInfoPages = Object.freeze([
   {
@@ -9,16 +10,16 @@ export const publicInfoPages = Object.freeze([
     seoTitle:
       "香港 KLG Studio 傳說對決代打與陪玩｜Aurora Esports Studio 官方網站",
     seoDescription:
-      "KLG Studio 是 Aurora Esports Studio 使用的遊戲服務品牌；官方網站提供香港及台灣傳說對決、王者榮耀國服及 HOK 國際服服務查詢。",
+      "KLG Studio 是 Aurora Esports Studio 使用的遊戲服務品牌；官方網站為香港、台灣及澳門玩家提供傳說對決、王者榮耀國服及 HOK 國際服服務查詢。",
     eyebrow: "KLG STUDIO · OFFICIAL SERVICE BRAND",
     title: "KLG Studio 官方服務網站",
-    intro: publicBrandIdentity.relationshipStatement,
+    intro: `${marketStatement} Aurora Esports Studio 是線上遊戲服務工作室，不設實體門市。`,
     sections: [
       {
         id: "identity",
         title: "KLG Studio 與 Aurora 的關係",
         body: [
-          "顧客可使用 KLG Studio 名稱查詢服務；Aurora Esports Studio 是本網站使用的關聯名稱。兩個名稱指向同一個官方網站及同一組官方聯絡方式。",
+          `${publicBrandIdentity.relationshipStatement} 顧客可使用 KLG Studio 名稱查詢服務；兩個名稱指向同一個官方網站及同一組官方聯絡方式。`,
         ],
       },
       {
@@ -41,7 +42,7 @@ export const publicInfoPages = Object.freeze([
         id: "online-only",
         title: "線上服務，不設實體門市",
         body: [
-          "KLG Studio 為香港及台灣玩家提供線上查詢及安排，不設供顧客到訪的實體門市。香港玩家可使用 WhatsApp，台灣玩家可使用 LINE。",
+          "KLG Studio 為香港、台灣及澳門玩家提供線上查詢及安排，不設供顧客到訪的實體門市。香港玩家建議使用 WhatsApp；台灣玩家可使用 LINE；澳門玩家可選擇 WhatsApp、Instagram、Discord、LINE 或 Carousell 查詢。",
         ],
       },
     ],
@@ -65,13 +66,12 @@ export const publicInfoPages = Object.freeze([
   {
     slug: "about-aurora",
     canonical: `${officialOrigin}/about-aurora/`,
-    seoTitle: "關於 Aurora Esports Studio｜香港及台灣線上遊戲服務",
+    seoTitle: "關於 Aurora Esports Studio｜香港、台灣及澳門線上遊戲服務",
     seoDescription:
-      "認識 Aurora Esports Studio：服務香港及台灣玩家的線上遊戲服務工作室，提供傳說對決、王者榮耀國服及 HOK 國際服查詢。",
+      "認識 Aurora Esports Studio：服務香港、台灣及澳門玩家的線上遊戲服務工作室，提供傳說對決、王者榮耀國服及 HOK 國際服查詢。",
     eyebrow: "ABOUT AURORA",
     title: "關於 Aurora Esports Studio",
-    intro:
-      "Aurora Esports Studio 是服務香港及台灣玩家的線上遊戲服務工作室，不設實體門市。網站提供清楚的遊戲資料、報價流程與客服聯絡方式。",
+    intro: `${marketStatement} Aurora Esports Studio 是線上遊戲服務工作室，不設實體門市。`,
     sections: [
       {
         id: "games",
@@ -90,9 +90,9 @@ export const publicInfoPages = Object.freeze([
       },
       {
         id: "contact",
-        title: "香港與台灣均可使用",
+        title: "香港、台灣及澳門均可查詢",
         body: [
-          "香港玩家建議使用 WhatsApp；台灣玩家可使用 LINE。Instagram、Discord 及 Carousell 亦可用作公開聯絡與品牌資料核對。",
+          "香港玩家建議使用 WhatsApp；台灣玩家可使用 LINE；澳門玩家可選擇 WhatsApp、Instagram、Discord、LINE 或 Carousell 查詢。",
         ],
       },
     ],

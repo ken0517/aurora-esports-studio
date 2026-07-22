@@ -56,6 +56,7 @@ test("public brand data preserves every approved localized fact and is deeply im
 test("public brand data centralises real markets, languages, and review evidence", async () => {
   const { publicBrandIdentity } = await import("../src/data/publicBrand.js");
 
+  assert.match(publicBrandIdentity.marketStatement, /香港.*台灣.*澳門/);
   assert.equal(publicBrandIdentity.primaryMarket.id, "hong-kong");
   assert.deepEqual(
     publicBrandIdentity.serviceMarkets.map((market) => market.id),
@@ -126,8 +127,9 @@ test("KLG public page states the approved relationship without unsupported claim
 });
 
 test("home and public pages visibly identify the KLG official service website", async () => {
-  const [content, home, game, info, css] = await Promise.all([
+  const [content, translations, home, game, info, css] = await Promise.all([
     source("src/data/content.js"),
+    source("src/data/translations.js"),
     source("src/App.jsx"),
     source("src/GameLandingPage.jsx"),
     source("src/PublicInfoPage.jsx"),
@@ -135,6 +137,10 @@ test("home and public pages visibly identify the KLG official service website", 
   ]);
 
   assert.match(content, /serviceName:\s*publicBrandIdentity\.primaryName/);
+  assert.match(content, /HK · TW · MO/);
+  assert.match(translations, /香港為主 · 台灣及澳門均可查詢/);
+  assert.match(translations, /Hong Kong first · Taiwan and Macau welcome/);
+  assert.match(translations, /香港为主 · 台湾及澳门均可咨询/);
   assert.match(home, /hero-wordmark__service-brand/);
   assert.match(css, /\.hero-wordmark__service-brand/);
   for (const page of [home, game, info]) {

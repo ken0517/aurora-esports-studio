@@ -9,20 +9,20 @@ export const gameLandingPages = Object.freeze([
     canonical: "https://auroraesportstudio.com/arena-of-valor-boosting/",
     seoTitle: "香港 KLG Studio 傳說對決代打・陪玩｜Aurora 官方網站",
     seoDescription:
-      "KLG Studio 為香港及台灣玩家提供傳說對決排位代打、陪玩帶飛、巔峰賽及英雄戰力標查詢；官方網站由 Aurora Esports Studio 使用。",
-    eyebrow: "ARENA OF VALOR · HK / TW",
+      "KLG Studio 為香港、台灣及澳門玩家提供傳說對決排位代打、陪玩帶飛、巔峰賽及英雄戰力標查詢；官方網站由 Aurora Esports Studio 使用。",
+    eyebrow: "ARENA OF VALOR · HK / TW / MO",
     title: "香港傳說對決代打與陪玩服務",
     intro:
       "按目前段位、目標與遊戲習慣安排合適服務。你可以先自行填寫資料，亦可由 Aurora 客服逐步協助整理需求。",
     image: "assets/generated/game-aov-user.webp",
     imageAlt: "Aurora 傳說對決遊戲服務實績",
-    audience: "香港及台灣《傳說對決》玩家",
+    audience: "香港、台灣及澳門《傳說對決》玩家",
     searchGuide: {
-      title: "香港及台灣傳說對決代打、陪玩查詢",
+      title: "香港、台灣及澳門傳說對決代打、陪玩查詢",
       paragraphs: [
         brandRelationship,
         "如果你正在尋找香港傳說對決代打、排位上分或傳說對決陪玩服務，可以先在 Aurora 報價表選擇目前段位、目標段位、星數、指定英雄及分路。系統會依照已確認的中央價格規則整理暫估報價，無法自動計算的要求則交由客服確認。",
-        "台灣玩家同樣可以使用繁體中文填寫資料，並透過 LINE 確認；香港玩家可直接使用 WhatsApp。服務範圍包括排位代打、陪玩帶飛、巔峰賽、英雄戰力標，以及第一視角教學或復盤等其他需求。",
+        "香港玩家建議使用 WhatsApp；台灣玩家可使用 LINE；澳門玩家可選擇 WhatsApp、Instagram、Discord、LINE 或 Carousell 查詢。服務範圍包括排位代打、陪玩帶飛、巔峰賽、英雄戰力標，以及第一視角教學或復盤等其他需求。",
       ],
     },
     relatedGameIds: ["aov", "hok-cn", "hok-global"],
@@ -70,8 +70,8 @@ export const gameLandingPages = Object.freeze([
         answer: "戰力標需要按英雄、目前戰力、目標戰力與標誌確認，因此會交由 Aurora 客服人工報價。",
       },
       {
-        question: "香港與台灣玩家可以用甚麼方式聯絡？",
-        answer: "香港玩家可使用 WhatsApp，台灣玩家可使用 LINE；兩者都可以先在網站完成報價表，再把整理好的資料交給客服確認。",
+        question: "香港、台灣及澳門玩家可以使用哪些方式聯絡？",
+        answer: "香港玩家建議使用 WhatsApp；台灣玩家可使用 LINE；澳門玩家可選擇 WhatsApp、Instagram、Discord、LINE 或 Carousell 查詢。",
       },
       {
         question: "傳說對決服務是否保證勝率或指定結果？",
@@ -85,20 +85,20 @@ export const gameLandingPages = Object.freeze([
     canonical: "https://auroraesportstudio.com/honor-of-kings-cn-boosting/",
     seoTitle: "KLG Studio 王者榮耀國服代打・陪玩｜Aurora 官方網站",
     seoDescription:
-      "KLG Studio 提供香港王者榮耀國服排位代打、陪玩帶飛、巔峰賽及英雄戰力標需求整理；官方網站為 auroraesportstudio.com。",
+      "KLG Studio 為香港、台灣及澳門玩家提供王者榮耀國服排位代打、陪玩帶飛、巔峰賽及英雄戰力標需求整理；官方網站為 auroraesportstudio.com。",
     eyebrow: "HONOR OF KINGS · CHINA SERVER",
     title: "王者榮耀國服代打與陪玩服務",
     intro:
       "按照國服段位、星數、指定分路與目標整理專屬報價，所有金額只會採用 Aurora 已確認的中央價格資料。",
     image: "assets/generated/game-hok-cn-user.webp",
     imageAlt: "Aurora 王者榮耀國服遊戲服務實績",
-    audience: "需要王者榮耀國服服務的香港及台灣玩家",
+    audience: "需要王者榮耀國服服務的香港、台灣及澳門玩家",
     searchGuide: {
-      title: "香港及台灣王者榮耀國服代打查詢",
+      title: "香港、台灣及澳門王者榮耀國服代打查詢",
       paragraphs: [
         brandRelationship,
         "Aurora 的王者榮耀國服代打頁面把國服段位、分級、王者星數、指定英雄及分路分開處理，避免與 HOK 國際服資料混用。排位代打與陪玩帶飛可按網站已確認規則整理暫估報價。",
-        "如果你需要國服巔峰賽代打、小國標、大國標或其他特殊安排，網站會先收集目標分數、英雄及位置，再顯示待人工確認。香港玩家可使用 WhatsApp，台灣玩家亦可透過 LINE 聯絡 Aurora 客服。",
+        "如需國服巔峰賽代打、小國標、大國標或其他特殊安排，網站會先收集目標分數、英雄及位置，再顯示待人工確認。香港玩家建議使用 WhatsApp；台灣玩家可使用 LINE；澳門玩家可選擇 WhatsApp、Instagram、Discord、LINE 或 Carousell 查詢。",
       ],
     },
     relatedGameIds: ["aov", "hok-cn", "hok-global"],
@@ -135,20 +135,20 @@ export const gameLandingPages = Object.freeze([
     canonical: "https://auroraesportstudio.com/honor-of-kings-global-boosting/",
     seoTitle: "KLG Studio HOK 國際服代打・陪玩｜Aurora 官方網站",
     seoDescription:
-      "KLG Studio 為香港及台灣玩家提供 HOK／Honor of Kings 國際服排位代打、陪玩帶飛、巔峰賽及英雄戰力標查詢。",
+      "KLG Studio 為香港、台灣及澳門玩家提供 HOK／Honor of Kings 國際服排位代打、陪玩帶飛、巔峰賽及英雄戰力標查詢。",
     eyebrow: "HONOR OF KINGS · GLOBAL SERVER",
     title: "HOK 國際服代打與陪玩服務",
     intro:
       "針對 Honor of Kings 國際服段位、星數及伺服器環境整理服務需求，並以繁體書面語提供清楚的報價流程。",
     image: "assets/generated/game-hok-global-user.webp",
     imageAlt: "Aurora HOK 國際服遊戲服務實績",
-    audience: "香港及台灣 Honor of Kings 國際服玩家",
+    audience: "香港、台灣及澳門 Honor of Kings 國際服玩家",
     searchGuide: {
-      title: "香港及台灣 HOK 國際服代打、陪玩查詢",
+      title: "香港、台灣及澳門 HOK 國際服代打、陪玩查詢",
       paragraphs: [
         brandRelationship,
         "HOK 國際服代打與王者榮耀國服並非同一套段位資料。Aurora 會按 Honor of Kings 國際服的目前段位、分級、王者星數、指定英雄與分路整理排位代打或陪玩帶飛需求。",
-        "國際服巔峰賽與英雄戰力標需要依照分數、英雄、戰區及目標標誌人工確認。香港玩家可使用 WhatsApp，台灣玩家可使用 LINE；亦可以先使用網站報價表整理全部資料。",
+        "國際服巔峰賽與英雄戰力標需要依照分數、英雄、戰區及目標標誌人工確認。香港玩家建議使用 WhatsApp；台灣玩家可使用 LINE；澳門玩家可選擇 WhatsApp、Instagram、Discord、LINE 或 Carousell 查詢。",
       ],
     },
     relatedGameIds: ["aov", "hok-cn", "hok-global"],
@@ -167,7 +167,7 @@ export const gameLandingPages = Object.freeze([
       },
       {
         question: "如何聯絡 Aurora 確認服務？",
-        answer: "香港客戶可使用 WhatsApp，台灣客戶可使用 LINE；亦可先填寫網站報價表整理資料。",
+        answer: "香港玩家建議使用 WhatsApp；台灣玩家可使用 LINE；澳門玩家可選擇 WhatsApp、Instagram、Discord、LINE 或 Carousell 查詢。",
       },
       {
         question: "HOK 國際服排位代打會顯示哪一種貨幣？",

@@ -116,7 +116,7 @@ export default function PublicInfoPage({ slug }) {
 
       <footer className="public-info__footer">
         <a href="/">Aurora Esports Studio</a>
-        <span>香港及台灣線上遊戲服務工作室</span>
+        <span>香港、台灣及澳門線上遊戲服務工作室</span>
       </footer>
     </div>
   );

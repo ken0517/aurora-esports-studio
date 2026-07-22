@@ -258,7 +258,7 @@ export default function GameLandingPage({ gameId }) {
         <a href="/klg-studio/">KLG Studio</a>
         <a href="/about-aurora/">關於 Aurora</a>
         <a href="/service-process-safety/">服務流程與安全</a>
-        <span>香港及台灣手機 MOBA 遊戲服務</span>
+        <span>香港、台灣及澳門手機 MOBA 遊戲服務</span>
       </footer>
     </div>
   );

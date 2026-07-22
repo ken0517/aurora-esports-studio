@@ -20,6 +20,11 @@ test("public trust pages use unique indexable routes and formal Traditional Chin
   assert.match(aboutPage.intro, /線上遊戲服務工作室/);
   assert.match(aboutPage.intro, /不設實體門市/);
   assert.match(safetyPage.title, /服務流程與安全說明/);
+  assert.match(JSON.stringify(publicInfoPages), /香港.*台灣.*澳門/);
+  assert.doesNotMatch(
+    JSON.stringify(publicInfoPages),
+    /只限香港|僅限香港|香港及台灣玩家提供線上查詢及安排/,
+  );
   assert.doesNotMatch(
     JSON.stringify(publicInfoPages),
     /全港第一|零風險|保證上分|門市地址|金额/,

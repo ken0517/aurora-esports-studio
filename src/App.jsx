@@ -195,7 +195,7 @@ function OverlayMenu({ onClose, text }) {
       </nav>
 
       <div className="editorial-menu__footer">
-        <span>{text("hero.sideNote", "HK · TW · MOBILE ESPORTS")}</span>
+        <span>{text("hero.sideNote", "HK · TW · MO · MOBILE ESPORTS")}</span>
         <ExternalAnchor href={contactLinks.whatsapp} analyticsChannel="whatsapp">
           {text("contact.whatsapp", "WhatsApp 查詢")}
           <ExternalLink aria-hidden="true" />
@@ -749,7 +749,7 @@ export default function App() {
             <span aria-hidden="true">A</span>
             <strong>{brand.fullName}</strong>
           </a>
-          <p>{text("footer.description", "香港為主、台灣亦可使用的手機 MOBA 遊戲服務工作室。")}</p>
+          <p>{text("footer.description", "香港為主，台灣及澳門均可查詢的手機 MOBA 遊戲服務工作室。")}</p>
           <nav aria-label={text("footer.navigation", "頁尾導覽") }>
             {menuItems.slice(0, 4).map((item) => (
               <a key={item.href} href={item.href}>{text(item.key, item.fallback)}</a>

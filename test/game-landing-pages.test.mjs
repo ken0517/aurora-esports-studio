@@ -47,6 +47,7 @@ test("each game page has useful search guidance, expanded FAQs and internal disc
 
   assert.equal(gameLandingPages.length, 3);
   for (const page of gameLandingPages) {
+    assert.match(`${page.seoDescription} ${page.audience} ${page.searchGuide.title}`, /澳門/);
     assert.match(page.searchGuide?.title || "", /香港|台灣/);
     assert.ok((page.searchGuide?.paragraphs || []).length >= 2);
     assert.ok(page.faqs.length >= 5);
