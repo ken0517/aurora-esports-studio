@@ -74,6 +74,29 @@ export default function PublicInfoPage({ slug }) {
           </div>
         </section>
 
+        {page.reviews ? (
+          <section className="public-info__reviews" aria-labelledby="public-info-reviews-title">
+            <div className="public-info__shell">
+              <p className="public-info__eyebrow">VERIFIED PUBLIC REVIEWS</p>
+              <h2 id="public-info-reviews-title">真實顧客評價</h2>
+              <p className="public-info__review-summary">
+                {page.reviews.rating.toFixed(1)}／5 · {page.reviews.count} 條 Carousell 公開評價
+              </p>
+              <div className="public-info__review-grid">
+                {page.reviews.excerpts.map((review) => (
+                  <blockquote key={review.traditionalChinese}>
+                    <p>「{review.traditionalChinese}」</p>
+                    <cite>Carousell 公開顧客評價</cite>
+                  </blockquote>
+                ))}
+              </div>
+              <p className="public-info__review-source">
+                資料來源：KLG Studio 公開 Carousell 頁面 {page.reviews.profile}；最後核對日期 {page.reviews.verifiedOn}。
+              </p>
+            </div>
+          </section>
+        ) : null}
+
         <section className="public-info__faq" aria-labelledby="public-info-faq-title">
           <div className="public-info__shell public-info__faq-layout">
             <div>

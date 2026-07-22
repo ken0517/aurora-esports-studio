@@ -14,6 +14,7 @@ export const publicInfoPages = Object.freeze([
     eyebrow: "KLG STUDIO · OFFICIAL SERVICE BRAND",
     title: "KLG Studio 官方服務網站",
     intro: `${marketStatement} Aurora Esports Studio 是線上遊戲服務工作室，不設實體門市。`,
+    reviews: publicBrandIdentity.reviews,
     sections: [
       {
         id: "identity",

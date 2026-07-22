@@ -85,11 +85,18 @@ function renderGameCrawlerContent(page) {
   </main>`;
 }
 
+function renderInfoReviews(page) {
+  if (!page.reviews) return "";
+  const reviews = page.reviews;
+  return `<section id="public-reviews"><h2>真實顧客評價</h2><p>${reviews.rating.toFixed(1)}／5 · ${reviews.count} 條 Carousell 公開評價</p>${reviews.excerpts.map((review) => `<blockquote><p>「${escapeHtml(review.traditionalChinese)}」</p><cite>Carousell 公開顧客評價</cite></blockquote>`).join("")}<p>資料來源：KLG Studio 公開 Carousell 頁面 ${escapeHtml(reviews.profile)}；最後核對日期 ${escapeHtml(reviews.verifiedOn)}。</p></section>`;
+}
+
 function renderInfoCrawlerContent(page) {
   return `<main class="crawler-content">
     <header><a href="/klg-studio/">KLG Studio｜Aurora Esports Studio 官方網站</a></header>
     <article><p>${escapeHtml(page.eyebrow)}</p><h1>${escapeHtml(page.title)}</h1><p>${escapeHtml(page.intro)}</p>
       ${page.sections.map((section) => `<section id="${escapeHtml(section.id)}"><h2>${escapeHtml(section.title)}</h2>${section.body.map((text) => `<p>${escapeHtml(text)}</p>`).join("")}${renderTextList(section.points)}</section>`).join("")}
+      ${renderInfoReviews(page)}
       <section><h2>常見問題</h2>${page.faqs.map((faq) => `<h3>${escapeHtml(faq.question)}</h3><p>${escapeHtml(faq.answer)}</p>`).join("")}</section>
       <nav><a href="/klg-studio/">KLG Studio 官方服務網站</a><a href="/arena-of-valor-boosting/">傳說對決服務</a><a href="/honor-of-kings-cn-boosting/">王者榮耀國服服務</a><a href="/honor-of-kings-global-boosting/">HOK 國際服服務</a></nav>
     </article>

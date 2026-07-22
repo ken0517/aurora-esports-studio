@@ -129,6 +129,52 @@
   line-height: 1.85;
 }
 
+.public-info__reviews {
+  padding: 100px 0;
+  background: #fbf8f1;
+}
+
+.public-info__reviews h2 {
+  margin: 18px 0 12px;
+  font-size: 52px;
+}
+
+.public-info__review-summary {
+  color: #6e6457;
+}
+
+.public-info__review-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+  margin-top: 36px;
+}
+
+.public-info__review-grid blockquote {
+  margin: 0;
+  padding: 28px;
+  border: 1px solid rgba(73, 58, 39, 0.22);
+  color: #1c1a17;
+}
+
+.public-info__review-grid blockquote p {
+  margin: 0 0 20px;
+  line-height: 1.8;
+}
+
+.public-info__review-grid cite {
+  color: #a87a3e;
+  font-size: 12px;
+  font-style: normal;
+}
+
+.public-info__review-source {
+  margin: 28px 0 0;
+  color: #6e6457;
+  font-size: 12px;
+  line-height: 1.7;
+}
+
 .public-info__faq {
   padding: 100px 0;
   background: #e9e1d4;
@@ -230,6 +276,7 @@
   }
 
   .public-info__sections,
+  .public-info__review-grid,
   .public-info__faq-layout {
     grid-template-columns: 1fr;
   }
@@ -240,6 +287,7 @@
   }
 
   .public-info__faq,
+  .public-info__reviews,
   .public-info__content {
     padding: 72px 0;
   }

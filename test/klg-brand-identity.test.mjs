@@ -126,6 +126,17 @@ test("KLG public page states the approved relationship without unsupported claim
   assert.doesNotMatch(copy, /香港最強|零封號|保證最高勝率|保證推薦|鬥士工作室/);
 });
 
+test("KLG page exposes only anonymised verified Carousell review evidence", async () => {
+  const { getPublicInfoPageBySlug } = await import("../src/data/publicInfoPages.js");
+  const page = getPublicInfoPageBySlug("/klg-studio/");
+
+  assert.equal(page.reviews.rating, 5);
+  assert.equal(page.reviews.count, 30);
+  assert.equal(page.reviews.profile, "@klg_studio");
+  assert.equal(page.reviews.excerpts.length, 4);
+  assert.doesNotMatch(JSON.stringify(page.reviews), /phrakhrueng|82299|gordon1121|sofuli68|五年|5 years/);
+});
+
 test("home and public pages visibly identify the KLG official service website", async () => {
   const [content, translations, home, game, info, css] = await Promise.all([
     source("src/data/content.js"),

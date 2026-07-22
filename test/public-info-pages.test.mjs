@@ -2,6 +2,10 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
 
+async function source(path) {
+  return readFile(new URL(`../${path}`, import.meta.url), "utf8");
+}
+
 test("public trust pages use unique indexable routes and formal Traditional Chinese", async () => {
   const { publicInfoPages, getPublicInfoPageBySlug } = await import(
     "../src/data/publicInfoPages.js"
@@ -59,4 +63,15 @@ test("public trust routes lazy-load one shared responsive page", async () => {
   assert.match(page, /page\.sections\.map/);
   assert.match(page, /page\.faqs\.map/);
   assert.match(css, /@media \(max-width: 760px\)/);
+});
+
+test("shared public info renderer supports sourced review quotations", async () => {
+  const page = await source("src/PublicInfoPage.jsx");
+  const css = await source("src/styles/public-info.css");
+  const generator = await source("scripts/generate-game-landing-pages.mjs");
+
+  assert.match(page, /page\.reviews/);
+  assert.match(page, /blockquote/);
+  assert.match(css, /public-info__reviews/);
+  assert.match(generator, /renderInfoReviews/);
 });
