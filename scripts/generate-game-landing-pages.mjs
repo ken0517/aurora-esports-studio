@@ -3,20 +3,16 @@ import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 import { gameLandingPages } from "../src/data/gameLandingPages.js";
+import { publicBrandIdentity } from "../src/data/publicBrand.js";
 import { publicInfoPages } from "../src/data/publicInfoPages.js";
 
 const projectRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const distRoot = resolve(projectRoot, "dist");
 const sourcePath = resolve(distRoot, "index.html");
-const officialOrigin = "https://auroraesportstudio.com";
+const officialOrigin = publicBrandIdentity.officialOrigin;
 const organizationId = `${officialOrigin}/#organization`;
 const websiteId = `${officialOrigin}/#website`;
-const verifiedProfiles = [
-  "https://www.instagram.com/ken._0517",
-  "https://discord.gg/ZW9mwQRQud",
-  "https://line.me/ti/p/wWXCT-txMc",
-  "https://carousell.app.link/BWYWpLY692b",
-];
+const verifiedProfiles = publicBrandIdentity.verifiedProfiles;
 
 const markers = {
   description: 'name="description"',
@@ -77,25 +73,25 @@ function renderGameCrawlerContent(page) {
     : "";
 
   return `<main class="crawler-content">
-    <header><a href="/">Aurora Esports Studio</a></header>
+    <header><a href="/klg-studio/">KLG Studio｜Aurora Esports Studio 官方網站</a></header>
     <article>
       <p>${escapeHtml(page.eyebrow)}</p><h1>${escapeHtml(page.title)}</h1><p>${escapeHtml(page.intro)}</p>
       <section><h2>${escapeHtml(page.searchGuide.title)}</h2>${page.searchGuide.paragraphs.map((text) => `<p>${escapeHtml(text)}</p>`).join("")}</section>
       <section><h2>適用遊戲資料</h2><p>${escapeHtml(page.rankSummary)}</p><h3>指定位置／分路</h3>${renderTextList(page.lanes)}<h3>英雄戰力標</h3>${renderTextList(page.marks)}<p>${escapeHtml(page.priceNotice)}</p></section>
       ${cases}
       <section><h2>常見問題</h2>${page.faqs.map((faq) => `<h3>${escapeHtml(faq.question)}</h3><p>${escapeHtml(faq.answer)}</p>`).join("")}</section>
-      <nav><a href="/about-aurora/">關於 Aurora</a><a href="/service-process-safety/">服務流程與安全</a><a href="/#ai-quote">填寫報價表</a></nav>
+      <nav><a href="/klg-studio/">KLG Studio</a><a href="/about-aurora/">關於 Aurora</a><a href="/service-process-safety/">服務流程與安全</a><a href="/#ai-quote">填寫報價表</a></nav>
     </article>
   </main>`;
 }
 
 function renderInfoCrawlerContent(page) {
   return `<main class="crawler-content">
-    <header><a href="/">Aurora Esports Studio</a></header>
+    <header><a href="/klg-studio/">KLG Studio｜Aurora Esports Studio 官方網站</a></header>
     <article><p>${escapeHtml(page.eyebrow)}</p><h1>${escapeHtml(page.title)}</h1><p>${escapeHtml(page.intro)}</p>
       ${page.sections.map((section) => `<section id="${escapeHtml(section.id)}"><h2>${escapeHtml(section.title)}</h2>${section.body.map((text) => `<p>${escapeHtml(text)}</p>`).join("")}${renderTextList(section.points)}</section>`).join("")}
       <section><h2>常見問題</h2>${page.faqs.map((faq) => `<h3>${escapeHtml(faq.question)}</h3><p>${escapeHtml(faq.answer)}</p>`).join("")}</section>
-      <nav><a href="/arena-of-valor-boosting/">傳說對決服務</a><a href="/honor-of-kings-cn-boosting/">王者榮耀國服服務</a><a href="/honor-of-kings-global-boosting/">HOK 國際服服務</a></nav>
+      <nav><a href="/klg-studio/">KLG Studio 官方服務網站</a><a href="/arena-of-valor-boosting/">傳說對決服務</a><a href="/honor-of-kings-cn-boosting/">王者榮耀國服服務</a><a href="/honor-of-kings-global-boosting/">HOK 國際服服務</a></nav>
     </article>
   </main>`;
 }
@@ -129,10 +125,11 @@ function makeOrganizationData() {
   return {
     "@type": "Organization",
     "@id": organizationId,
-    name: "Aurora Esports Studio",
+    name: publicBrandIdentity.primaryName,
+    alternateName: publicBrandIdentity.alternateName,
     url: `${officialOrigin}/`,
     image: `${officialOrigin}/assets/generated/aurora-cinematic.webp`,
-    description: "服務香港及台灣玩家的線上遊戲服務工作室，不設實體門市。",
+    description: publicBrandIdentity.relationshipStatement,
     areaServed: ["Hong Kong", "Taiwan"],
     sameAs: verifiedProfiles,
     contactPoint: {
@@ -149,7 +146,8 @@ function makeWebsiteData() {
     "@type": "WebSite",
     "@id": websiteId,
     url: `${officialOrigin}/`,
-    name: "Aurora Esports Studio",
+    name: publicBrandIdentity.websiteName,
+    alternateName: publicBrandIdentity.alternateName,
     inLanguage: "zh-Hant",
     publisher: { "@id": organizationId },
   };
@@ -200,7 +198,7 @@ function makeStructuredData(page) {
       {
         "@type": "ProfessionalService",
         "@id": `${page.canonical}#service`,
-        name: `Aurora Esports Studio｜${page.title}`,
+        name: `KLG Studio｜${page.title}`,
         url: page.canonical,
         image: `${officialOrigin}/${page.image}`,
         description: page.seoDescription,

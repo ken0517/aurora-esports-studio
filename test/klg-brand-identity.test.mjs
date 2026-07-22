@@ -85,3 +85,13 @@ test("home and game SEO use KLG as the primary service name", async () => {
     assert.match(page.searchGuide.paragraphs.join(" "), /Aurora Esports Studio/);
   }
 });
+
+test("the generator uses the same KLG organization identity", async () => {
+  const generator = await source("scripts/generate-game-landing-pages.mjs");
+
+  assert.match(generator, /publicBrandIdentity/);
+  assert.match(generator, /primaryName/);
+  assert.match(generator, /alternateName/);
+  assert.match(generator, /relationshipStatement/);
+  assert.match(generator, /\/klg-studio\//);
+});

@@ -51,6 +51,7 @@ test("public brand schema uses stable organization and website identities", asyn
     "arena-of-valor-boosting",
     "honor-of-kings-cn-boosting",
     "honor-of-kings-global-boosting",
+    "klg-studio",
     "about-aurora",
     "service-process-safety",
   ]) {
@@ -89,7 +90,7 @@ test("public crawler files explicitly expose only public Aurora pages", async ()
   assert.match(robots, /Disallow: \/admin/);
   assert.match(robots, /Disallow: \/api\//);
 
-  for (const path of ["about-aurora", "service-process-safety"]) {
+  for (const path of ["klg-studio", "about-aurora", "service-process-safety"]) {
     assert.match(sitemap, new RegExp(`${officialOrigin}/${path}/`));
     assert.match(llms, new RegExp(`${officialOrigin}/${path}/`));
   }
@@ -132,6 +133,7 @@ test("production output exposes readable HTML for every public route before Java
     ["arena-of-valor-boosting", "香港傳說對決代打與陪玩服務"],
     ["honor-of-kings-cn-boosting", "王者榮耀國服代打與陪玩服務"],
     ["honor-of-kings-global-boosting", "HOK 國際服代打與陪玩服務"],
+    ["klg-studio", "KLG Studio 官方服務網站"],
     ["about-aurora", "關於 Aurora Esports Studio"],
     ["service-process-safety", "服務流程與安全說明"],
   ]) {
@@ -147,11 +149,14 @@ test("production output exposes readable HTML for every public route before Java
 
   const home = await read("dist/index.html");
   assert.match(home, /<main class="crawler-content">/);
-  assert.match(home, /<h1>Aurora Esports Studio<\/h1>/);
+  assert.match(home, /<h1>KLG Studio<\/h1>/);
+  assert.match(home, /KLG Studio 是 Aurora Esports Studio 使用的遊戲服務品牌/);
+  assert.match(home, /href="\/klg-studio\/"/);
   for (const path of [
     "/arena-of-valor-boosting/",
     "/honor-of-kings-cn-boosting/",
     "/honor-of-kings-global-boosting/",
+    "/klg-studio/",
     "/about-aurora/",
     "/service-process-safety/",
   ]) {
