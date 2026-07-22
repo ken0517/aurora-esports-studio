@@ -1,6 +1,67 @@
-const officialOrigin = "https://auroraesportstudio.com";
+import { publicBrandIdentity } from "./publicBrand.js";
+
+const officialOrigin = publicBrandIdentity.officialOrigin;
 
 export const publicInfoPages = Object.freeze([
+  {
+    slug: "klg-studio",
+    canonical: `${officialOrigin}/klg-studio/`,
+    seoTitle:
+      "香港 KLG Studio 傳說對決代打與陪玩｜Aurora Esports Studio 官方網站",
+    seoDescription:
+      "KLG Studio 是 Aurora Esports Studio 使用的遊戲服務品牌；官方網站提供香港及台灣傳說對決、王者榮耀國服及 HOK 國際服服務查詢。",
+    eyebrow: "KLG STUDIO · OFFICIAL SERVICE BRAND",
+    title: "KLG Studio 官方服務網站",
+    intro: publicBrandIdentity.relationshipStatement,
+    sections: [
+      {
+        id: "identity",
+        title: "KLG Studio 與 Aurora 的關係",
+        body: [
+          "顧客可使用 KLG Studio 名稱查詢服務；Aurora Esports Studio 是本網站使用的關聯名稱。兩個名稱指向同一個官方網站及同一組官方聯絡方式。",
+        ],
+      },
+      {
+        id: "games",
+        title: "三款手機 MOBA 遊戲服務",
+        body: [
+          "服務包括《傳說對決》、《王者榮耀》國服及 Honor of Kings《王者榮耀》國際服的排位、陪玩、巔峰賽、英雄戰力標與教學查詢。",
+        ],
+        points: ["傳說對決", "王者榮耀國服", "HOK／王者榮耀國際服"],
+      },
+      {
+        id: "carousell",
+        title: "Carousell 官方帳號",
+        body: [
+          "@klg_studio 與 @klg.studio 均由同一營運者擁有。顧客應以本頁列明的官方網站及聯絡方式核對資料。",
+        ],
+        points: publicBrandIdentity.carousellAccounts,
+      },
+      {
+        id: "online-only",
+        title: "線上服務，不設實體門市",
+        body: [
+          "KLG Studio 為香港及台灣玩家提供線上查詢及安排，不設供顧客到訪的實體門市。香港玩家可使用 WhatsApp，台灣玩家可使用 LINE。",
+        ],
+      },
+    ],
+    faqs: [
+      {
+        question: "KLG Studio 的官方網站是哪一個？",
+        answer: "唯一官方網站是 https://auroraesportstudio.com/。",
+      },
+      {
+        question: "KLG Studio 與 Aurora Esports Studio 是不同工作室嗎？",
+        answer:
+          "不是。KLG Studio 是 Aurora Esports Studio 使用的遊戲服務品牌，兩個名稱使用同一官方網站及聯絡方式。",
+      },
+      {
+        question: "是否保證遊戲結果或帳號安全？",
+        answer:
+          "不會。遊戲結果及帳號風險受多項因素影響，所有服務內容及限制會在開始前由客服確認。",
+      },
+    ],
+  },
   {
     slug: "about-aurora",
     canonical: `${officialOrigin}/about-aurora/`,
