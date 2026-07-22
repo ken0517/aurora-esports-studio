@@ -9,6 +9,10 @@ async function read(relativePath) {
   return readFile(new URL(relativePath, root), "utf8");
 }
 
+function escapeRegExp(value) {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
 test("public SEO metadata uses the official Aurora domain", async () => {
   const html = await read("index.html");
 
@@ -24,6 +28,37 @@ test("public SEO metadata uses the official Aurora domain", async () => {
     /"image": "https:\/\/auroraesportstudio\.com\/assets\/generated\/aurora-cinematic\.webp"/,
   );
   assert.doesNotMatch(html, /ken0517\.github\.io\/aurora-esports-studio/);
+});
+
+test("public brand schema uses stable organization and website identities", async () => {
+  const home = await read("index.html");
+
+  assert.match(home, /"@type": "Organization"/);
+  assert.match(home, /"@type": "WebSite"/);
+  assert.match(home, /https:\/\/auroraesportstudio\.com\/#organization/);
+  assert.match(home, /https:\/\/auroraesportstudio\.com\/#website/);
+  for (const url of [
+    "https://www.instagram.com/ken._0517",
+    "https://discord.gg/ZW9mwQRQud",
+    "https://line.me/ti/p/wWXCT-txMc",
+    "https://carousell.app.link/BWYWpLY692b",
+  ]) {
+    assert.match(home, new RegExp(escapeRegExp(url)));
+  }
+  assert.doesNotMatch(home, /PostalAddress|streetAddress|LocalBusiness/);
+
+  for (const slug of [
+    "arena-of-valor-boosting",
+    "honor-of-kings-cn-boosting",
+    "honor-of-kings-global-boosting",
+    "about-aurora",
+    "service-process-safety",
+  ]) {
+    const html = await read(`dist/${slug}/index.html`);
+    assert.match(html, /https:\/\/auroraesportstudio\.com\/#organization/);
+    assert.match(html, /https:\/\/auroraesportstudio\.com\/#website/);
+    assert.doesNotMatch(html, /PostalAddress|streetAddress|LocalBusiness/);
+  }
 });
 
 test("robots and sitemap advertise the official Aurora domain", async () => {

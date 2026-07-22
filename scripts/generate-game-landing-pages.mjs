@@ -9,6 +9,14 @@ const projectRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const distRoot = resolve(projectRoot, "dist");
 const sourcePath = resolve(distRoot, "index.html");
 const officialOrigin = "https://auroraesportstudio.com";
+const organizationId = `${officialOrigin}/#organization`;
+const websiteId = `${officialOrigin}/#website`;
+const verifiedProfiles = [
+  "https://www.instagram.com/ken._0517",
+  "https://discord.gg/ZW9mwQRQud",
+  "https://line.me/ti/p/wWXCT-txMc",
+  "https://carousell.app.link/BWYWpLY692b",
+];
 
 const markers = {
   description: 'name="description"',
@@ -117,10 +125,78 @@ function replaceCanonical(source, canonical) {
   );
 }
 
+function makeOrganizationData() {
+  return {
+    "@type": "Organization",
+    "@id": organizationId,
+    name: "Aurora Esports Studio",
+    url: `${officialOrigin}/`,
+    image: `${officialOrigin}/assets/generated/aurora-cinematic.webp`,
+    description: "服務香港及台灣玩家的線上遊戲服務工作室，不設實體門市。",
+    areaServed: ["Hong Kong", "Taiwan"],
+    sameAs: verifiedProfiles,
+    contactPoint: {
+      "@type": "ContactPoint",
+      contactType: "customer service",
+      url: "https://wa.me/447442619658",
+      availableLanguage: ["zh-Hant", "en"],
+    },
+  };
+}
+
+function makeWebsiteData() {
+  return {
+    "@type": "WebSite",
+    "@id": websiteId,
+    url: `${officialOrigin}/`,
+    name: "Aurora Esports Studio",
+    inLanguage: "zh-Hant",
+    publisher: { "@id": organizationId },
+  };
+}
+
+function makeFaqData(page) {
+  return {
+    "@type": "FAQPage",
+    "@id": `${page.canonical}#faq`,
+    mainEntity: page.faqs.map((faq) => ({
+      "@type": "Question",
+      name: faq.question,
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: faq.answer,
+      },
+    })),
+  };
+}
+
+function makeBreadcrumbData(page) {
+  return {
+    "@type": "BreadcrumbList",
+    "@id": `${page.canonical}#breadcrumb`,
+    itemListElement: [
+      {
+        "@type": "ListItem",
+        position: 1,
+        name: "Aurora Esports Studio",
+        item: `${officialOrigin}/`,
+      },
+      {
+        "@type": "ListItem",
+        position: 2,
+        name: page.title,
+        item: page.canonical,
+      },
+    ],
+  };
+}
+
 function makeStructuredData(page) {
   return {
     "@context": "https://schema.org",
     "@graph": [
+      makeOrganizationData(),
+      makeWebsiteData(),
       {
         "@type": "ProfessionalService",
         "@id": `${page.canonical}#service`,
@@ -135,62 +211,7 @@ function makeStructuredData(page) {
         availableLanguage: ["zh-Hant", "zh-Hans", "en"],
         serviceType: ["排位代打", "陪玩帶飛", "巔峰賽代打", "英雄戰力標", "遊戲教學"],
         audience: { "@type": "Audience", audienceType: page.audience },
-        contactPoint: {
-          "@type": "ContactPoint",
-          contactType: "customer service",
-          url: "https://wa.me/447442619658",
-          availableLanguage: ["Chinese", "English"],
-        },
-      },
-      {
-        "@type": "FAQPage",
-        "@id": `${page.canonical}#faq`,
-        mainEntity: page.faqs.map((faq) => ({
-          "@type": "Question",
-          name: faq.question,
-          acceptedAnswer: {
-            "@type": "Answer",
-            text: faq.answer,
-          },
-        })),
-      },
-      {
-        "@type": "BreadcrumbList",
-        "@id": `${page.canonical}#breadcrumb`,
-        itemListElement: [
-          {
-            "@type": "ListItem",
-            position: 1,
-            name: "Aurora Esports Studio",
-            item: `${officialOrigin}/`,
-          },
-          {
-            "@type": "ListItem",
-            position: 2,
-            name: page.title,
-            item: page.canonical,
-          },
-        ],
-      },
-    ],
-  };
-}
-
-function makeInfoStructuredData(page) {
-  return {
-    "@context": "https://schema.org",
-    "@graph": [
-      {
-        "@type": "Organization",
-        "@id": `${officialOrigin}/#organization`,
-        name: "Aurora Esports Studio",
-        url: `${officialOrigin}/`,
-        description:
-          "服務香港及台灣玩家的線上遊戲服務工作室，不設實體門市。",
-        areaServed: [
-          { "@type": "Country", name: "Hong Kong" },
-          { "@type": "Country", name: "Taiwan" },
-        ],
+        provider: { "@id": organizationId },
         contactPoint: {
           "@type": "ContactPoint",
           contactType: "customer service",
@@ -204,39 +225,34 @@ function makeInfoStructuredData(page) {
         url: page.canonical,
         name: page.title,
         description: page.seoDescription,
-        about: { "@id": `${officialOrigin}/#organization` },
+        isPartOf: { "@id": websiteId },
+        about: { "@id": `${page.canonical}#service` },
         inLanguage: "zh-Hant",
       },
+      makeFaqData(page),
+      makeBreadcrumbData(page),
+    ],
+  };
+}
+
+function makeInfoStructuredData(page) {
+  return {
+    "@context": "https://schema.org",
+    "@graph": [
+      makeOrganizationData(),
+      makeWebsiteData(),
       {
-        "@type": "FAQPage",
-        "@id": `${page.canonical}#faq`,
-        mainEntity: page.faqs.map((faq) => ({
-          "@type": "Question",
-          name: faq.question,
-          acceptedAnswer: {
-            "@type": "Answer",
-            text: faq.answer,
-          },
-        })),
+        "@type": "WebPage",
+        "@id": `${page.canonical}#webpage`,
+        url: page.canonical,
+        name: page.title,
+        description: page.seoDescription,
+        about: { "@id": organizationId },
+        isPartOf: { "@id": websiteId },
+        inLanguage: "zh-Hant",
       },
-      {
-        "@type": "BreadcrumbList",
-        "@id": `${page.canonical}#breadcrumb`,
-        itemListElement: [
-          {
-            "@type": "ListItem",
-            position: 1,
-            name: "Aurora Esports Studio",
-            item: `${officialOrigin}/`,
-          },
-          {
-            "@type": "ListItem",
-            position: 2,
-            name: page.title,
-            item: page.canonical,
-          },
-        ],
-      },
+      makeFaqData(page),
+      makeBreadcrumbData(page),
     ],
   };
 }

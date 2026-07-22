@@ -30,25 +30,36 @@
     <script type="application/ld+json">
       {
         "@context": "https://schema.org",
-        "@type": "ProfessionalService",
-        "name": "Aurora Esports Studio",
-        "url": "https://auroraesportstudio.com/",
-        "image": "https://auroraesportstudio.com/assets/generated/aurora-cinematic.webp",
-        "description": "為香港及台灣玩家提供傳說對決、王者榮耀國服及 Honor of Kings 國際服的排位代打、陪玩帶飛、巔峰賽、英雄戰力標與報價查詢服務。",
-        "areaServed": [
-          { "@type": "Country", "name": "Hong Kong" },
-          { "@type": "Country", "name": "Taiwan" }
-        ],
-        "availableLanguage": ["zh-Hant", "zh-Hans", "en"],
-        "contactPoint": {
-          "@type": "ContactPoint",
-          "contactType": "customer service",
-          "url": "https://wa.me/447442619658",
-          "availableLanguage": ["Chinese", "English"]
-        },
-        "sameAs": [
-          "https://www.instagram.com/ken._0517",
-          "https://discord.gg/ZW9mwQRQud"
+        "@graph": [
+          {
+            "@type": "Organization",
+            "@id": "https://auroraesportstudio.com/#organization",
+            "name": "Aurora Esports Studio",
+            "url": "https://auroraesportstudio.com/",
+            "image": "https://auroraesportstudio.com/assets/generated/aurora-cinematic.webp",
+            "description": "服務香港及台灣玩家的線上遊戲服務工作室，不設實體門市。",
+            "areaServed": ["Hong Kong", "Taiwan"],
+            "sameAs": [
+              "https://www.instagram.com/ken._0517",
+              "https://discord.gg/ZW9mwQRQud",
+              "https://line.me/ti/p/wWXCT-txMc",
+              "https://carousell.app.link/BWYWpLY692b"
+            ],
+            "contactPoint": {
+              "@type": "ContactPoint",
+              "contactType": "customer service",
+              "url": "https://wa.me/447442619658",
+              "availableLanguage": ["zh-Hant", "en"]
+            }
+          },
+          {
+            "@type": "WebSite",
+            "@id": "https://auroraesportstudio.com/#website",
+            "url": "https://auroraesportstudio.com/",
+            "name": "Aurora Esports Studio",
+            "inLanguage": "zh-Hant",
+            "publisher": { "@id": "https://auroraesportstudio.com/#organization" }
+          }
         ]
       }
     </script>
