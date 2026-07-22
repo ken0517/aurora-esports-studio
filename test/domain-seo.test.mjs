@@ -13,6 +13,12 @@ function escapeRegExp(value) {
   return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
+function extractJsonLd(html) {
+  return [...html.matchAll(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/g)].map(
+    (match) => JSON.parse(match[1]),
+  );
+}
+
 test("public SEO metadata uses the official Aurora domain", async () => {
   const html = await read("index.html");
 
@@ -33,8 +39,13 @@ test("public SEO metadata uses the official Aurora domain", async () => {
 test("public brand schema uses stable organization and website identities", async () => {
   const home = await read("index.html");
 
+  const homeGraph = extractJsonLd(home).flatMap((item) => item["@graph"] ?? [item]);
+  const homeOrganization = homeGraph.find((item) => item["@type"] === "Organization");
+
   assert.match(home, /"@type": "Organization"/);
   assert.match(home, /"@type": "WebSite"/);
+  assert.deepEqual(homeOrganization.areaServed, ["Hong Kong", "Taiwan", "Macau"]);
+  assert.deepEqual(homeOrganization.contactPoint.availableLanguage, ["zh-Hant", "zh-Hans", "en"]);
   assert.match(home, /https:\/\/auroraesportstudio\.com\/#organization/);
   assert.match(home, /https:\/\/auroraesportstudio\.com\/#website/);
   for (const url of [
@@ -59,6 +70,39 @@ test("public brand schema uses stable organization and website identities", asyn
     assert.match(html, /https:\/\/auroraesportstudio\.com\/#organization/);
     assert.match(html, /https:\/\/auroraesportstudio\.com\/#website/);
     assert.doesNotMatch(html, /PostalAddress|streetAddress|LocalBusiness/);
+  }
+});
+
+test("generated structured data uses all real markets and supported languages", async () => {
+  for (const slug of [
+    "arena-of-valor-boosting",
+    "honor-of-kings-cn-boosting",
+    "honor-of-kings-global-boosting",
+    "klg-studio",
+    "about-aurora",
+    "service-process-safety",
+  ]) {
+    const html = await read(`dist/${slug}/index.html`);
+    const graph = extractJsonLd(html).flatMap((item) => item["@graph"] ?? [item]);
+    const organization = graph.find((item) => item["@type"] === "Organization");
+    assert.deepEqual(organization.areaServed, ["Hong Kong", "Taiwan", "Macau"]);
+    assert.deepEqual(organization.contactPoint.availableLanguage, ["zh-Hant", "zh-Hans", "en"]);
+    assert.doesNotMatch(html, /PostalAddress|streetAddress|LocalBusiness/);
+
+    const professionalService = graph.find((item) => item["@type"] === "ProfessionalService");
+    if (slug.endsWith("boosting")) {
+      assert.ok(professionalService);
+      assert.deepEqual(
+        professionalService.areaServed,
+        ["Hong Kong", "Taiwan", "Macau"].map((name) => ({ "@type": "Country", name })),
+      );
+      assert.deepEqual(professionalService.availableLanguage, ["zh-Hant", "zh-Hans", "en"]);
+      assert.deepEqual(professionalService.contactPoint.availableLanguage, [
+        "zh-Hant",
+        "zh-Hans",
+        "en",
+      ]);
+    }
   }
 });
 

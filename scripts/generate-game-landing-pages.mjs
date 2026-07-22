@@ -13,6 +13,8 @@ const officialOrigin = publicBrandIdentity.officialOrigin;
 const organizationId = `${officialOrigin}/#organization`;
 const websiteId = `${officialOrigin}/#website`;
 const verifiedProfiles = publicBrandIdentity.verifiedProfiles;
+const serviceMarketNames = publicBrandIdentity.serviceMarkets.map((market) => market.english);
+const supportedLanguageIds = publicBrandIdentity.supportedLanguages.map((language) => language.id);
 
 const markers = {
   description: 'name="description"',
@@ -137,13 +139,13 @@ function makeOrganizationData() {
     url: `${officialOrigin}/`,
     image: `${officialOrigin}/assets/generated/aurora-cinematic.webp`,
     description: publicBrandIdentity.relationshipStatement,
-    areaServed: ["Hong Kong", "Taiwan"],
+    areaServed: serviceMarketNames,
     sameAs: verifiedProfiles,
     contactPoint: {
       "@type": "ContactPoint",
       contactType: "customer service",
       url: "https://wa.me/447442619658",
-      availableLanguage: ["zh-Hant", "en"],
+      availableLanguage: supportedLanguageIds,
     },
   };
 }
@@ -209,11 +211,8 @@ function makeStructuredData(page) {
         url: page.canonical,
         image: `${officialOrigin}/${page.image}`,
         description: page.seoDescription,
-        areaServed: [
-          { "@type": "Country", name: "Hong Kong" },
-          { "@type": "Country", name: "Taiwan" },
-        ],
-        availableLanguage: ["zh-Hant", "zh-Hans", "en"],
+        areaServed: serviceMarketNames.map((name) => ({ "@type": "Country", name })),
+        availableLanguage: supportedLanguageIds,
         serviceType: ["排位代打", "陪玩帶飛", "巔峰賽代打", "英雄戰力標", "遊戲教學"],
         audience: { "@type": "Audience", audienceType: page.audience },
         provider: { "@id": organizationId },
@@ -221,7 +220,7 @@ function makeStructuredData(page) {
           "@type": "ContactPoint",
           contactType: "customer service",
           url: "https://wa.me/447442619658",
-          availableLanguage: ["Chinese", "English"],
+          availableLanguage: supportedLanguageIds,
         },
       },
       {
