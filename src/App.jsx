@@ -753,6 +753,8 @@ export default function App() {
             {menuItems.slice(0, 4).map((item) => (
               <a key={item.href} href={item.href}>{text(item.key, item.fallback)}</a>
             ))}
+            <a href="/about-aurora/">關於 Aurora</a>
+            <a href="/service-process-safety/">服務流程與安全</a>
           </nav>
         </div>
         <div className="editorial-shell editorial-footer__bottom">

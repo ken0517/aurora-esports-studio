@@ -140,3 +140,15 @@ test("landing pages and homepage share game-aware quote entry links", async () =
   assert.match(deferred, /prefillRequest\?\.pane/);
   assert.match(quote, /prefillRequest\?\.gameId/);
 });
+
+test("home and game pages link to public Aurora trust pages", async () => {
+  const [home, game] = await Promise.all([
+    source("src/App.jsx"),
+    source("src/GameLandingPage.jsx"),
+  ]);
+
+  for (const path of ["/about-aurora/", "/service-process-safety/"]) {
+    assert.match(home, new RegExp(path.replaceAll("/", "\\/")));
+    assert.match(game, new RegExp(path.replaceAll("/", "\\/")));
+  }
+});

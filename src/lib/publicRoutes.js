@@ -2,6 +2,7 @@ import {
   getGameLandingPageById,
   getGameLandingPageBySlug,
 } from "../data/gameLandingPages.js";
+import { getPublicInfoPageBySlug } from "../data/publicInfoPages.js";
 
 export function resolvePublicRoute(pathname = "/") {
   const cleanPath = String(pathname || "/")
@@ -10,6 +11,9 @@ export function resolvePublicRoute(pathname = "/") {
     .replace(/\/+$/, "") || "/";
 
   if (cleanPath === "/admin") return { type: "admin" };
+
+  const infoPage = getPublicInfoPageBySlug(cleanPath);
+  if (infoPage) return { type: "info", slug: infoPage.slug };
 
   const page = getGameLandingPageBySlug(cleanPath);
   if (page) return { type: "game", gameId: page.gameId };
