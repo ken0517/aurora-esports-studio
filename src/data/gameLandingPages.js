@@ -1,11 +1,15 @@
+import { publicBrandIdentity } from "./publicBrand.js";
+
+const brandRelationship = publicBrandIdentity.relationshipStatement;
+
 export const gameLandingPages = Object.freeze([
   {
     gameId: "aov",
     slug: "arena-of-valor-boosting",
     canonical: "https://auroraesportstudio.com/arena-of-valor-boosting/",
-    seoTitle: "香港傳說對決代打・陪玩｜Aurora Esports Studio",
+    seoTitle: "香港 KLG Studio 傳說對決代打・陪玩｜Aurora 官方網站",
     seoDescription:
-      "Aurora 為香港及台灣玩家提供傳說對決排位代打、陪玩帶飛、巔峰賽及英雄戰力標查詢，支援 WhatsApp 與 LINE 聯絡。",
+      "KLG Studio 為香港及台灣玩家提供傳說對決排位代打、陪玩帶飛、巔峰賽及英雄戰力標查詢；官方網站由 Aurora Esports Studio 使用。",
     eyebrow: "ARENA OF VALOR · HK / TW",
     title: "香港傳說對決代打與陪玩服務",
     intro:
@@ -16,6 +20,7 @@ export const gameLandingPages = Object.freeze([
     searchGuide: {
       title: "香港及台灣傳說對決代打、陪玩查詢",
       paragraphs: [
+        brandRelationship,
         "如果你正在尋找香港傳說對決代打、排位上分或傳說對決陪玩服務，可以先在 Aurora 報價表選擇目前段位、目標段位、星數、指定英雄及分路。系統會依照已確認的中央價格規則整理暫估報價，無法自動計算的要求則交由客服確認。",
         "台灣玩家同樣可以使用繁體中文填寫資料，並透過 LINE 確認；香港玩家可直接使用 WhatsApp。服務範圍包括排位代打、陪玩帶飛、巔峰賽、英雄戰力標，以及第一視角教學或復盤等其他需求。",
       ],
@@ -78,9 +83,9 @@ export const gameLandingPages = Object.freeze([
     gameId: "hok-cn",
     slug: "honor-of-kings-cn-boosting",
     canonical: "https://auroraesportstudio.com/honor-of-kings-cn-boosting/",
-    seoTitle: "王者榮耀國服代打・陪玩｜Aurora Esports Studio",
+    seoTitle: "KLG Studio 王者榮耀國服代打・陪玩｜Aurora 官方網站",
     seoDescription:
-      "Aurora 提供香港王者榮耀國服代打、排位上分、陪玩帶飛、巔峰賽及英雄戰力標需求整理，支援香港及台灣玩家查詢。",
+      "KLG Studio 提供香港王者榮耀國服排位代打、陪玩帶飛、巔峰賽及英雄戰力標需求整理；官方網站為 auroraesportstudio.com。",
     eyebrow: "HONOR OF KINGS · CHINA SERVER",
     title: "王者榮耀國服代打與陪玩服務",
     intro:
@@ -91,6 +96,7 @@ export const gameLandingPages = Object.freeze([
     searchGuide: {
       title: "香港及台灣王者榮耀國服代打查詢",
       paragraphs: [
+        brandRelationship,
         "Aurora 的王者榮耀國服代打頁面把國服段位、分級、王者星數、指定英雄及分路分開處理，避免與 HOK 國際服資料混用。排位代打與陪玩帶飛可按網站已確認規則整理暫估報價。",
         "如果你需要國服巔峰賽代打、小國標、大國標或其他特殊安排，網站會先收集目標分數、英雄及位置，再顯示待人工確認。香港玩家可使用 WhatsApp，台灣玩家亦可透過 LINE 聯絡 Aurora 客服。",
       ],
@@ -127,9 +133,9 @@ export const gameLandingPages = Object.freeze([
     gameId: "hok-global",
     slug: "honor-of-kings-global-boosting",
     canonical: "https://auroraesportstudio.com/honor-of-kings-global-boosting/",
-    seoTitle: "HOK 國際服代打・陪玩｜Aurora Esports Studio",
+    seoTitle: "KLG Studio HOK 國際服代打・陪玩｜Aurora 官方網站",
     seoDescription:
-      "Aurora 為香港及台灣玩家提供 HOK／Honor of Kings 國際服排位代打、上分、陪玩帶飛、巔峰賽及英雄戰力標查詢。",
+      "KLG Studio 為香港及台灣玩家提供 HOK／Honor of Kings 國際服排位代打、陪玩帶飛、巔峰賽及英雄戰力標查詢。",
     eyebrow: "HONOR OF KINGS · GLOBAL SERVER",
     title: "HOK 國際服代打與陪玩服務",
     intro:
@@ -140,6 +146,7 @@ export const gameLandingPages = Object.freeze([
     searchGuide: {
       title: "香港及台灣 HOK 國際服代打、陪玩查詢",
       paragraphs: [
+        brandRelationship,
         "HOK 國際服代打與王者榮耀國服並非同一套段位資料。Aurora 會按 Honor of Kings 國際服的目前段位、分級、王者星數、指定英雄與分路整理排位代打或陪玩帶飛需求。",
         "國際服巔峰賽與英雄戰力標需要依照分數、英雄、戰區及目標標誌人工確認。香港玩家可使用 WhatsApp，台灣玩家可使用 LINE；亦可以先使用網站報價表整理全部資料。",
       ],

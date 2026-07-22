@@ -66,3 +66,22 @@ test("home and public pages visibly identify the KLG official service website", 
     assert.match(page, /\/klg-studio\//);
   }
 });
+
+test("home and game SEO use KLG as the primary service name", async () => {
+  const [home, games] = await Promise.all([
+    source("index.html"),
+    import("../src/data/gameLandingPages.js"),
+  ]);
+
+  assert.match(home, /<title>KLG Studio｜Aurora Esports Studio 官方網站/);
+  assert.match(home, /"name": "KLG Studio"/);
+  assert.match(home, /"alternateName": "Aurora Esports Studio"/);
+  assert.match(home, /KLG Studio 是 Aurora Esports Studio 使用的遊戲服務品牌/);
+  assert.match(home, /href="\/klg-studio\/"/);
+
+  for (const page of games.gameLandingPages) {
+    assert.match(page.seoTitle, /KLG Studio/);
+    assert.match(page.seoDescription, /KLG Studio/);
+    assert.match(page.searchGuide.paragraphs.join(" "), /Aurora Esports Studio/);
+  }
+});
