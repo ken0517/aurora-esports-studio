@@ -1,8 +1,11 @@
 import { publicAsset } from "../lib/publicAsset.js";
+import { publicBrandIdentity } from "./publicBrand.js";
 
 export const brand = {
   name: "AURORA",
-  fullName: "Aurora Esports Studio",
+  fullName: publicBrandIdentity.alternateName,
+  serviceName: publicBrandIdentity.primaryName,
+  serviceLabel: `${publicBrandIdentity.primaryName} 官方服務網站`,
   descriptor: "HK · TW MOBILE ESPORTS STUDIO",
 };
 

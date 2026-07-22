@@ -232,6 +232,7 @@ function HeroHeader({ locale, setLocale, menuOpen, setMenuOpen, text }) {
       <a className="hero-wordmark" href="#top" aria-label={brand.fullName}>
         <span className="hero-wordmark__monogram" aria-hidden="true">A</span>
         <span>{brand.fullName}</span>
+        <span className="hero-wordmark__service-brand">{brand.serviceLabel}</span>
         <span className="hero-wordmark__offer">
           {text("hero.newcomerOffer", "新人優惠・全單自動享 85 折")}
         </span>
@@ -753,6 +754,7 @@ export default function App() {
             {menuItems.slice(0, 4).map((item) => (
               <a key={item.href} href={item.href}>{text(item.key, item.fallback)}</a>
             ))}
+            <a href="/klg-studio/">KLG Studio</a>
             <a href="/about-aurora/">關於 Aurora</a>
             <a href="/service-process-safety/">服務流程與安全</a>
           </nav>

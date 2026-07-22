@@ -33,6 +33,7 @@ export default function PublicInfoPage({ slug }) {
           <strong>Aurora Esports Studio</strong>
         </a>
         <nav aria-label="公開資料頁導覽">
+          <a href="/klg-studio/">KLG Studio</a>
           <a href="/about-aurora/">關於 Aurora</a>
           <a href="/service-process-safety/">流程與安全</a>
           <a href="/#games">遊戲服務</a>

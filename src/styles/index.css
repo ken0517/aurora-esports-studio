@@ -384,6 +384,15 @@ img {
   letter-spacing: 0;
 }
 
+.hero-wordmark__service-brand {
+  color: rgba(255, 255, 255, 0.9);
+  font-family: var(--sans);
+  font-size: 8px;
+  font-weight: 650;
+  letter-spacing: 0.1em;
+  text-transform: none;
+}
+
 .hero-wordmark__offer {
   color: #d8b77d;
   font-family: var(--sans);
@@ -1452,6 +1461,12 @@ img {
     letter-spacing: 0.04em;
   }
 
+  .hero-wordmark__service-brand {
+    max-width: 190px;
+    font-size: 7px;
+    line-height: 1.25;
+  }
+
   .hero-menu-button span { display: none; }
   .hero-menu-button { min-width: 44px; justify-content: flex-end; }
 
@@ -1655,7 +1670,7 @@ img {
   }
   .cinematic-hero__copy h1 { font-size: clamp(30px, 8vw, 34px); }
   .cinematic-hero__copy p { max-width: 320px; font-size: 11px; }
-  .hero-wordmark > span:last-child { display: none; }
+  .hero-wordmark__offer { display: none; }
   .studio-stat__value { font-size: 37px; line-height: 1; }
 }
 
