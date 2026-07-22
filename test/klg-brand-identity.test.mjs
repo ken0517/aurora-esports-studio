@@ -7,76 +7,29 @@ test("public brand data preserves every approved localized fact and is deeply im
 
   assert.deepEqual(publicBrandIdentity.primaryMarket, {
     id: "hong-kong",
-    traditionalChinese: "擐葛",
-    simplifiedChinese: "擐葛",
+    traditionalChinese: "\u9999\u6e2f",
+    simplifiedChinese: "\u9999\u6e2f",
     english: "Hong Kong",
   });
   assert.deepEqual(publicBrandIdentity.serviceMarkets, [
-    {
-      id: "hong-kong",
-      traditionalChinese: "擐葛",
-      simplifiedChinese: "擐葛",
-      english: "Hong Kong",
-    },
-    {
-      id: "taiwan",
-      traditionalChinese: "?啁",
-      simplifiedChinese: "?唳嗾",
-      english: "Taiwan",
-    },
-    {
-      id: "macau",
-      traditionalChinese: "瞉喲?",
-      simplifiedChinese: "瞉喲",
-      english: "Macau",
-    },
+    { id: "hong-kong", traditionalChinese: "\u9999\u6e2f", simplifiedChinese: "\u9999\u6e2f", english: "Hong Kong" },
+    { id: "taiwan", traditionalChinese: "\u53f0\u7063", simplifiedChinese: "\u53f0\u6e7e", english: "Taiwan" },
+    { id: "macau", traditionalChinese: "\u6fb3\u9580", simplifiedChinese: "\u6fb3\u95e8", english: "Macau" },
   ]);
   assert.deepEqual(publicBrandIdentity.supportedLanguages, [
-    {
-      id: "zh-Hant",
-      traditionalChinese: "蝜?銝剜?",
-      simplifiedChinese: "蝜?銝剜?",
-      english: "Traditional Chinese",
-    },
-    {
-      id: "zh-Hans",
-      traditionalChinese: "蝪⊿?銝剜?",
-      simplifiedChinese: "蝞雿葉?",
-      english: "Simplified Chinese",
-    },
-    {
-      id: "en",
-      traditionalChinese: "?望?",
-      simplifiedChinese: "?望?",
-      english: "English",
-    },
+    { id: "zh-Hant", traditionalChinese: "\u7e41\u9ad4\u4e2d\u6587", simplifiedChinese: "\u7e41\u4f53\u4e2d\u6587", english: "Traditional Chinese" },
+    { id: "zh-Hans", traditionalChinese: "\u7c21\u9ad4\u4e2d\u6587", simplifiedChinese: "\u7b80\u4f53\u4e2d\u6587", english: "Simplified Chinese" },
+    { id: "en", traditionalChinese: "\u82f1\u6587", simplifiedChinese: "\u82f1\u6587", english: "English" },
   ]);
   assert.equal(
     publicBrandIdentity.marketStatement,
-    "KLG Studio 隞仿?皜舐銝餉?撣嚗???啁?噫??拙振??蝺????嚗?渡?擃葉?陛擃葉???望??亥岷?",
+    "KLG Studio \u4ee5\u9999\u6e2f\u70ba\u4e3b\u8981\u5e02\u5834\uff0c\u540c\u6642\u70ba\u53f0\u7063\u53ca\u6fb3\u9580\u73a9\u5bb6\u63d0\u4f9b\u7dda\u4e0a\u904a\u6232\u670d\u52d9\uff0c\u652f\u63f4\u7e41\u9ad4\u4e2d\u6587\u3001\u7c21\u9ad4\u4e2d\u6587\u53ca\u82f1\u6587\u67e5\u8a62\u3002",
   );
   assert.deepEqual(publicBrandIdentity.reviews.excerpts, [
-    {
-      traditionalChinese: "撠平?翰?翰?喋",
-      simplifiedChinese: "銝??翰?翰?",
-      english: "Professional and very efficient.",
-    },
-    {
-      traditionalChinese: "good嚗翰?",
-      simplifiedChinese: "good嚗漲敹怒",
-      english: "Good and fast.",
-    },
-    {
-      traditionalChinese: "??敹怒????",
-      simplifiedChinese: "??敹怒????",
-      english: "Fast replies and efficient service.",
-    },
-    {
-      traditionalChinese: "銝活閬??曆?撟怠?嚗?閬翰????嚗ice?",
-      simplifiedChinese: "銝活餈??雿葬敹???敹怒???嚗ice?",
-      english:
-        "I would ask for help again next time?ast replies and highly efficient. Nice.",
-    },
+    { traditionalChinese: "\u5c08\u696d\u3001\u5feb\u624b\u5feb\u8173\u3002", simplifiedChinese: "\u4e13\u4e1a\u3001\u5feb\u624b\u5feb\u811a\u3002", english: "Professional and very efficient." },
+    { traditionalChinese: "good\uff0c\u5feb\u624b\u3002", simplifiedChinese: "good\uff0c\u901f\u5ea6\u5feb\u3002", english: "Good and fast." },
+    { traditionalChinese: "\u56de\u8986\u5feb\u3001\u6709\u6548\u7387\u3002", simplifiedChinese: "\u56de\u590d\u5feb\u3001\u6709\u6548\u7387\u3002", english: "Fast replies and efficient service." },
+    { traditionalChinese: "\u4e0b\u6b21\u8981\u518d\u627e\u4f60\u5e6b\u5fd9\uff0c\u56de\u8986\u5feb\u3001\u6548\u7387\u9ad8\uff0cNice\u3002", simplifiedChinese: "\u4e0b\u6b21\u8fd8\u4f1a\u518d\u627e\u4f60\u5e2e\u5fd9\uff0c\u56de\u590d\u5feb\u3001\u6548\u7387\u9ad8\uff0cNice\u3002", english: "I would ask for help again next time\u2014fast replies and highly efficient. Nice." },
   ]);
   for (const value of [
     publicBrandIdentity.primaryMarket,
@@ -92,7 +45,11 @@ test("public brand data preserves every approved localized fact and is deeply im
   }
   assert.doesNotMatch(
     JSON.stringify(publicBrandIdentity),
-    /鈭僑|5 years|Fighter Studio|擛亙ㄚ撌乩?摰?/,
+    /\u4e94\u5e74|5 years|Fighter Studio|\u9b25\u58eb\u5de5\u4f5c\u5ba4/,
+  );
+  assert.doesNotMatch(
+    JSON.stringify(publicBrandIdentity),
+    /\uFFFD|[\uE000-\uF8FF]|[\u0000-\u0008\u000B\u000C\u000E-\u001F]/u,
   );
 });
 
