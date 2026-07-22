@@ -2,6 +2,100 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
 
+test("public brand data preserves every approved localized fact and is deeply immutable", async () => {
+  const { publicBrandIdentity } = await import("../src/data/publicBrand.js");
+
+  assert.deepEqual(publicBrandIdentity.primaryMarket, {
+    id: "hong-kong",
+    traditionalChinese: "擐葛",
+    simplifiedChinese: "擐葛",
+    english: "Hong Kong",
+  });
+  assert.deepEqual(publicBrandIdentity.serviceMarkets, [
+    {
+      id: "hong-kong",
+      traditionalChinese: "擐葛",
+      simplifiedChinese: "擐葛",
+      english: "Hong Kong",
+    },
+    {
+      id: "taiwan",
+      traditionalChinese: "?啁",
+      simplifiedChinese: "?唳嗾",
+      english: "Taiwan",
+    },
+    {
+      id: "macau",
+      traditionalChinese: "瞉喲?",
+      simplifiedChinese: "瞉喲",
+      english: "Macau",
+    },
+  ]);
+  assert.deepEqual(publicBrandIdentity.supportedLanguages, [
+    {
+      id: "zh-Hant",
+      traditionalChinese: "蝜?銝剜?",
+      simplifiedChinese: "蝜?銝剜?",
+      english: "Traditional Chinese",
+    },
+    {
+      id: "zh-Hans",
+      traditionalChinese: "蝪⊿?銝剜?",
+      simplifiedChinese: "蝞雿葉?",
+      english: "Simplified Chinese",
+    },
+    {
+      id: "en",
+      traditionalChinese: "?望?",
+      simplifiedChinese: "?望?",
+      english: "English",
+    },
+  ]);
+  assert.equal(
+    publicBrandIdentity.marketStatement,
+    "KLG Studio 隞仿?皜舐銝餉?撣嚗???啁?噫??拙振??蝺????嚗?渡?擃葉?陛擃葉???望??亥岷?",
+  );
+  assert.deepEqual(publicBrandIdentity.reviews.excerpts, [
+    {
+      traditionalChinese: "撠平?翰?翰?喋",
+      simplifiedChinese: "銝??翰?翰?",
+      english: "Professional and very efficient.",
+    },
+    {
+      traditionalChinese: "good嚗翰?",
+      simplifiedChinese: "good嚗漲敹怒",
+      english: "Good and fast.",
+    },
+    {
+      traditionalChinese: "??敹怒????",
+      simplifiedChinese: "??敹怒????",
+      english: "Fast replies and efficient service.",
+    },
+    {
+      traditionalChinese: "銝活閬??曆?撟怠?嚗?閬翰????嚗ice?",
+      simplifiedChinese: "銝活餈??雿葬敹???敹怒???嚗ice?",
+      english:
+        "I would ask for help again next time?ast replies and highly efficient. Nice.",
+    },
+  ]);
+  for (const value of [
+    publicBrandIdentity.primaryMarket,
+    publicBrandIdentity.serviceMarkets,
+    ...publicBrandIdentity.serviceMarkets,
+    publicBrandIdentity.supportedLanguages,
+    ...publicBrandIdentity.supportedLanguages,
+    publicBrandIdentity.reviews,
+    publicBrandIdentity.reviews.excerpts,
+    ...publicBrandIdentity.reviews.excerpts,
+  ]) {
+    assert.equal(Object.isFrozen(value), true);
+  }
+  assert.doesNotMatch(
+    JSON.stringify(publicBrandIdentity),
+    /鈭僑|5 years|Fighter Studio|擛亙ㄚ撌乩?摰?/,
+  );
+});
+
 test("public brand data centralises real markets, languages, and review evidence", async () => {
   const { publicBrandIdentity } = await import("../src/data/publicBrand.js");
 
