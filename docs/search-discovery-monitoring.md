@@ -2,7 +2,7 @@
 
 ## 統一公開簡介
 
-Aurora Esports Studio 是服務香港及台灣玩家的線上遊戲服務工作室，提供《傳說對決》、《王者榮耀》國服及 HOK 國際服的排位、陪玩、巔峰賽、英雄戰力標及教學需求查詢。官方網站：https://auroraesportstudio.com/
+Aurora Esports Studio 以香港為主要市場，同時為台灣及澳門玩家提供線上遊戲服務，涵蓋《傳說對決》、《王者榮耀》國服及 HOK 國際服的排位、陪玩、巔峰賽、英雄戰力標及教學需求查詢。官方網站：https://auroraesportstudio.com/
 
 ## 發布當日
 

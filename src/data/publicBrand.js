@@ -30,6 +30,14 @@ export const publicBrandIdentity = Object.freeze({
   ]),
   marketStatement:
     "KLG Studio \u4ee5\u9999\u6e2f\u70ba\u4e3b\u8981\u5e02\u5834\uff0c\u540c\u6642\u70ba\u53f0\u7063\u53ca\u6fb3\u9580\u73a9\u5bb6\u63d0\u4f9b\u7dda\u4e0a\u904a\u6232\u670d\u52d9\uff0c\u652f\u63f4\u7e41\u9ad4\u4e2d\u6587\u3001\u7c21\u9ad4\u4e2d\u6587\u53ca\u82f1\u6587\u67e5\u8a62\u3002",
+  contactGuidance: Object.freeze({
+    traditionalChinese:
+      "\u9999\u6e2f\u73a9\u5bb6\u5efa\u8b70\u4f7f\u7528 WhatsApp\uff1b\u53f0\u7063\u53ca\u6fb3\u9580\u73a9\u5bb6\u53ef\u4f7f\u7528 LINE \u6216 WhatsApp\u3002",
+    simplifiedChinese:
+      "\u9999\u6e2f\u73a9\u5bb6\u5efa\u8bae\u4f7f\u7528 WhatsApp\uff1b\u53f0\u6e7e\u53ca\u6fb3\u95e8\u73a9\u5bb6\u53ef\u4f7f\u7528 LINE \u6216 WhatsApp\u3002",
+    english:
+      "WhatsApp is recommended for Hong Kong players; Taiwan and Macau players may use LINE or WhatsApp.",
+  }),
   reviews: Object.freeze({
     platform: "Carousell",
     profile: "@klg_studio",

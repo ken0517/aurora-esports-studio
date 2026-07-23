@@ -1,6 +1,6 @@
 # Aurora Esports Studio
 
-Aurora Esports Studio 的单页网站，服务香港及台湾玩家，支持：
+Aurora Esports Studio 的单页网站，以香港为主要市场，同时服务台湾及澳门玩家，支持：
 
 - 《传说对决》／Arena of Valor
 - 《王者荣耀》国服

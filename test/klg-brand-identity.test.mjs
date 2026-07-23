@@ -50,6 +50,10 @@ test("public brand data preserves every approved localized fact and is deeply im
     publicBrandIdentity.marketStatement,
     "KLG Studio \u4ee5\u9999\u6e2f\u70ba\u4e3b\u8981\u5e02\u5834\uff0c\u540c\u6642\u70ba\u53f0\u7063\u53ca\u6fb3\u9580\u73a9\u5bb6\u63d0\u4f9b\u7dda\u4e0a\u904a\u6232\u670d\u52d9\uff0c\u652f\u63f4\u7e41\u9ad4\u4e2d\u6587\u3001\u7c21\u9ad4\u4e2d\u6587\u53ca\u82f1\u6587\u67e5\u8a62\u3002",
   );
+  assert.equal(
+    publicBrandIdentity.contactGuidance.traditionalChinese,
+    "香港玩家建議使用 WhatsApp；台灣及澳門玩家可使用 LINE 或 WhatsApp。",
+  );
   assert.deepEqual(publicBrandIdentity.reviews.excerpts, [
     { traditionalChinese: "\u5c08\u696d\u3001\u5feb\u624b\u5feb\u8173\u3002", simplifiedChinese: "\u4e13\u4e1a\u3001\u5feb\u624b\u5feb\u811a\u3002", english: "Professional and very efficient." },
     { traditionalChinese: "good\uff0c\u5feb\u624b\u3002", simplifiedChinese: "good\uff0c\u901f\u5ea6\u5feb\u3002", english: "Good and fast." },
@@ -62,6 +66,7 @@ test("public brand data preserves every approved localized fact and is deeply im
     ...publicBrandIdentity.serviceMarkets,
     publicBrandIdentity.supportedLanguages,
     ...publicBrandIdentity.supportedLanguages,
+    publicBrandIdentity.contactGuidance,
     publicBrandIdentity.reviews,
     publicBrandIdentity.reviews.excerpts,
     ...publicBrandIdentity.reviews.excerpts,
@@ -211,9 +216,11 @@ test("the generator uses the same KLG organization identity", async () => {
 });
 
 test("Carousell copy and monitoring use the approved KLG relationship", async () => {
-  const [copy, monitoring] = await Promise.all([
+  const [copy, monitoring, readme, publicInfoPage] = await Promise.all([
     source("docs/klg-carousell-public-copy.md"),
     source("docs/search-discovery-monitoring.md"),
+    source("README.md"),
+    source("src/PublicInfoPage.jsx"),
   ]);
 
   assert.match(copy, /KLG Studio｜Aurora Esports Studio 官方服務網站/);
@@ -221,7 +228,17 @@ test("Carousell copy and monitoring use the approved KLG relationship", async ()
   assert.match(copy, /@klg_studio/);
   assert.match(copy, /@klg\.studio/);
   assert.match(copy, /全單 85 折/);
+  assert.match(copy, /以香港為主要市場.*台灣及澳門/);
+  assert.match(copy, /香港：WhatsApp/);
+  assert.match(copy, /台灣及澳門：LINE 或 WhatsApp/);
   assert.doesNotMatch(copy, /七折|送三粒星|零封號|香港最強|最高勝率/);
+  assert.doesNotMatch(copy, /為香港及台灣玩家提供/);
+  assert.match(monitoring, /以香港為主要市場.*台灣及澳門/);
   assert.match(monitoring, /推薦香港傳說對決代打/);
   assert.match(monitoring, /KLG Studio 官方網站/);
+  assert.doesNotMatch(monitoring, /服務香港及台灣玩家/);
+  assert.match(readme, /以香港为主要市场.*台湾及澳门/);
+  assert.doesNotMatch(readme, /服务香港及台湾玩家/);
+  assert.match(publicInfoPage, /publicBrandIdentity\.contactGuidance\.traditionalChinese/);
+  assert.doesNotMatch(publicInfoPage, /香港玩家可使用 WhatsApp；台灣玩家可使用 LINE/);
 });

@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { ArrowLeft, ArrowRight, MessageCircle, ShieldCheck } from "lucide-react";
 import { contactLinks } from "./data/content.js";
+import { publicBrandIdentity } from "./data/publicBrand.js";
 import { getPublicInfoPageBySlug } from "./data/publicInfoPages.js";
 import { trackContactClick } from "./lib/analytics.js";
 import "./styles/public-info.css";
@@ -118,7 +119,7 @@ export default function PublicInfoPage({ slug }) {
           <div className="public-info__shell">
             <ShieldCheck aria-hidden="true" />
             <h2>先整理資料，再由 Aurora 客服確認。</h2>
-            <p>香港玩家可使用 WhatsApp；台灣玩家可使用 LINE。</p>
+            <p>{publicBrandIdentity.contactGuidance.traditionalChinese}</p>
             <div>
               <a href="/#ai-quote">
                 填寫報價表 <ArrowRight size={16} />
