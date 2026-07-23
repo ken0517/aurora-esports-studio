@@ -2,6 +2,31 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
 
+function containsDisallowedPublicText(value) {
+  for (const character of String(value)) {
+    const codePoint = character.codePointAt(0);
+    const isControlCharacter =
+      codePoint <= 0x08 ||
+      codePoint === 0x0b ||
+      codePoint === 0x0c ||
+      (codePoint >= 0x0e && codePoint <= 0x1f);
+    const isPrivateUseCharacter = codePoint >= 0xe000 && codePoint <= 0xf8ff;
+
+    if (codePoint === 0xfffd || isControlCharacter || isPrivateUseCharacter) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
+test("public text corruption guard catches replacement, private-use, and control characters", () => {
+  assert.equal(containsDisallowedPublicText("香港、台灣及澳門"), false);
+  assert.equal(containsDisallowedPublicText(`broken${String.fromCharCode(0)}`), true);
+  assert.equal(containsDisallowedPublicText("broken\uFFFD"), true);
+  assert.equal(containsDisallowedPublicText("broken\uE000"), true);
+});
+
 test("public brand data preserves every approved localized fact and is deeply immutable", async () => {
   const { publicBrandIdentity } = await import("../src/data/publicBrand.js");
 
@@ -47,10 +72,7 @@ test("public brand data preserves every approved localized fact and is deeply im
     JSON.stringify(publicBrandIdentity),
     /\u4e94\u5e74|5 years|Fighter Studio|\u9b25\u58eb\u5de5\u4f5c\u5ba4/,
   );
-  assert.doesNotMatch(
-    JSON.stringify(publicBrandIdentity),
-    /\uFFFD|[\uE000-\uF8FF]|[\u0000-\u0008\u000B\u000C\u000E-\u001F]/u,
-  );
+  assert.equal(containsDisallowedPublicText(JSON.stringify(publicBrandIdentity)), false);
 });
 
 test("public brand data centralises real markets, languages, and review evidence", async () => {

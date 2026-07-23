@@ -75,3 +75,23 @@ test("shared public info renderer supports sourced review quotations", async () 
   assert.match(css, /public-info__reviews/);
   assert.match(generator, /renderInfoReviews/);
 });
+
+test("generated review evidence appears only on the KLG public page", async () => {
+  const klgHtml = await source("dist/klg-studio/index.html");
+
+  assert.match(klgHtml, /id="public-reviews"/);
+  assert.match(klgHtml, /5\.0／5 · 30 條 Carousell 公開評價/);
+  assert.match(klgHtml, /@klg_studio/);
+  assert.match(klgHtml, /最後核對日期 2026-07-22/);
+
+  for (const route of [
+    "about-aurora",
+    "service-process-safety",
+    "arena-of-valor-boosting",
+    "honor-of-kings-cn-boosting",
+    "honor-of-kings-global-boosting",
+  ]) {
+    const html = await source(`dist/${route}/index.html`);
+    assert.doesNotMatch(html, /id="public-reviews"|30 條 Carousell 公開評價/);
+  }
+});
