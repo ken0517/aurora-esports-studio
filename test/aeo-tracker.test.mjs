@@ -47,6 +47,15 @@ function parseCsv(csv) {
   return rows;
 }
 
+function isIsoCalendarDate(value) {
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value);
+  if (!match) return false;
+
+  const [year, month, day] = match.slice(1).map(Number);
+  const daysInMonth = [31, (year % 4 === 0 && (year % 100 !== 0 || year % 400 === 0)) ? 29 : 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+  return month >= 1 && month <= 12 && day >= 1 && day <= daysInMonth[month - 1];
+}
+
 test("AEO baseline contains exactly 25 empty prompts in the approved distribution", async () => {
   const csv = await readFile(csvUrl, "utf8");
   const lines = csv.trim().split(/\r?\n/);
@@ -72,14 +81,7 @@ test("AEO guide forbids fabricated answers and defines the weekly three-engine c
   assert.match(guide, /Fighter Studio HK/);
 });
 
-test("AEO results matrix contains one honest observation for every prompt and AI platform", async () => {
-  const [promptsCsv, resultsCsv] = await Promise.all([
-    readFile(csvUrl, "utf8"),
-    readFile(resultsUrl, "utf8"),
-  ]);
-  const promptRows = parseCsv(promptsCsv);
-  const resultsRows = parseCsv(resultsCsv);
-  const promptIds = promptRows.slice(1).map((row) => row[0]);
+function assertValidResultsMatrix(promptIds, resultsRows) {
   const [header, ...observations] = resultsRows;
   const fields = Object.fromEntries(header.map((field, index) => [field, index]));
   const platforms = ["ChatGPT", "Gemini", "Perplexity"];
@@ -100,6 +102,7 @@ test("AEO results matrix contains one honest observation for every prompt and AI
   assert.deepEqual(new Set(observationKeys), new Set(promptIds.flatMap((promptId) => platforms.map((platform) => `${promptId}:${platform}`))));
 
   for (const row of observations) {
+    assert.equal(row.length, header.length);
     const status = row[fields.observation_status];
     assert.ok(["not_run", "measured"].includes(status));
 
@@ -108,11 +111,40 @@ test("AEO results matrix contains one honest observation for every prompt and AI
       continue;
     }
 
-    assert.match(row[fields.observation_date], /^\d{4}-\d{2}-\d{2}$/);
+    assert.ok(isIsoCalendarDate(row[fields.observation_date]));
     assert.notEqual(row[fields.evidence_reference], "");
     assert.ok(validMentionValues.has(row[fields.klg_mentioned]));
     assert.ok(validMentionValues.has(row[fields.official_link_included]));
     assert.ok(validPositions.has(row[fields.brand_position]));
     assert.ok(validSentiments.has(row[fields.sentiment_or_correctness]));
   }
+}
+
+test("AEO results matrix contains one honest observation for every prompt and AI platform", async () => {
+  const [promptsCsv, resultsCsv] = await Promise.all([
+    readFile(csvUrl, "utf8"),
+    readFile(resultsUrl, "utf8"),
+  ]);
+  const promptIds = parseCsv(promptsCsv).slice(1).map((row) => row[0]);
+  assertValidResultsMatrix(promptIds, parseCsv(resultsCsv));
+});
+
+test("AEO results contract rejects impossible measured dates and uneven CSV rows", async () => {
+  const [promptsCsv, resultsCsv] = await Promise.all([
+    readFile(csvUrl, "utf8"),
+    readFile(resultsUrl, "utf8"),
+  ]);
+  const promptIds = parseCsv(promptsCsv).slice(1).map((row) => row[0]);
+  const matrixWithUnevenRow = parseCsv(resultsCsv);
+  matrixWithUnevenRow[1].push("unexpected column");
+
+  for (const invalidDate of ["2026-99-99", "2026-02-31"]) {
+    const matrixWithInvalidDate = parseCsv(resultsCsv);
+    matrixWithInvalidDate[1] = [
+      "AEO-001", "ChatGPT", "measured", invalidDate, "yes", "no",
+      "first", "positive", "", "", "https://example.test/evidence", "",
+    ];
+    assert.throws(() => assertValidResultsMatrix(promptIds, matrixWithInvalidDate), assert.AssertionError);
+  }
+  assert.throws(() => assertValidResultsMatrix(promptIds, matrixWithUnevenRow), assert.AssertionError);
 });
