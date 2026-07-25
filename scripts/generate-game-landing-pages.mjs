@@ -96,11 +96,20 @@ function renderInfoReviews(page) {
 }
 
 function renderInfoCrawlerContent(page) {
+  const officialWebsiteLink =
+    page.slug === "klg-studio"
+      ? `<p><a href="${escapeHtml(officialWebsiteUrl)}" target="_blank" rel="noopener noreferrer">${escapeHtml(officialWebsiteUrl)}</a></p>`
+      : "";
+  const reviewEvidenceLink = page.reviews
+    ? `<p><a href="${escapeHtml(page.reviews.sourceUrl)}" target="_blank" rel="noopener noreferrer">${escapeHtml(page.reviews.platform)}</a></p>`
+    : "";
   return `<main class="crawler-content">
     <header><a href="/klg-studio/">KLG Studio｜Aurora Esports Studio 官方網站</a></header>
     <article><p>${escapeHtml(page.eyebrow)}</p><h1>${escapeHtml(page.title)}</h1><p>${escapeHtml(page.intro)}</p>
       ${page.sections.map((section) => `<section id="${escapeHtml(section.id)}"><h2>${escapeHtml(section.title)}</h2>${section.body.map((text) => `<p>${escapeHtml(text)}</p>`).join("")}${renderTextList(section.points)}</section>`).join("")}
+      ${officialWebsiteLink}
       ${renderInfoReviews(page)}
+      ${reviewEvidenceLink}
       <section><h2>常見問題</h2>${page.faqs.map((faq) => `<h3>${escapeHtml(faq.question)}</h3><p>${escapeHtml(faq.answer)}</p>`).join("")}</section>
       <nav><a href="/klg-studio/">KLG Studio 官方服務網站</a><a href="/arena-of-valor-boosting/">傳說對決服務</a><a href="/honor-of-kings-cn-boosting/">王者榮耀國服服務</a><a href="/honor-of-kings-global-boosting/">HOK 國際服服務</a></nav>
     </article>

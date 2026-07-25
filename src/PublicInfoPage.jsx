@@ -63,6 +63,17 @@ export default function PublicInfoPage({ slug }) {
                 {section.body.map((paragraph) => (
                   <p key={paragraph}>{paragraph}</p>
                 ))}
+                {page.slug === "klg-studio" && section.id === "identity" ? (
+                  <p>
+                    <a
+                      href={publicBrandIdentity.officialWebsiteUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      {publicBrandIdentity.officialWebsiteUrl}
+                    </a>
+                  </p>
+                ) : null}
                 {section.points?.length ? (
                   <ul>
                     {section.points.map((point) => (
@@ -92,7 +103,15 @@ export default function PublicInfoPage({ slug }) {
                 ))}
               </div>
               <p className="public-info__review-source">
-                資料來源：KLG Studio 公開 Carousell 頁面 {page.reviews.profile}；最後核對日期 {page.reviews.verifiedOn}。
+                資料來源：KLG Studio 公開 Carousell 頁面{" "}
+                <a
+                  href={page.reviews.sourceUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  {page.reviews.profile}
+                </a>
+                ；最後核對日期 {page.reviews.verifiedOn}。
               </p>
             </div>
           </section>
