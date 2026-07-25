@@ -28,3 +28,16 @@
 - 第 1 日：建立空白基準並首次測量。
 - 第 8、15、22 日：以相同問題重測。
 - 第 30 日：比較三個 AI 平台的品牌出現率、官方連結率及資料正確率。
+
+## Auditable results matrix
+
+`klg-aeo-prompts.csv` is the immutable prompt library. Do not edit its prompt
+wording, identifiers, or distribution while recording observations. Record each
+engine check in `klg-aeo-baseline-results.csv`, which provides an appendable,
+auditable matrix of every prompt across ChatGPT, Gemini, and Perplexity.
+
+All new rows begin as `not_run`. Only an answer directly observed in the named
+AI platform may be changed to `measured`; that change must include the
+observation date, the observed result fields, and an evidence reference. Never
+infer, estimate, copy, or fabricate a measurement from another platform or
+source.
