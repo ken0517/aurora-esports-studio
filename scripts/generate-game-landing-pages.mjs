@@ -10,6 +10,8 @@ const projectRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const distRoot = resolve(projectRoot, "dist");
 const sourcePath = resolve(distRoot, "index.html");
 const officialOrigin = publicBrandIdentity.officialOrigin;
+const officialWebsiteUrl = publicBrandIdentity.officialWebsiteUrl;
+const brandId = `${officialOrigin}/#brand`;
 const organizationId = `${officialOrigin}/#organization`;
 const websiteId = `${officialOrigin}/#website`;
 const verifiedProfiles = publicBrandIdentity.verifiedProfiles;
@@ -130,13 +132,22 @@ function replaceCanonical(source, canonical) {
   );
 }
 
+function makeBrandData() {
+  return {
+    "@type": "Brand",
+    "@id": brandId,
+    name: publicBrandIdentity.serviceBrand.name,
+    url: officialWebsiteUrl,
+  };
+}
+
 function makeOrganizationData() {
   return {
     "@type": "Organization",
     "@id": organizationId,
-    name: publicBrandIdentity.primaryName,
-    alternateName: publicBrandIdentity.alternateName,
-    url: `${officialOrigin}/`,
+    name: publicBrandIdentity.operator.name,
+    alternateName: publicBrandIdentity.serviceBrand.name,
+    url: officialWebsiteUrl,
     image: `${officialOrigin}/assets/generated/aurora-cinematic.webp`,
     description: publicBrandIdentity.relationshipStatement,
     areaServed: serviceMarketNames,
@@ -154,9 +165,9 @@ function makeWebsiteData() {
   return {
     "@type": "WebSite",
     "@id": websiteId,
-    url: `${officialOrigin}/`,
+    url: officialWebsiteUrl,
     name: publicBrandIdentity.websiteName,
-    alternateName: publicBrandIdentity.alternateName,
+    alternateName: publicBrandIdentity.serviceBrand.name,
     inLanguage: "zh-Hant",
     publisher: { "@id": organizationId },
   };
@@ -202,10 +213,11 @@ function makeStructuredData(page) {
   return {
     "@context": "https://schema.org",
     "@graph": [
+      makeBrandData(),
       makeOrganizationData(),
       makeWebsiteData(),
       {
-        "@type": "ProfessionalService",
+        "@type": "Service",
         "@id": `${page.canonical}#service`,
         name: `KLG Studio｜${page.title}`,
         url: page.canonical,
@@ -216,6 +228,7 @@ function makeStructuredData(page) {
         serviceType: ["排位代打", "陪玩帶飛", "巔峰賽代打", "英雄戰力標", "遊戲教學"],
         audience: { "@type": "Audience", audienceType: page.audience },
         provider: { "@id": organizationId },
+        brand: { "@id": brandId },
         contactPoint: {
           "@type": "ContactPoint",
           contactType: "customer service",
@@ -243,6 +256,7 @@ function makeInfoStructuredData(page) {
   return {
     "@context": "https://schema.org",
     "@graph": [
+      makeBrandData(),
       makeOrganizationData(),
       makeWebsiteData(),
       {

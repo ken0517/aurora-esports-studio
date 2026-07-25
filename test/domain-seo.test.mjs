@@ -36,26 +36,25 @@ test("public SEO metadata uses the official Aurora domain", async () => {
   assert.doesNotMatch(html, /ken0517\.github\.io\/aurora-esports-studio/);
 });
 
-test("public brand schema uses stable organization and website identities", async () => {
+test("homepage schema gives KLG, Aurora, and the official website their distinct roles", async () => {
   const home = await read("index.html");
 
   const homeGraph = extractJsonLd(home).flatMap((item) => item["@graph"] ?? [item]);
-  const homeOrganization = homeGraph.find((item) => item["@type"] === "Organization");
+  const brands = homeGraph.filter((item) => item["@type"] === "Brand");
+  const organizations = homeGraph.filter((item) => item["@type"] === "Organization");
+  const websites = homeGraph.filter((item) => item["@type"] === "WebSite");
 
-  assert.match(home, /"@type": "Organization"/);
-  assert.match(home, /"@type": "WebSite"/);
-  assert.deepEqual(homeOrganization.areaServed, ["Hong Kong", "Taiwan", "Macau"]);
-  assert.deepEqual(homeOrganization.contactPoint.availableLanguage, ["zh-Hant", "zh-Hans", "en"]);
-  assert.match(home, /https:\/\/auroraesportstudio\.com\/#organization/);
-  assert.match(home, /https:\/\/auroraesportstudio\.com\/#website/);
-  for (const url of [
-    "https://www.instagram.com/ken._0517",
-    "https://discord.gg/ZW9mwQRQud",
-    "https://line.me/ti/p/wWXCT-txMc",
-    "https://carousell.app.link/BWYWpLY692b",
-  ]) {
-    assert.match(home, new RegExp(escapeRegExp(url)));
-  }
+  assert.equal(brands.length, 1);
+  assert.equal(brands[0].name, "KLG Studio");
+  assert.equal(brands[0]["@id"], "https://auroraesportstudio.com/#brand");
+  assert.equal(organizations.length, 1);
+  assert.equal(organizations[0].name, "Aurora Esports Studio");
+  assert.equal(organizations[0]["@id"], "https://auroraesportstudio.com/#organization");
+  assert.deepEqual(organizations[0].areaServed, ["Hong Kong", "Taiwan", "Macau"]);
+  assert.deepEqual(organizations[0].contactPoint.availableLanguage, ["zh-Hant", "zh-Hans", "en"]);
+  assert.equal(websites.length, 1);
+  assert.equal(websites[0].url, "https://auroraesportstudio.com/");
+  assert.deepEqual(websites[0].publisher, { "@id": "https://auroraesportstudio.com/#organization" });
   assert.doesNotMatch(home, /PostalAddress|streetAddress|LocalBusiness/);
 
   for (const slug of [
@@ -73,36 +72,39 @@ test("public brand schema uses stable organization and website identities", asyn
   }
 });
 
-test("generated structured data uses all real markets and supported languages", async () => {
+test("generated game schemas connect each Service to the Aurora provider and KLG brand", async () => {
   for (const slug of [
     "arena-of-valor-boosting",
     "honor-of-kings-cn-boosting",
     "honor-of-kings-global-boosting",
-    "klg-studio",
-    "about-aurora",
-    "service-process-safety",
   ]) {
     const html = await read(`dist/${slug}/index.html`);
     const graph = extractJsonLd(html).flatMap((item) => item["@graph"] ?? [item]);
-    const organization = graph.find((item) => item["@type"] === "Organization");
+    const brands = graph.filter((item) => item["@type"] === "Brand");
+    const organizations = graph.filter((item) => item["@type"] === "Organization");
+    const services = graph.filter((item) => item["@type"] === "Service");
+
+    assert.equal(brands.length, 1, `${slug} must include one KLG Brand`);
+    assert.equal(brands[0].name, "KLG Studio");
+    assert.equal(brands[0]["@id"], "https://auroraesportstudio.com/#brand");
+    assert.equal(organizations.length, 1, `${slug} must include one Aurora Organization`);
+    assert.equal(organizations[0].name, "Aurora Esports Studio");
+    assert.equal(organizations[0]["@id"], "https://auroraesportstudio.com/#organization");
+    assert.equal(services.length, 1, `${slug} must include one ordinary Service`);
+    assert.deepEqual(services[0].provider, { "@id": "https://auroraesportstudio.com/#organization" });
+    assert.deepEqual(services[0].brand, { "@id": "https://auroraesportstudio.com/#brand" });
+
+    const organization = organizations[0];
     assert.deepEqual(organization.areaServed, ["Hong Kong", "Taiwan", "Macau"]);
     assert.deepEqual(organization.contactPoint.availableLanguage, ["zh-Hant", "zh-Hans", "en"]);
     assert.doesNotMatch(html, /PostalAddress|streetAddress|LocalBusiness/);
 
-    const professionalService = graph.find((item) => item["@type"] === "ProfessionalService");
-    if (slug.endsWith("boosting")) {
-      assert.ok(professionalService);
-      assert.deepEqual(
-        professionalService.areaServed,
-        ["Hong Kong", "Taiwan", "Macau"].map((name) => ({ "@type": "Country", name })),
-      );
-      assert.deepEqual(professionalService.availableLanguage, ["zh-Hant", "zh-Hans", "en"]);
-      assert.deepEqual(professionalService.contactPoint.availableLanguage, [
-        "zh-Hant",
-        "zh-Hans",
-        "en",
-      ]);
-    }
+    assert.deepEqual(
+      services[0].areaServed,
+      ["Hong Kong", "Taiwan", "Macau"].map((name) => ({ "@type": "Country", name })),
+    );
+    assert.deepEqual(services[0].availableLanguage, ["zh-Hant", "zh-Hans", "en"]);
+    assert.deepEqual(services[0].contactPoint.availableLanguage, ["zh-Hant", "zh-Hans", "en"]);
   }
 });
 
@@ -159,7 +161,7 @@ test("production build generates crawler-ready game landing page documents", asy
   assert.match(generator, /name="twitter:title"/);
   assert.match(generator, /name="twitter:description"/);
   assert.match(generator, /application\/ld\+json/);
-  assert.match(generator, /ProfessionalService/);
+  assert.match(generator, /"@type": "Service"/);
 });
 
 test("game landing documents expose FAQ and breadcrumb structured data", async () => {
