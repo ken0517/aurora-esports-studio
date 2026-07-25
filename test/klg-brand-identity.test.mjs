@@ -133,11 +133,11 @@ test("KLG is the primary service name for the Aurora official website", async ()
     "@klg_studio",
     "@klg.studio",
   ]);
-  assert.ok(
-    publicBrandIdentity.verifiedProfiles.includes(
-      "https://carousell.app.link/BWYWpLY692b",
-    ),
-  );
+  assert.deepEqual(publicBrandIdentity.verifiedProfiles, [
+    "https://www.instagram.com/ken._0517",
+    "https://discord.gg/ZW9mwQRQud",
+    "https://line.me/ti/p/wWXCT-txMc",
+  ]);
 });
 
 test("public brand data gives KLG, Aurora, official website, and review evidence distinct roles", async () => {

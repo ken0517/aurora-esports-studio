@@ -4,6 +4,11 @@ import test from "node:test";
 
 const root = new URL("../", import.meta.url);
 const officialOrigin = "https://auroraesportstudio.com";
+const expectedOrganizationProfiles = [
+  "https://www.instagram.com/ken._0517",
+  "https://discord.gg/ZW9mwQRQud",
+  "https://line.me/ti/p/wWXCT-txMc",
+];
 
 async function read(relativePath) {
   return readFile(new URL(relativePath, root), "utf8");
@@ -47,6 +52,7 @@ test("homepage schema gives KLG, Aurora, and the official website their distinct
   assert.equal(organizations[0].name, "Aurora Esports Studio");
   assert.equal(organizations[0]["@id"], "https://auroraesportstudio.com/#organization");
   assert.equal(Object.hasOwn(organizations[0], "alternateName"), false);
+  assert.deepEqual(organizations[0].sameAs, expectedOrganizationProfiles);
   assert.deepEqual(organizations[0].areaServed, ["Hong Kong", "Taiwan", "Macau"]);
   assert.deepEqual(organizations[0].contactPoint.availableLanguage, ["zh-Hant", "zh-Hans", "en"]);
   assert.equal(websites.length, 1);
@@ -70,6 +76,7 @@ test("homepage schema gives KLG, Aurora, and the official website their distinct
     assert.equal(organizations.length, 1, `${slug} must include one Aurora Organization`);
     assert.equal(organizations[0].name, "Aurora Esports Studio");
     assert.equal(Object.hasOwn(organizations[0], "alternateName"), false);
+    assert.deepEqual(organizations[0].sameAs, expectedOrganizationProfiles);
     assert.equal(websites.length, 1, `${slug} must include one official WebSite`);
     assert.equal(websites[0].url, "https://auroraesportstudio.com/");
     assert.deepEqual(websites[0].publisher, { "@id": "https://auroraesportstudio.com/#organization" });

@@ -32,12 +32,19 @@
 ## Auditable results matrix
 
 `klg-aeo-prompts.csv` is the immutable prompt library. Do not edit its prompt
-wording, identifiers, or distribution while recording observations. Record each
-engine check in `klg-aeo-baseline-results.csv`, which provides an appendable,
-auditable matrix of every prompt across ChatGPT, Gemini, and Perplexity.
+wording, identifiers, or distribution while recording observations.
+`klg-aeo-baseline-results.csv` is the single 75-row baseline snapshot: one row
+for every prompt across ChatGPT, Gemini, and Perplexity. Do not append extra
+rows to this fixed snapshot.
 
-All new rows begin as `not_run`. Only an answer directly observed in the named
-AI platform may be changed to `measured`; that change must include the
+Every baseline row begins as `not_run`. Only an answer directly observed in the
+named AI platform may be changed to `measured`; that change must include the
 observation date, the observed result fields, and an evidence reference. Never
 infer, estimate, copy, or fabricate a measurement from another platform or
 source.
+
+For future weekly history, save dated copies such as
+`klg-aeo-results-YYYY-MM-DD.csv`. If the project later uses one long-term
+results table instead, introduce a future batch field through a versioned schema
+and matching tests before adding batches. Do not append weekly rows to
+`klg-aeo-baseline-results.csv`.

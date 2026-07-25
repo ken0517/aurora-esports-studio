@@ -4,7 +4,7 @@
 
 **Goal:** Make the public site unambiguously describe KLG Studio as the service brand operated by Aurora Esports Studio, expose the official website and real Carousell evidence as crawlable links, and create an honest three-engine AEO measurement baseline.
 
-**Architecture:** Keep public facts in `src/data/publicBrand.js`. Both the React trust page and the static crawler generator consume those facts. Structured data uses a `Brand` node for KLG, an `Organization` node for Aurora, and ordinary `Service` nodes for the three game services. A separate long-form CSV stores one observation per prompt and AI platform without inventing results.
+**Architecture:** Keep public facts in `src/data/publicBrand.js`. Both the React trust page and the static crawler generator consume those facts. Structured data uses a `Brand` node for KLG, an `Organization` node for Aurora, and ordinary `Service` nodes for the three game services. A fixed 75-row baseline CSV stores one initial observation per prompt and AI platform without inventing results; future weekly history uses dated copies or a versioned schema with a batch field.
 
 **Constraints:**
 
@@ -28,7 +28,7 @@
 2. Require `observation_status` to be `not_run` or `measured`. `not_run` rows must keep result/evidence fields blank. `measured` rows must contain an ISO date, evidence reference, and valid result enums.
 3. Run `node --test test/aeo-tracker.test.mjs` and record the expected RED result because the results file does not exist.
 4. Create the 75-row results file with every row honestly marked `not_run`.
-5. Update the guide to explain that the prompt library is immutable, observations are appendable/auditable, and only directly observed answers may be changed to `measured`.
+5. Update the guide to explain that the prompt library is immutable, the 75-row results file is one fixed baseline snapshot, only directly observed answers may be changed to `measured`, and future weekly history must use dated copies or a future batch field rather than extra rows in the snapshot.
 6. Rerun the focused test and verify GREEN.
 7. Commit only these files.
 
@@ -91,4 +91,3 @@
 4. Merge the verified branch into `main`, push `main`, and wait for the public site to serve the new commit.
 5. Verify live homepage, KLG page, all three game pages, `robots.txt`, `sitemap.xml`, and `llms.txt`.
 6. Run a post-release representative AEO check using fresh public AI conversations where available. Record only evidence-backed observations; leave blocked or unrun rows honest.
-

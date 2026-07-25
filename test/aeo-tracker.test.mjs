@@ -79,6 +79,10 @@ test("AEO guide forbids fabricated answers and defines the weekly three-engine c
   assert.match(guide, /不可推測、補寫或偽造/);
   assert.match(guide, /https:\/\/auroraesportstudio\.com\//);
   assert.match(guide, /Fighter Studio HK/);
+  assert.match(guide, /single 75-row baseline snapshot/i);
+  assert.match(guide, /dated copies/i);
+  assert.match(guide, /future batch field/i);
+  assert.doesNotMatch(guide, /appendable/i);
 });
 
 function assertValidResultsMatrix(promptIds, resultsRows) {

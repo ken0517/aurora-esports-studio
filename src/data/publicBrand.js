@@ -13,7 +13,6 @@ export const publicBrandIdentity = Object.freeze({
     "https://www.instagram.com/ken._0517",
     "https://discord.gg/ZW9mwQRQud",
     "https://line.me/ti/p/wWXCT-txMc",
-    "https://carousell.app.link/BWYWpLY692b",
   ]),
   primaryMarket: Object.freeze({
     id: "hong-kong",
