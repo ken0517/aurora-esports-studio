@@ -9,10 +9,6 @@ async function read(relativePath) {
   return readFile(new URL(relativePath, root), "utf8");
 }
 
-function escapeRegExp(value) {
-  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-}
-
 function extractJsonLd(html) {
   return [...html.matchAll(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/g)].map(
     (match) => JSON.parse(match[1]),
