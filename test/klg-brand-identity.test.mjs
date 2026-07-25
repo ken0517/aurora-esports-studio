@@ -109,6 +109,12 @@ async function source(path) {
   return readFile(new URL(`../${path}`, import.meta.url), "utf8");
 }
 
+function extractJsonLdGraph(html) {
+  return [...html.matchAll(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/g)]
+    .map((match) => JSON.parse(match[1]))
+    .flatMap((item) => item["@graph"] ?? [item]);
+}
+
 test("KLG is the primary service name for the Aurora official website", async () => {
   const { publicBrandIdentity } = await import("../src/data/publicBrand.js");
 
@@ -205,10 +211,18 @@ test("home and game SEO use KLG as the primary service name", async () => {
     source("index.html"),
     import("../src/data/gameLandingPages.js"),
   ]);
+  const graph = extractJsonLdGraph(home);
+  const brands = graph.filter((item) => item["@type"] === "Brand");
+  const organizations = graph.filter((item) => item["@type"] === "Organization");
 
   assert.match(home, /<title>KLG Studio｜Aurora Esports Studio 官方網站/);
-  assert.match(home, /"name": "KLG Studio"/);
-  assert.match(home, /"alternateName": "Aurora Esports Studio"/);
+  assert.equal(brands.length, 1);
+  assert.equal(brands[0].name, "KLG Studio");
+  assert.equal(brands[0]["@id"], "https://auroraesportstudio.com/#brand");
+  assert.equal(organizations.length, 1);
+  assert.equal(organizations[0].name, "Aurora Esports Studio");
+  assert.equal(organizations[0]["@id"], "https://auroraesportstudio.com/#organization");
+  assert.equal(Object.hasOwn(organizations[0], "alternateName"), false);
   assert.match(home, /KLG Studio 是 Aurora Esports Studio 使用的遊戲服務品牌/);
   assert.match(home, /href="\/klg-studio\/"/);
 
@@ -219,14 +233,24 @@ test("home and game SEO use KLG as the primary service name", async () => {
   }
 });
 
-test("the generator uses the same KLG organization identity", async () => {
-  const generator = await source("scripts/generate-game-landing-pages.mjs");
+test("generated game pages keep KLG Brand and Aurora Organization identities distinct", async () => {
+  for (const slug of [
+    "arena-of-valor-boosting",
+    "honor-of-kings-cn-boosting",
+    "honor-of-kings-global-boosting",
+  ]) {
+    const graph = extractJsonLdGraph(await source(`dist/${slug}/index.html`));
+    const brands = graph.filter((item) => item["@type"] === "Brand");
+    const organizations = graph.filter((item) => item["@type"] === "Organization");
 
-  assert.match(generator, /publicBrandIdentity/);
-  assert.match(generator, /primaryName/);
-  assert.match(generator, /alternateName/);
-  assert.match(generator, /relationshipStatement/);
-  assert.match(generator, /\/klg-studio\//);
+    assert.equal(brands.length, 1, `${slug} must include one KLG Brand`);
+    assert.equal(brands[0].name, "KLG Studio");
+    assert.equal(brands[0]["@id"], "https://auroraesportstudio.com/#brand");
+    assert.equal(organizations.length, 1, `${slug} must include one Aurora Organization`);
+    assert.equal(organizations[0].name, "Aurora Esports Studio");
+    assert.equal(organizations[0]["@id"], "https://auroraesportstudio.com/#organization");
+    assert.equal(Object.hasOwn(organizations[0], "alternateName"), false);
+  }
 });
 
 test("Carousell copy and monitoring use the approved KLG relationship", async () => {
