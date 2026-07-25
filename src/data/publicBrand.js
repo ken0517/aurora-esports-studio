@@ -1,4 +1,7 @@
 export const publicBrandIdentity = Object.freeze({
+  serviceBrand: Object.freeze({ name: "KLG Studio" }),
+  operator: Object.freeze({ name: "Aurora Esports Studio" }),
+  officialWebsiteUrl: "https://auroraesportstudio.com/",
   primaryName: "KLG Studio",
   alternateName: "Aurora Esports Studio",
   websiteName: "KLG Studio｜Aurora Esports Studio 官方網站",
@@ -41,6 +44,8 @@ export const publicBrandIdentity = Object.freeze({
   reviews: Object.freeze({
     platform: "Carousell",
     profile: "@klg_studio",
+    sourceUrl:
+      "https://www.carousell.com.hk/p/%E5%82%B3%E8%AA%AA%E5%B0%8D%E6%B1%BA%EF%BD%9C%E6%8E%92%E4%BD%8D%E4%BB%A3%E6%89%93-%E9%99%AA%E7%8E%A9%E5%A8%9B%E6%A8%82%EF%BD%9C%E6%96%B0%E8%B3%BD%E5%AD%A3%E8%A1%9D%E5%88%BA%F0%9F%94%A5%EF%BD%9C%E8%A7%92%E8%89%B2%E6%88%B0%E5%8A%9B-%E5%85%A8%E6%9C%8D%E6%A8%99-%E5%B7%94%E5%B3%B0%E8%B3%BD-%E9%A6%99%E6%B8%AFklg%E6%9C%80%E5%BC%B7%E5%B7%A5%E4%BD%9C%E5%AE%A4%F0%9F%94%A5%E6%9A%91%E5%81%87%E5%84%AA%E6%83%A0%E4%B8%AD%F0%9F%94%A5-1374994752/",
     rating: 5,
     count: 30,
     verifiedOn: "2026-07-22",
