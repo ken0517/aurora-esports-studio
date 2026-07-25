@@ -146,7 +146,6 @@ function makeOrganizationData() {
     "@type": "Organization",
     "@id": organizationId,
     name: publicBrandIdentity.operator.name,
-    alternateName: publicBrandIdentity.serviceBrand.name,
     url: officialWebsiteUrl,
     image: `${officialOrigin}/assets/generated/aurora-cinematic.webp`,
     description: publicBrandIdentity.relationshipStatement,

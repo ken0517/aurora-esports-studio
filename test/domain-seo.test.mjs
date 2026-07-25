@@ -50,6 +50,7 @@ test("homepage schema gives KLG, Aurora, and the official website their distinct
   assert.equal(organizations.length, 1);
   assert.equal(organizations[0].name, "Aurora Esports Studio");
   assert.equal(organizations[0]["@id"], "https://auroraesportstudio.com/#organization");
+  assert.equal(Object.hasOwn(organizations[0], "alternateName"), false);
   assert.deepEqual(organizations[0].areaServed, ["Hong Kong", "Taiwan", "Macau"]);
   assert.deepEqual(organizations[0].contactPoint.availableLanguage, ["zh-Hant", "zh-Hans", "en"]);
   assert.equal(websites.length, 1);
@@ -66,8 +67,16 @@ test("homepage schema gives KLG, Aurora, and the official website their distinct
     "service-process-safety",
   ]) {
     const html = await read(`dist/${slug}/index.html`);
-    assert.match(html, /https:\/\/auroraesportstudio\.com\/#organization/);
-    assert.match(html, /https:\/\/auroraesportstudio\.com\/#website/);
+    const graph = extractJsonLd(html).flatMap((item) => item["@graph"] ?? [item]);
+    const organizations = graph.filter((item) => item["@type"] === "Organization");
+    const websites = graph.filter((item) => item["@type"] === "WebSite");
+
+    assert.equal(organizations.length, 1, `${slug} must include one Aurora Organization`);
+    assert.equal(organizations[0].name, "Aurora Esports Studio");
+    assert.equal(Object.hasOwn(organizations[0], "alternateName"), false);
+    assert.equal(websites.length, 1, `${slug} must include one official WebSite`);
+    assert.equal(websites[0].url, "https://auroraesportstudio.com/");
+    assert.deepEqual(websites[0].publisher, { "@id": "https://auroraesportstudio.com/#organization" });
     assert.doesNotMatch(html, /PostalAddress|streetAddress|LocalBusiness/);
   }
 });
