@@ -118,6 +118,23 @@ test("Do Not Track keeps analytics denied despite an opt-in request", () => {
   assert.equal(changes[0].analytics, false);
 });
 
+test("Do Not Track fails closed when reading a previously granted choice", () => {
+  const storage = memoryStorage();
+  storage.setItem(PRIVACY_STORAGE_KEY, JSON.stringify({
+    version: PRIVACY_POLICY_VERSION,
+    analytics: true,
+    decidedAt: "2026-07-29T12:47:00.000Z",
+  }));
+  const windowObject = eventWindow();
+  windowObject.navigator = { doNotTrack: "1" };
+
+  assert.deepEqual(readPrivacyConsent(storage, windowObject), {
+    version: PRIVACY_POLICY_VERSION,
+    analytics: false,
+    decidedAt: "2026-07-29T12:47:00.000Z",
+  });
+});
+
 test("only a boolean true grants analytics consent", () => {
   const storage = memoryStorage();
 

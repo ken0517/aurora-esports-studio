@@ -11,6 +11,10 @@ function safeLocalStorage() {
   }
 }
 
+function isDoNotTrackEnabled(windowObject) {
+  return windowObject?.navigator?.doNotTrack === "1";
+}
+
 function dispatchEvent(windowObject, type, detail) {
   if (typeof windowObject?.dispatchEvent !== "function") return false;
   const CustomEventConstructor = windowObject.CustomEvent || globalThis.CustomEvent;
@@ -18,7 +22,7 @@ function dispatchEvent(windowObject, type, detail) {
   return windowObject.dispatchEvent(new CustomEventConstructor(type, { detail }));
 }
 
-export function readPrivacyConsent(storage = safeLocalStorage()) {
+export function readPrivacyConsent(storage = safeLocalStorage(), windowObject = globalThis.window) {
   try {
     const value = JSON.parse(storage?.getItem(PRIVACY_STORAGE_KEY) || "null");
     if (
@@ -26,7 +30,7 @@ export function readPrivacyConsent(storage = safeLocalStorage()) {
       typeof value.analytics !== "boolean" ||
       !Number.isFinite(Date.parse(value.decidedAt))
     ) return null;
-    return value;
+    return isDoNotTrackEnabled(windowObject) ? { ...value, analytics: false } : value;
   } catch {
     return null;
   }
@@ -38,7 +42,7 @@ export function writePrivacyConsent(
 ) {
   const decision = {
     version: PRIVACY_POLICY_VERSION,
-    analytics: analytics === true && windowObject?.navigator?.doNotTrack !== "1",
+    analytics: analytics === true && !isDoNotTrackEnabled(windowObject),
     decidedAt: now().toISOString(),
   };
 
