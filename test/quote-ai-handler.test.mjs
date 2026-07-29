@@ -545,6 +545,7 @@ test("Gemini receives all three games from the shared central configuration", as
 
   assert.match(instructions, /You are Aurora Esports Studio customer service/);
   assert.match(instructions, /Never call yourself AI, Gemini/);
+  assert.match(instructions, /Never mention internal quote, enquiry, or order identifiers/);
 
   const declaration = fake.calls[0].config.tools[0].functionDeclarations[0];
   assert.equal(declaration.name, "calculate_quote");
@@ -587,6 +588,35 @@ test("customer-visible model text is presented only as Aurora customer service",
     assert.match(payload.message, /Aurora 客服/);
     assert.doesNotMatch(payload.message, /\bAI\b|Gemini/iu);
   });
+});
+
+test("internal references in model output are removed from the customer reply and persisted assistant message", async () => {
+  const internalReference = "AUR-20260729-ABC123";
+  const operationsStore = createConversationStore();
+  const { handler } = createConfiguredHandler({
+    operationsStore,
+    responses: [responseWithText(`你的內部報價編號是 ${internalReference}。`)],
+  });
+  let payload;
+
+  await withHttpServer(handler, async (baseUrl) => {
+    const result = await postJson(baseUrl, {
+      locale: "zh-HK",
+      sessionId: "99999999-9999-4999-8999-999999999999",
+      conversationConsent: true,
+      messages: [{ role: "user", content: "請繼續處理我的服務查詢。" }],
+      quoteContext: {},
+    });
+    assert.equal(result.response.status, 200);
+    payload = result.payload;
+  });
+
+  const storedAssistantMessage = operationsStore.state.conversations[0].messages.findLast(
+    (message) => message.role === "assistant",
+  );
+  assert.doesNotMatch(payload.message, /AUR-[A-Z0-9-]+/i);
+  assert.ok(storedAssistantMessage);
+  assert.doesNotMatch(storedAssistantMessage.text, /AUR-[A-Z0-9-]+/i);
 });
 
 test("calculate_quote rejects a lane and hero-power mark from another game", async () => {
@@ -646,7 +676,9 @@ test("a quoted amount is rebuilt exclusively from the injected authoritative cal
   const requestedQuote = validChinaRankContext();
   const calculatorInputs = [];
   const authoritativeTotal = 987;
+  const operationsStore = createConversationStore();
   const { handler, fake } = createConfiguredHandler({
+    operationsStore,
     responses: [
       functionCallResponse(requestedQuote),
       responseWithText("模型自己猜總額是 HKD 111。", { responseId: "gemini-quoted-2" }),
@@ -670,6 +702,8 @@ test("a quoted amount is rebuilt exclusively from the injected authoritative cal
   await withHttpServer(handler, async (baseUrl) => {
     const { response, payload } = await postJson(baseUrl, {
       locale: "zh-HK",
+      sessionId: "77777777-7777-4777-8777-777777777777",
+      conversationConsent: true,
       messages: [{ role: "user", content: "國服鑽石三升星耀五幾錢？" }],
     });
     assert.equal(response.status, 200);
@@ -681,9 +715,12 @@ test("a quoted amount is rebuilt exclusively from the injected authoritative cal
   assert.equal(calculatorInputs.length, 1);
   assert.equal(calculatorInputs[0].gameId, "hok-cn");
   assert.equal(calculatorInputs[0].serviceId, "rank");
+  assert.equal(operationsStore.state.enquiries[0].quoteReference, "AUR-AUTHORITATIVE-TEST");
   const functionOutput = fake.calls[1].contents.at(-1).parts[0].functionResponse.response.output;
   assert.equal(functionOutput.status, "quoted");
   assert.equal(functionOutput.finalTotal, authoritativeTotal);
+  assert.equal(functionOutput.referenceNumber, undefined);
+  assert.doesNotMatch(JSON.stringify(fake.calls), /AUR-AUTHORITATIVE-TEST/);
 });
 
 test("unconfigured pricing blocks a model-invented amount and returns human confirmation", async () => {
