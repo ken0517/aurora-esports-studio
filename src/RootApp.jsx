@@ -1,9 +1,16 @@
 import { lazy, Suspense } from "react";
+import PrivacyConsent from "./components/PrivacyConsent.jsx";
 
 const App = lazy(() => import("./App.jsx"));
 const AdminApp = lazy(() => import("./AdminApp.jsx"));
 const GameLandingPage = lazy(() => import("./GameLandingPage.jsx"));
 const PublicInfoPage = lazy(() => import("./PublicInfoPage.jsx"));
+
+function renderPublicRoute(route) {
+  if (route.type === "game") return <GameLandingPage gameId={route.gameId} />;
+  if (route.type === "info") return <PublicInfoPage slug={route.slug} />;
+  return <App />;
+}
 
 export default function RootApp({ route = { type: "home" }, isAdmin = route.type === "admin" }) {
   return (
@@ -26,13 +33,12 @@ export default function RootApp({ route = { type: "home" }, isAdmin = route.type
         </div>
       )}
     >
-      {isAdmin
-        ? <AdminApp />
-        : route.type === "game"
-          ? <GameLandingPage gameId={route.gameId} />
-          : route.type === "info"
-            ? <PublicInfoPage slug={route.slug} />
-          : <App />}
+      {isAdmin ? <AdminApp /> : (
+        <>
+          {renderPublicRoute(route)}
+          <PrivacyConsent route={route} />
+        </>
+      )}
     </Suspense>
   );
 }

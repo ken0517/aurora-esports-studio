@@ -1,5 +1,6 @@
 import { useEffect } from "react";
 import { ArrowLeft, ArrowRight, MessageCircle, ShieldCheck } from "lucide-react";
+import PrivacyFooterLinks from "./components/PrivacyFooterLinks.jsx";
 import { contactLinks } from "./data/content.js";
 import { publicBrandIdentity } from "./data/publicBrand.js";
 import { getPublicInfoPageBySlug } from "./data/publicInfoPages.js";
@@ -159,6 +160,7 @@ export default function PublicInfoPage({ slug }) {
 
       <footer className="public-info__footer">
         <a href="/">Aurora Esports Studio</a>
+        <PrivacyFooterLinks />
         <span>香港、台灣及澳門線上遊戲服務工作室</span>
       </footer>
     </div>

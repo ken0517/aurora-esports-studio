@@ -10,6 +10,7 @@ import {
   X,
 } from "lucide-react";
 import DeferredQuoteAssistant from "./components/DeferredQuoteAssistant";
+import PrivacyFooterLinks from "./components/PrivacyFooterLinks";
 import ServicesEditorial from "./components/ServicesEditorial";
 import { getEditorialServicesForGame, getServiceEditorialText } from "./data/serviceCatalog";
 import {
@@ -297,6 +298,7 @@ export default function App() {
     } catch {
       // Language switching still works when storage is unavailable.
     }
+    window.dispatchEvent(new CustomEvent("aurora:locale-changed", { detail: { locale } }));
   }, [locale]);
 
   useEffect(() => {
@@ -757,6 +759,7 @@ export default function App() {
             <a href="/klg-studio/">KLG Studio</a>
             <a href="/about-aurora/">關於 Aurora</a>
             <a href="/service-process-safety/">服務流程與安全</a>
+            <PrivacyFooterLinks locale={locale} />
           </nav>
         </div>
         <div className="editorial-shell editorial-footer__bottom">
