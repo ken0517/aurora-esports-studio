@@ -1,12 +1,19 @@
 .privacy-consent {
-  --privacy-ivory: var(--ivory, #f4f0e7);
-  --privacy-paper: var(--paper, #faf7ef);
-  --privacy-ink: var(--charcoal, #1b1d1d);
-  --privacy-muted: var(--muted, #716f69);
-  --privacy-gold: var(--bronze, #92785a);
-  --privacy-line: var(--line, #d1c8b9);
+  --privacy-ivory: #f4f0e7;
+  --privacy-paper: #faf7ef;
+  --privacy-ink: #1b1d1d;
+  --privacy-muted: #6b6861;
+  --privacy-gold: #7a6249;
+  --privacy-line: #d1c8b9;
   --privacy-serif: var(--serif, Georgia, "Times New Roman", serif);
   --privacy-sans: var(--sans, "Noto Sans TC", sans-serif);
+}
+
+.privacy-consent,
+.privacy-consent *,
+.privacy-consent *::before,
+.privacy-consent *::after {
+  box-sizing: border-box;
 }
 
 .privacy-consent__banner {
@@ -54,12 +61,24 @@
   line-height: 1.05;
 }
 
-.privacy-consent__copy > p:last-child,
 .privacy-consent__description {
   margin: 0;
   color: var(--privacy-muted);
   font-size: 12px;
   line-height: 1.65;
+}
+
+.privacy-consent__reassurance {
+  margin: 2px 0 0;
+  color: var(--privacy-ink);
+  font-size: 11px;
+  line-height: 1.55;
+}
+
+.privacy-consent__reassurance a {
+  color: inherit;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
 }
 
 .privacy-consent__actions {
@@ -106,6 +125,7 @@
 .privacy-consent__action:focus-visible,
 .privacy-consent__close:focus-visible,
 .privacy-consent__choice input:focus-visible,
+.privacy-consent__reassurance a:focus-visible,
 .privacy-footer-links a:focus-visible,
 .privacy-footer-links button:focus-visible {
   outline: 2px solid var(--privacy-gold, #92785a);

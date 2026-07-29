@@ -132,7 +132,19 @@ export function redactSensitiveText(value) {
     .replace(/(?:驗證碼|验证码|otp|one[- ]?time code)\s*(?:是|為|为|:|：|=)?\s*\d{4,8}/gi, "驗證碼：[已過濾]")
     .replace(/(?:cvv|cvc|安全碼|安全码)\s*(?:是|為|为|:|：|=)?\s*\d{3,4}/gi, "付款安全碼：[已過濾]")
     .replace(/\b(?:\d[ -]*?){13,19}\b/g, "[付款資料已過濾]")
-    .replace(/(?:銀行帳號|银行账号|bank account|付款資料|付款资料)\s*(?:是|為|为|:|：|=)?\s*[^\s,，。;；]{4,}/gi, "付款資料：[已過濾]");
+    .replace(/(?:銀行帳號|银行账号|bank account|付款資料|付款资料)\s*(?:是|為|为|:|：|=)?\s*[^\s,，。;；]{4,}/gi, "付款資料：[已過濾]")
+    .replace(
+      /(^|[^A-Z0-9])([A-Z]{1,2}\s?\d{6}\s?\([0-9A]\))(?![A-Z0-9])/gi,
+      "$1[身分證件已過濾]",
+    )
+    .replace(
+      /(^|[^A-Z0-9])([A-Z][12]\d{8})(?![A-Z0-9])/gi,
+      "$1[身分證件已過濾]",
+    )
+    .replace(
+      /(?:護照(?:號碼|號)?|护照(?:号码|号)?|passport(?:\s*(?:number|no\.?))?)\s*(?:是|為|为|:|：|=)?\s*(?=[A-Z0-9-]{6,15}(?:\s|[,，。;；]|$))(?=[A-Z0-9-]*\d)[A-Z0-9-]{6,15}/gi,
+      "護照資料：[已過濾]",
+    );
   return text;
 }
 
@@ -185,7 +197,7 @@ export function normalizeEnquiryDraft(input = {}) {
     duoMode: ["ranked", "match-5v5"].includes(input.duoMode) ? input.duoMode : null,
     duoGuarantee: ["guaranteed", "standard"].includes(input.duoGuarantee) ? input.duoGuarantee : null,
     otherServiceType: cleanNullableString(input.otherServiceType, 50),
-    preferredHero: cleanNullableString(input.preferredHero, 80),
+    preferredHero: redactSensitiveText(input.preferredHero).slice(0, 80) || null,
     preferredRole: cleanNullableString(input.preferredRole, 40),
     heroPowerMarkId: cleanNullableString(input.heroPowerMarkId, 40),
     preferredStartTime: cleanNullableString(input.preferredStartTime, 80),

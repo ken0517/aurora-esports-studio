@@ -10,6 +10,37 @@ function source(path) {
   }
 }
 
+function hexToRgb(hex) {
+  return hex
+    .replace("#", "")
+    .match(/.{2}/g)
+    .map((part) => Number.parseInt(part, 16) / 255);
+}
+
+function relativeLuminance(hex) {
+  return hexToRgb(hex)
+    .map((channel) => (
+      channel <= 0.04045
+        ? channel / 12.92
+        : ((channel + 0.055) / 1.055) ** 2.4
+    ))
+    .reduce((total, channel, index) => total + channel * [0.2126, 0.7152, 0.0722][index], 0);
+}
+
+function contrastRatio(foreground, background) {
+  const foregroundLuminance = relativeLuminance(foreground);
+  const backgroundLuminance = relativeLuminance(background);
+  return (
+    (Math.max(foregroundLuminance, backgroundLuminance) + 0.05)
+    / (Math.min(foregroundLuminance, backgroundLuminance) + 0.05)
+  );
+}
+
+function cssHexVariable(css, variable) {
+  const declaration = css.match(new RegExp(`${variable}:\\s*([^;]+);`))?.[1] || "";
+  return declaration.match(/#[0-9a-f]{6}/gi)?.at(-1);
+}
+
 test("public routes mount privacy consent outside the admin application", () => {
   const root = source("../src/RootApp.jsx");
 
@@ -40,8 +71,17 @@ test("privacy consent exposes equal banner choices and an accessible settings di
   assert.match(component, /analytics/);
   assert.match(component, /type="checkbox"/);
   assert.match(component, /event\.key === "Escape"/);
-  assert.match(component, /openerRef\.current\?\.focus/);
+  assert.match(component, /restorePrivacyFocus/);
+  assert.match(component, /subscribePrivacyDecision/);
   assert.match(component, /applyPrivacyDecision\(initialDecisionRef\.current\)/);
+  assert.match(
+    component,
+    /id="privacy-banner-description"\s+className="privacy-consent__description"/,
+  );
+  assert.doesNotMatch(
+    source("../src/styles/privacy-consent.css"),
+    /\.privacy-consent__copy\s*>\s*p:last-child/,
+  );
 });
 
 test("privacy settings trap forward and reverse tab navigation inside the dialog", () => {
@@ -71,6 +111,78 @@ test("privacy actions remain accessible on narrow screens", () => {
     css,
     /@media \(max-width:\s*760px\)(?:(?!@media)[\s\S])*privacy-consent--home/,
   );
+  assert.match(
+    css,
+    /\.privacy-consent,\s*\.privacy-consent \*,\s*\.privacy-consent \*::before,\s*\.privacy-consent \*::after\s*\{\s*box-sizing:\s*border-box/,
+  );
+});
+
+test("privacy-only small-text colors meet WCAG AA on their actual surfaces", () => {
+  const consentCss = source("../src/styles/privacy-consent.css");
+  const consentIvory = cssHexVariable(consentCss, "--privacy-ivory");
+  const consentPaper = cssHexVariable(consentCss, "--privacy-paper");
+  const consentMuted = cssHexVariable(consentCss, "--privacy-muted");
+  const consentGold = cssHexVariable(consentCss, "--privacy-gold");
+  for (const foreground of [consentMuted, consentGold]) {
+    for (const background of [consentIvory, consentPaper]) {
+      assert.ok(
+        contrastRatio(foreground, background) >= 4.5,
+        `${foreground} on ${background} must meet 4.5:1`,
+      );
+    }
+  }
+
+  const policyCss = source("../src/styles/privacy-policy.css");
+  const policyLight = cssHexVariable(policyCss, "--privacy-policy-light");
+  const policyDark = cssHexVariable(policyCss, "--privacy-policy-dark");
+  const policyGoldOnLight = cssHexVariable(policyCss, "--privacy-policy-gold-on-light");
+  const policyMutedOnDark = cssHexVariable(policyCss, "--privacy-policy-muted-on-dark");
+  assert.ok(contrastRatio(policyGoldOnLight, policyLight) >= 4.5);
+  assert.ok(contrastRatio(policyMutedOnDark, policyDark) >= 4.5);
+});
+
+test("localized banner analytics copy is accurate and rejection preserves service access", async () => {
+  const { privacyContent } = await import("../src/data/privacyContent.js");
+  const expectations = {
+    "zh-HK": ["選用網站分析", "技術及 Cookie 識別碼", "瀏覽器", "裝置", "約略位置", "廣告個人化", "報價", "Aurora 客服"],
+    en: ["optional site analytics", "technical and cookie identifiers", "browser", "device", "approximate location", "advertising personalisation", "quotes", "Aurora Support"],
+    "zh-CN": ["可选网站分析", "技术及 Cookie 标识符", "浏览器", "设备", "大致位置", "广告个性化", "报价", "Aurora 客服"],
+  };
+
+  for (const [locale, requiredCopy] of Object.entries(expectations)) {
+    const copy = privacyContent[locale];
+    const renderedCopy = JSON.stringify({
+      banner: copy.banner,
+      policy: copy.policy,
+      settings: copy.settings,
+    });
+    assert.doesNotMatch(renderedCopy, /anonymous|non-identifying|匿名|不識別個人|不识别个人/iu);
+    for (const phrase of requiredCopy) {
+      assert.ok(renderedCopy.includes(phrase), `${locale} copy must include ${phrase}`);
+    }
+    assert.equal(typeof copy.banner.reassurance, "string");
+    assert.ok(copy.banner.reassurance.length > 10);
+  }
+
+  const component = source("../src/components/PrivacyConsent.jsx");
+  assert.match(component, /copy\.banner\.reassurance/);
+  assert.match(component, /href="\/privacy\/"/);
+});
+
+test("localized submit notices explain active use and saving while warning against sensitive data", async () => {
+  const { privacyContent } = await import("../src/data/privacyContent.js");
+  const requiredByLocale = {
+    "zh-HK": ["提交報價", "傳送對話", "允許", "使用及儲存", "處理查詢", "跟進", "密碼", "驗證碼", "付款資料", "身分證明文件"],
+    en: ["submitting a quote", "sending a conversation", "allow", "use and save", "handle your enquiry", "follow up", "passwords", "verification codes", "payment data", "identity documents"],
+    "zh-CN": ["提交报价", "发送对话", "允许", "使用及保存", "处理咨询", "跟进", "密码", "验证码", "付款资料", "身份证明文件"],
+  };
+
+  for (const [locale, requiredCopy] of Object.entries(requiredByLocale)) {
+    const notice = privacyContent[locale].inlineNotice;
+    for (const phrase of requiredCopy) {
+      assert.ok(notice.includes(phrase), `${locale} notice must include ${phrase}`);
+    }
+  }
 });
 
 test("every public footer exposes the privacy notice and cookie settings", () => {

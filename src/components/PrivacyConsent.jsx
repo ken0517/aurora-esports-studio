@@ -2,6 +2,8 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { privacyContent, normalizePrivacyLocale } from "../data/privacyContent.js";
 import {
   readPrivacyConsent,
+  restorePrivacyFocus,
+  subscribePrivacyDecision,
   subscribePrivacySettings,
   writePrivacyConsent,
 } from "../lib/privacyConsent.js";
@@ -42,7 +44,13 @@ export default function PrivacyConsent({ route = { type: "home" } }) {
 
   const closeSettings = useCallback(() => {
     setSettingsOpen(false);
-    window.requestAnimationFrame(() => openerRef.current?.focus());
+    window.requestAnimationFrame(() => restorePrivacyFocus(openerRef.current));
+  }, []);
+
+  const applyStoredDecision = useCallback((nextDecision) => {
+    setDecision(nextDecision);
+    setAnalytics(nextDecision?.analytics === true);
+    applyPrivacyDecision(nextDecision);
   }, []);
 
   const persistChoice = useCallback((allowsAnalytics) => {
@@ -51,7 +59,7 @@ export default function PrivacyConsent({ route = { type: "home" } }) {
     setAnalytics(nextDecision.analytics);
     setSettingsOpen(false);
     applyPrivacyDecision(nextDecision);
-    window.requestAnimationFrame(() => openerRef.current?.focus());
+    window.requestAnimationFrame(() => restorePrivacyFocus(openerRef.current));
   }, []);
 
   useEffect(() => {
@@ -61,6 +69,11 @@ export default function PrivacyConsent({ route = { type: "home" } }) {
   }, []);
 
   useEffect(() => subscribePrivacySettings(() => openSettings()), [openSettings]);
+
+  useEffect(
+    () => subscribePrivacyDecision(applyStoredDecision),
+    [applyStoredDecision],
+  );
 
   useEffect(() => {
     const handleLocaleChange = (event) => {
@@ -115,7 +128,13 @@ export default function PrivacyConsent({ route = { type: "home" } }) {
           <div className="privacy-consent__copy">
             <p className="privacy-consent__kicker">PRIVACY / COOKIE CHOICES</p>
             <h2 id="privacy-banner-title">{copy.banner.title}</h2>
-            <p id="privacy-banner-description">{copy.banner.body}</p>
+            <p id="privacy-banner-description" className="privacy-consent__description">
+              {copy.banner.body}
+            </p>
+            <p className="privacy-consent__reassurance">
+              {copy.banner.reassurance}{" "}
+              <a href="/privacy/">{copy.links.privacyNotice}</a>
+            </p>
           </div>
           <div className="privacy-consent__actions">
             <button

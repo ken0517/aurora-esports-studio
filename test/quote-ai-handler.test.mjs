@@ -107,6 +107,14 @@ function createFakeClient(sequence) {
   return { client, calls, responses };
 }
 
+function sensitiveValuePattern(value) {
+  return new RegExp(
+    value
+      .replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
+      .replaceAll(" ", "\\s+"),
+  );
+}
+
 function createConfiguredHandler({
   responses,
   requestTimeoutMs,
@@ -415,7 +423,16 @@ test("normal chat preserves the frontend response shape and maps assistant histo
 test("sensitive customer content is redacted before Gemini receives it", async () => {
   const verificationCode = "654321";
   const paymentCard = "4111 1111 1111 1111";
-  const sensitiveText = `OTP ${verificationCode}, card ${paymentCard}`;
+  const hkid = "A123456(3)";
+  const taiwanId = "A123456789";
+  const passportNumber = "K12345678";
+  const sensitiveText = [
+    `OTP ${verificationCode}`,
+    `card ${paymentCard}`,
+    `HKID ${hkid}`,
+    `Taiwan ID ${taiwanId}`,
+    `passport no. ${passportNumber}`,
+  ].join(", ");
   const { handler, fake } = createConfiguredHandler({
     responses: [responseWithText("Aurora 客服已收到你的服務要求。")],
   });
@@ -432,9 +449,15 @@ test("sensitive customer content is redacted before Gemini receives it", async (
   assert.equal(fake.calls.length, 1);
   const contents = JSON.stringify(fake.calls[0].contents);
   const instructions = fake.calls[0].config.systemInstruction;
-  for (const sensitiveValue of [verificationCode, paymentCard]) {
-    assert.doesNotMatch(contents, new RegExp(sensitiveValue.replaceAll(" ", "\\s+")));
-    assert.doesNotMatch(instructions, new RegExp(sensitiveValue.replaceAll(" ", "\\s+")));
+  for (const sensitiveValue of [
+    verificationCode,
+    paymentCard,
+    hkid,
+    taiwanId,
+    passportNumber,
+  ]) {
+    assert.doesNotMatch(contents, sensitiveValuePattern(sensitiveValue));
+    assert.doesNotMatch(instructions, sensitiveValuePattern(sensitiveValue));
   }
   assert.match(contents, /\[已過濾\]/u);
   assert.match(instructions, /\[已過濾\]/u);
@@ -443,7 +466,8 @@ test("sensitive customer content is redacted before Gemini receives it", async (
 test("sensitive assistant history is redacted before Gemini receives it", async () => {
   const verificationCode = "654321";
   const paymentCard = "4111 1111 1111 1111";
-  const sensitiveHistory = `OTP ${verificationCode}, card ${paymentCard}`;
+  const hkid = "A123456(3)";
+  const sensitiveHistory = `OTP ${verificationCode}, card ${paymentCard}, HKID ${hkid}`;
   const { handler, fake } = createConfiguredHandler({
     responses: [responseWithText("Aurora 客服會繼續處理你的服務查詢。")],
   });
@@ -466,8 +490,8 @@ test("sensitive assistant history is redacted before Gemini receives it", async 
     ["model", "user"],
   );
   const contents = JSON.stringify(fake.calls[0].contents);
-  for (const sensitiveValue of [verificationCode, paymentCard]) {
-    assert.doesNotMatch(contents, new RegExp(sensitiveValue.replaceAll(" ", "\\s+")));
+  for (const sensitiveValue of [verificationCode, paymentCard, hkid]) {
+    assert.doesNotMatch(contents, sensitiveValuePattern(sensitiveValue));
   }
   assert.match(contents, /\[已過濾\]/u);
 });

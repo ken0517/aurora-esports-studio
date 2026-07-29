@@ -55,7 +55,8 @@ test("quote assistant acknowledges service-data processing on active submission 
   const quote = await source("src/components/QuoteAssistant.jsx");
   assert.doesNotMatch(quote, /aurora-data-consent-manual|aurora-data-consent-ai/);
   assert.doesNotMatch(quote, /const\s*\[\s*conversationConsent|setConversationConsent|!conversationConsent|ui\.consentRequired/);
-  assert.match(quote, /service-data-notice/);
+  assert.equal(quote.match(/privacyUi\.inlineNotice/g)?.length, 2);
+  assert.equal(quote.match(/service-data-notice/g)?.length, 2);
   assert.match(quote, /href="\/privacy\/"/);
   assert.match(quote, /consent:\s*true/);
   assert.match(quote, /conversationConsent:\s*true/);

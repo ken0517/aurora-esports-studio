@@ -42,6 +42,7 @@ export function applyPrivacyDecision(
   const captureAcquisitionContext = runtime.captureAcquisitionContext || captureCurrentAcquisition;
   const enableAnalytics = runtime.enableAnalytics || enableGoogleAnalytics;
   const trackPageView = runtime.trackPageView || trackCurrentPageView;
+  const analyticsWasEnabled = windowObject?.__auroraAnalyticsConsent === true;
   const acquisitionOptions = {
     locationHref: windowObject?.location?.href,
     referrer: documentObject?.referrer || "",
@@ -55,7 +56,7 @@ export function applyPrivacyDecision(
     runtime.measurementId,
     analyticsHarness,
   ) === true;
-  if (analyticsEnabled) {
+  if (analyticsEnabled && !analyticsWasEnabled) {
     callWithoutThrow(
       trackPageView,
       {

@@ -78,7 +78,9 @@ test("a consented completed quote creates a redacted enquiry and never an order"
           targetRankId: "bronze",
           targetDivision: "II",
           targetStars: 0,
-          additionalRequirements: "密碼 secret123，不要公開",
+          preferredHero: "密碼 secret123；OTP 654321；HKID A123456(3)",
+          preferredStartTime: "2026-08-01T20:00",
+          additionalRequirements: "台灣身分證 A123456789；passport no. K12345678",
           displayCurrency: "TWD",
         },
         quote: { reference: "AUR-CONSENT-1", status: "quoted", currency: "TWD", finalTotal: 212.5, sourceFinalTotal: 50, requiresManualReview: false, reason: null },
@@ -112,7 +114,13 @@ test("a consented completed quote creates a redacted enquiry and never an order"
     assert.equal(state.orders.length, 0);
     assert.ok(state.enquiries[0].consentedAt);
     assert.equal(state.enquiries[0].gameId, "aov");
-    assert.doesNotMatch(state.enquiries[0].draft.additionalRequirements, /secret123/);
+    assert.doesNotMatch(
+      JSON.stringify(state.enquiries[0].draft),
+      /secret123|654321|A123456\(3\)|A123456789|K12345678/,
+    );
+    assert.match(state.enquiries[0].draft.preferredHero, /已過濾/);
+    assert.equal(state.enquiries[0].draft.currentRankId, "bronze");
+    assert.equal(state.enquiries[0].draft.preferredStartTime, "2026-08-01T20:00");
     assert.equal(state.enquiries[0].quote.status, "quoted");
     assert.equal(state.enquiries[0].quote.finalTotal, 180.63);
     assert.equal(state.enquiries[0].quote.sourceFinalTotal, 42.5);

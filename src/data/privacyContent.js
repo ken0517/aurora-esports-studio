@@ -1,7 +1,8 @@
 const zhHK = {
   banner: {
     title: "你的私隱選擇",
-    body: "Aurora 只使用必要儲存資料來維持網站運作。你可選擇是否允許匿名分析，以協助我們了解網站使用情況。",
+    body: "Aurora 只使用必要儲存資料來維持網站運作。你可選擇是否允許選用網站分析。分析可能使用有限技術及 Cookie 識別碼、瀏覽器和裝置資料及約略位置資料；不會用於廣告個人化。",
+    reassurance: "拒絕選用分析不會影響報價或 Aurora 客服。",
     acceptAll: "接受所有項目",
     rejectNonEssential: "拒絕非必要項目",
     manageSettings: "管理設定",
@@ -10,8 +11,8 @@ const zhHK = {
     title: "Cookie 與私隱設定",
     necessary: "必要儲存資料",
     necessaryDescription: "這些資料用於記住你的私隱選擇及維持網站基本功能，不能關閉。",
-    analytics: "匿名分析",
-    analyticsDescription: "讓我們以匯總方式了解哪些頁面和功能較有用；不會用於廣告個人化。",
+    analytics: "選用網站分析",
+    analyticsDescription: "使用有限技術及 Cookie 識別碼、瀏覽器和裝置資料及約略位置資料，以了解網站使用情況；不會用於廣告個人化。",
     saveSettings: "儲存設定",
     close: "關閉",
   },
@@ -19,11 +20,11 @@ const zhHK = {
     privacyNotice: "私隱聲明",
     cookieSettings: "Cookie 設定",
   },
-  inlineNotice: "提交資料或使用 Aurora 客服前，請勿分享密碼、驗證碼或其他敏感帳戶資料。",
+  inlineNotice: "提交報價或傳送對話即表示你允許 Aurora 使用及儲存該報價或對話，以處理查詢及跟進。請勿傳送密碼、驗證碼、付款資料或身分證明文件。",
   policy: {
     title: "私隱聲明",
     introductionHeading: "我們如何處理資料",
-    body: "Aurora Esports Studio 會在提供查詢、報價及客戶服務時處理你主動提交的聯絡和服務資料。我們只會為回覆查詢、安排服務、維持網站安全及遵守適用法律而使用這些資料。必要儲存資料會保存你的私隱選擇；如你同意，我們亦會使用不識別個人的匯總分析資料以改善網站。你可隨時在 Cookie 設定中更改分析選擇。",
+    body: "Aurora Esports Studio 會在提供查詢、報價及客戶服務時處理你主動提交的聯絡和服務資料。我們只會為回覆查詢、安排服務、維持網站安全及遵守適用法律而使用這些資料。必要儲存資料會保存你的私隱選擇；如你同意，我們亦會使用選用網站分析以改善網站。你可隨時在 Cookie 設定中更改分析選擇。",
     contactHeading: "聯絡我們",
     contactBody: "如對私隱或資料處理有疑問，請透過 Aurora 官方聯絡渠道與我們聯絡。",
     eyebrow: "PRIVACY / DATA PRACTICES",
@@ -41,7 +42,7 @@ const zhHK = {
         title: "我們收集的資料",
         body: [
           "我們可能收集你主動提供的聯絡資料、遊戲及服務需求、報價表內容、客服訊息，以及訂單安排和完成後跟進紀錄。",
-          "如你同意分析，我們亦可能收集頁面路徑、頁面標題、有限的互動事件，以及來源渠道、到達頁面、引薦網站主機名稱和 UTM 活動標記。這些來源資料不要求你提供真實姓名。",
+          "如你同意分析，我們亦可能收集頁面路徑、頁面標題、有限的互動事件、技術及 Cookie 識別碼、瀏覽器和裝置資料、約略位置資料，以及來源渠道、到達頁面、引薦網站主機名稱和 UTM 活動標記。這些來源資料不要求你提供真實姓名。",
         ],
         points: [
           "聯絡資料：你選擇提供的稱呼及聯絡渠道",
@@ -112,7 +113,8 @@ const zhHK = {
 const en = {
   banner: {
     title: "Your privacy choices",
-    body: "Aurora uses necessary storage to keep the site working. You can choose whether to allow anonymous analytics that help us understand site use.",
+    body: "Aurora uses necessary storage to keep the site working. You can choose whether to allow optional site analytics. Analytics may use limited technical and cookie identifiers, browser and device information, and approximate location information; it is not used for advertising personalisation.",
+    reassurance: "Rejecting optional analytics does not affect quotes or Aurora Support.",
     acceptAll: "Accept all",
     rejectNonEssential: "Reject non-essential",
     manageSettings: "Manage settings",
@@ -121,8 +123,8 @@ const en = {
     title: "Cookie and privacy settings",
     necessary: "Necessary storage",
     necessaryDescription: "This stores your privacy choice and supports essential site functions. It cannot be switched off.",
-    analytics: "Anonymous analytics",
-    analyticsDescription: "Helps us understand, in aggregate, which pages and features are useful. It is not used for advertising personalisation.",
+    analytics: "Optional site analytics",
+    analyticsDescription: "Uses limited technical and cookie identifiers, browser and device information, and approximate location information to help us understand site use. It is not used for advertising personalisation.",
     saveSettings: "Save settings",
     close: "Close",
   },
@@ -130,11 +132,11 @@ const en = {
     privacyNotice: "Privacy notice",
     cookieSettings: "Cookie settings",
   },
-  inlineNotice: "Before submitting information or using Aurora Support, do not share passwords, verification codes, or other sensitive account information.",
+  inlineNotice: "By submitting a quote or sending a conversation, you allow Aurora to use and save the quote or conversation to handle your enquiry and follow up. Do not send passwords, verification codes, payment data, or identity documents.",
   policy: {
     title: "Privacy notice",
     introductionHeading: "How we handle information",
-    body: "Aurora Esports Studio processes the contact and service information you choose to submit when providing enquiries, quotes, and customer support. We use it only to reply to enquiries, arrange services, keep the site secure, and meet applicable legal obligations. Necessary storage keeps your privacy choice. If you agree, we also use aggregated, non-identifying analytics to improve the site. You can change your analytics choice at any time in Cookie settings.",
+    body: "Aurora Esports Studio processes the contact and service information you choose to submit when providing enquiries, quotes, and customer support. We use it only to reply to enquiries, arrange services, keep the site secure, and meet applicable legal obligations. Necessary storage keeps your privacy choice. If you agree, we also use optional site analytics to improve the site. You can change your analytics choice at any time in Cookie settings.",
     contactHeading: "Contact us",
     contactBody: "For questions about privacy or information handling, contact us through Aurora's official contact channels.",
     eyebrow: "PRIVACY / DATA PRACTICES",
@@ -152,7 +154,7 @@ const en = {
         title: "Information we collect",
         body: [
           "We may collect contact details you choose to provide, game and service requirements, quotation-form entries, customer-support messages, and records used to arrange and follow up orders.",
-          "If you consent to analytics, we may also collect page paths, page titles, limited interaction events, and acquisition information such as channel, landing page, referring host, and UTM campaign tags. Acquisition information does not require your real name.",
+          "If you consent to analytics, we may also collect page paths, page titles, limited interaction events, technical and cookie identifiers, browser and device information, approximate location information, and acquisition information such as channel, landing page, referring host, and UTM campaign tags. Acquisition information does not require your real name.",
         ],
         points: [
           "Contact information: the name and contact channel you choose to provide",
@@ -223,7 +225,8 @@ const en = {
 const zhCN = {
   banner: {
     title: "你的隐私选择",
-    body: "Aurora 仅使用必要存储来维持网站运行。你可以选择是否允许匿名分析，以帮助我们了解网站的使用情况。",
+    body: "Aurora 仅使用必要存储来维持网站运行。你可以选择是否允许可选网站分析。分析可能使用有限技术及 Cookie 标识符、浏览器和设备资料及大致位置资料；不会用于广告个性化。",
+    reassurance: "拒绝可选分析不会影响报价或 Aurora 客服。",
     acceptAll: "接受所有项目",
     rejectNonEssential: "拒绝非必要项目",
     manageSettings: "管理设置",
@@ -232,8 +235,8 @@ const zhCN = {
     title: "Cookie 与隐私设置",
     necessary: "必要存储",
     necessaryDescription: "这些数据用于记住你的隐私选择并维持网站基本功能，不能关闭。",
-    analytics: "匿名分析",
-    analyticsDescription: "帮助我们以汇总方式了解哪些页面和功能更有用；不会用于广告个性化。",
+    analytics: "可选网站分析",
+    analyticsDescription: "使用有限技术及 Cookie 标识符、浏览器和设备资料及大致位置资料，以了解网站使用情况；不会用于广告个性化。",
     saveSettings: "保存设置",
     close: "关闭",
   },
@@ -241,11 +244,11 @@ const zhCN = {
     privacyNotice: "隐私声明",
     cookieSettings: "Cookie 设置",
   },
-  inlineNotice: "提交资料或使用 Aurora 客服前，请勿分享密码、验证码或其他敏感账户资料。",
+  inlineNotice: "提交报价或发送对话即表示你允许 Aurora 使用及保存该报价或对话，以处理咨询及跟进。请勿发送密码、验证码、付款资料或身份证明文件。",
   policy: {
     title: "隐私声明",
     introductionHeading: "我们如何处理资料",
-    body: "Aurora Esports Studio 会在提供咨询、报价及客户服务时处理你主动提交的联系和服务资料。我们只会为回复咨询、安排服务、维护网站安全及遵守适用法律而使用这些资料。必要存储会保存你的隐私选择；如你同意，我们也会使用不识别个人的汇总分析资料来改善网站。你可以随时在 Cookie 设置中更改分析选择。",
+    body: "Aurora Esports Studio 会在提供咨询、报价及客户服务时处理你主动提交的联系和服务资料。我们只会为回复咨询、安排服务、维护网站安全及遵守适用法律而使用这些资料。必要存储会保存你的隐私选择；如你同意，我们也会使用可选网站分析来改善网站。你可以随时在 Cookie 设置中更改分析选择。",
     contactHeading: "联系我们",
     contactBody: "如对隐私或资料处理有疑问，请通过 Aurora 官方联系渠道联系我们。",
     eyebrow: "PRIVACY / DATA PRACTICES",
@@ -263,7 +266,7 @@ const zhCN = {
         title: "我们收集的资料",
         body: [
           "我们可能收集你主动提供的联系资料、游戏及服务需求、报价表内容、客服消息，以及订单安排和完成后跟进记录。",
-          "如你同意分析，我们也可能收集页面路径、页面标题、有限的互动事件，以及来源渠道、到达页面、引荐网站主机名称和 UTM 活动标签。这些来源资料不要求你提供真实姓名。",
+          "如你同意分析，我们也可能收集页面路径、页面标题、有限的互动事件、技术及 Cookie 标识符、浏览器和设备资料、大致位置资料，以及来源渠道、到达页面、引荐网站主机名称和 UTM 活动标签。这些来源资料不要求你提供真实姓名。",
         ],
         points: [
           "联系资料：你选择提供的称呼及联系渠道",

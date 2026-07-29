@@ -65,6 +65,8 @@ test("enablement grants analytics only and loads the Google tag once", async () 
   assert.deepEqual(commands[1].slice(0, 2), ["consent", "update"]);
   assert.equal(commands[1][2].analytics_storage, "granted");
   assert.equal(commands[1][2].ad_storage, "denied");
+  assert.equal(commands[1][2].ad_user_data, "denied");
+  assert.equal(commands[1][2].ad_personalization, "denied");
 });
 
 test("disablement blocks later events and queues a denied consent update", async () => {

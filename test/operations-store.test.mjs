@@ -36,9 +36,21 @@ test("operations defaults use 90-day retention and the approved status set", () 
 });
 
 test("sensitive customer text is redacted before storage", () => {
-  const input = "密碼：secret123，驗證碼 654321，信用卡 4111 1111 1111 1111，CVV 123";
+  const input = [
+    "密碼：secret123",
+    "驗證碼 654321",
+    "信用卡 4111 1111 1111 1111",
+    "CVV 123",
+    "銀行帳號 987654321",
+    "HKID A123456(3)",
+    "台灣身分證 A123456789",
+    "passport no. K12345678",
+  ].join("，");
   const redacted = redactSensitiveText(input);
-  assert.doesNotMatch(redacted, /secret123|654321|4111|CVV 123/);
+  assert.doesNotMatch(
+    redacted,
+    /secret123|654321|4111|CVV 123|987654321|A123456\(3\)|A123456789|K12345678/,
+  );
   assert.match(redacted, /已過濾/);
 });
 

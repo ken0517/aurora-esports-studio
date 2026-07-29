@@ -1,6 +1,10 @@
 .privacy-policy {
+  --privacy-policy-dark: #211d17;
+  --privacy-policy-gold-on-light: #8a5e29;
+  --privacy-policy-light: #f4efe5;
+  --privacy-policy-muted-on-dark: #8c877f;
   min-height: 100vh;
-  background: #f4efe5;
+  background: var(--privacy-policy-light);
   color: #1c1a17;
   font-family: "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", sans-serif;
 }
@@ -60,7 +64,7 @@
   padding: 92px 0 82px;
   background:
     radial-gradient(circle at 80% 15%, rgba(197, 154, 97, 0.12), transparent 30%),
-    #211d17;
+    var(--privacy-policy-dark);
   color: #f7f1e7;
 }
 
@@ -73,10 +77,17 @@
 
 .privacy-policy__eyebrow,
 .privacy-policy__index > p {
-  color: #c59a61;
   font-size: 11px;
   font-weight: 700;
   letter-spacing: 0.22em;
+}
+
+.privacy-policy__eyebrow {
+  color: #c59a61;
+}
+
+.privacy-policy__index > p {
+  color: var(--privacy-policy-gold-on-light);
 }
 
 .privacy-policy__language {
@@ -131,7 +142,7 @@
 }
 
 .privacy-policy__meta dt {
-  color: rgba(247, 241, 231, 0.48);
+  color: var(--privacy-policy-muted-on-dark);
   font-size: 10px;
   letter-spacing: 0.14em;
   text-transform: uppercase;
@@ -205,7 +216,7 @@
   position: absolute;
   top: 48px;
   right: 4px;
-  color: #a87a3e;
+  color: var(--privacy-policy-gold-on-light);
   font-family: Georgia, serif;
 }
 

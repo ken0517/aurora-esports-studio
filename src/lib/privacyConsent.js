@@ -67,3 +67,62 @@ export function subscribePrivacySettings(callback, windowObject = globalThis.win
   windowObject.addEventListener(PRIVACY_SETTINGS_EVENT, callback);
   return () => windowObject.removeEventListener?.(PRIVACY_SETTINGS_EVENT, callback);
 }
+
+export function subscribePrivacyDecision(
+  callback,
+  {
+    windowObject = globalThis.window,
+    documentObject = globalThis.document,
+    storage = safeLocalStorage(),
+  } = {},
+) {
+  if (typeof callback !== "function" || typeof windowObject?.addEventListener !== "function") {
+    return () => {};
+  }
+
+  const notify = (event) => callback(
+    readPrivacyConsent(storage, windowObject),
+    event,
+  );
+  const handleStorage = (event) => {
+    if (event?.key !== null && event?.key !== PRIVACY_STORAGE_KEY) return;
+    notify(event);
+  };
+  const handleVisibilityChange = (event) => {
+    if (documentObject?.visibilityState === "hidden") return;
+    notify(event);
+  };
+
+  windowObject.addEventListener("storage", handleStorage);
+  windowObject.addEventListener("pageshow", notify);
+  windowObject.addEventListener("focus", notify);
+  documentObject?.addEventListener?.("visibilitychange", handleVisibilityChange);
+
+  return () => {
+    windowObject.removeEventListener?.("storage", handleStorage);
+    windowObject.removeEventListener?.("pageshow", notify);
+    windowObject.removeEventListener?.("focus", notify);
+    documentObject?.removeEventListener?.("visibilitychange", handleVisibilityChange);
+  };
+}
+
+export function restorePrivacyFocus(opener, documentObject = globalThis.document) {
+  const target = opener?.isConnected === true
+    ? opener
+    : documentObject?.querySelector?.("#main-content, main");
+  if (typeof target?.focus !== "function") return false;
+
+  try {
+    if (
+      target !== opener
+      && typeof target.hasAttribute === "function"
+      && !target.hasAttribute("tabindex")
+    ) {
+      target.setAttribute?.("tabindex", "-1");
+    }
+    target.focus();
+    return true;
+  } catch {
+    return false;
+  }
+}

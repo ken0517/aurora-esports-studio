@@ -8,6 +8,8 @@ import {
   PRIVACY_STORAGE_KEY,
   openPrivacySettings,
   readPrivacyConsent,
+  restorePrivacyFocus,
+  subscribePrivacyDecision,
   subscribePrivacySettings,
   writePrivacyConsent,
 } from "../src/lib/privacyConsent.js";
@@ -35,13 +37,15 @@ function eventWindow() {
       }
     },
     addEventListener(type, callback) {
-      listeners.set(type, callback);
+      const callbacks = listeners.get(type) || new Set();
+      callbacks.add(callback);
+      listeners.set(type, callbacks);
     },
     removeEventListener(type, callback) {
-      if (listeners.get(type) === callback) listeners.delete(type);
+      listeners.get(type)?.delete(callback);
     },
     dispatchEvent(event) {
-      listeners.get(event.type)?.(event);
+      for (const callback of listeners.get(event.type) || []) callback(event);
       return true;
     },
   };
@@ -176,6 +180,88 @@ test("privacy settings subscriptions can be removed", () => {
   openPrivacySettings(windowObject);
 
   assert.equal(calls, 1);
+});
+
+test("privacy decision subscriptions re-read cross-tab and resumed storage choices", () => {
+  const storage = memoryStorage();
+  const windowObject = eventWindow();
+  const documentObject = eventWindow();
+  windowObject.localStorage = storage;
+  windowObject.navigator = { doNotTrack: "0" };
+  documentObject.visibilityState = "visible";
+  const decisions = [];
+  const unsubscribe = subscribePrivacyDecision(
+    (decision, event) => decisions.push([decision?.analytics ?? null, event.type]),
+    { windowObject, documentObject, storage },
+  );
+
+  storage.setItem(PRIVACY_STORAGE_KEY, JSON.stringify({
+    version: PRIVACY_POLICY_VERSION,
+    analytics: false,
+    decidedAt: "2026-07-29T13:10:00.000Z",
+  }));
+  windowObject.dispatchEvent({ type: "storage", key: "unrelated" });
+  assert.deepEqual(decisions, []);
+
+  windowObject.dispatchEvent({ type: "storage", key: PRIVACY_STORAGE_KEY });
+  assert.deepEqual(decisions, [[false, "storage"]]);
+
+  storage.setItem(PRIVACY_STORAGE_KEY, JSON.stringify({
+    version: PRIVACY_POLICY_VERSION,
+    analytics: true,
+    decidedAt: "2026-07-29T13:11:00.000Z",
+  }));
+  windowObject.dispatchEvent({ type: "pageshow" });
+  documentObject.visibilityState = "hidden";
+  documentObject.dispatchEvent({ type: "visibilitychange" });
+  documentObject.visibilityState = "visible";
+  documentObject.dispatchEvent({ type: "visibilitychange" });
+  assert.deepEqual(decisions, [
+    [false, "storage"],
+    [true, "pageshow"],
+    [true, "visibilitychange"],
+  ]);
+
+  unsubscribe();
+  windowObject.dispatchEvent({ type: "focus" });
+  assert.equal(decisions.length, 3);
+});
+
+test("focus restoration keeps a connected opener and otherwise focuses the public main landmark", () => {
+  let connectedFocuses = 0;
+  const connectedOpener = {
+    isConnected: true,
+    focus() { connectedFocuses += 1; },
+  };
+  const unexpectedDocument = {
+    querySelector() {
+      throw new Error("a connected opener must remain the focus target");
+    },
+  };
+
+  assert.equal(restorePrivacyFocus(connectedOpener, unexpectedDocument), true);
+  assert.equal(connectedFocuses, 1);
+
+  const attributes = new Map();
+  let mainFocuses = 0;
+  const main = {
+    hasAttribute(name) { return attributes.has(name); },
+    setAttribute(name, value) { attributes.set(name, value); },
+    focus() { mainFocuses += 1; },
+  };
+  const documentObject = {
+    querySelector(selector) {
+      assert.equal(selector, "#main-content, main");
+      return main;
+    },
+  };
+
+  assert.equal(
+    restorePrivacyFocus({ isConnected: false, focus() {} }, documentObject),
+    true,
+  );
+  assert.equal(mainFocuses, 1);
+  assert.equal(attributes.get("tabindex"), "-1");
 });
 
 test("privacy content covers all supported locales and normalizes locale variants", () => {

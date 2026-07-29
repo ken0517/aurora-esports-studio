@@ -8,7 +8,7 @@
     "ai:server": "node --env-file-if-exists=.env.local server/quote-ai-server.mjs",
     "build": "vite build && node scripts/generate-game-landing-pages.mjs",
     "lint": "eslint . --max-warnings=0",
-    "test": "node --test",
+    "test": "npm run build && node --test",
     "test:performance": "node --test test/performance-budget.test.mjs",
     "preview": "vite preview --host 0.0.0.0",
     "preview:full": "node --env-file-if-exists=.env.local server/site-server.mjs",
