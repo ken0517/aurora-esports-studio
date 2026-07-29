@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import PrivacyFooterLinks from "./components/PrivacyFooterLinks.jsx";
 import { contactLinks } from "./data/content.js";
 import { normalizePrivacyLocale, privacyContent } from "./data/privacyContent.js";
@@ -32,6 +32,10 @@ function initialLocale() {
 export default function PrivacyPolicyPage() {
   const [locale, setLocale] = useState(initialLocale);
   const policy = privacyContent[locale].policy;
+
+  useEffect(() => {
+    document.documentElement.lang = locale;
+  }, [locale]);
 
   function changeLocale(nextLocale) {
     if (!localeKeys.includes(nextLocale)) return;

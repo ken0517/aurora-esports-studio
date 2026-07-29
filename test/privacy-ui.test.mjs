@@ -139,3 +139,9 @@ test("privacy page offers language, cookie, contact, and safe-submission control
   assert.match(css, /@media \(max-width:\s*760px\)/);
   assert.match(css, /:focus-visible/);
 });
+
+test("privacy page keeps the document language in sync with its selected locale", () => {
+  const page = source("../src/PrivacyPolicyPage.jsx");
+
+  assert.match(page, /useEffect\(\(\) => \{\s*document\.documentElement\.lang = locale;\s*\}, \[locale\]\)/);
+});
