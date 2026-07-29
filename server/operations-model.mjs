@@ -17,6 +17,7 @@ const gameIds = new Set(supportedGameIds);
 const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const isoPattern = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{3})?Z$/;
 const locales = new Set(["zh-HK", "en", "zh-CN"]);
+const acquisitionChannels = new Set(["google", "carousell", "instagram", "direct", "other"]);
 
 function cleanString(value, maxLength = 500) {
   return typeof value === "string" ? value.trim().slice(0, maxLength) : "";
@@ -48,6 +49,7 @@ function cleanTime(value) {
 }
 
 function cleanNumber(value, fallback = null, { min = -Infinity, max = Infinity, integer = false } = {}) {
+  if (value === "" || value === null || value === undefined) return fallback;
   const number = Number(value);
   if (!Number.isFinite(number)) return fallback;
   const bounded = Math.min(max, Math.max(min, number));
@@ -70,6 +72,56 @@ function cleanServiceId(value) {
 
 function cleanStatus(value, fallback = "new_enquiry") {
   return operationsOrderStatuses.includes(value) ? value : fallback;
+}
+
+function cleanLandingPath(value) {
+  const cleaned = cleanString(value, 300);
+  if (!cleaned) return "/";
+  try {
+    const url = new URL(cleaned, "https://auroraesportstudio.com/");
+    return url.pathname.startsWith("/") ? url.pathname.slice(0, 240) : "/";
+  } catch {
+    return "/";
+  }
+}
+
+function cleanHost(value) {
+  const cleaned = cleanString(value, 200).toLowerCase();
+  if (!cleaned) return null;
+  try {
+    return new URL(cleaned.includes("://") ? cleaned : `https://${cleaned}`).hostname.slice(0, 120) || null;
+  } catch {
+    return null;
+  }
+}
+
+function cleanCampaignToken(value) {
+  const cleaned = cleanString(value, 80)
+    .toLowerCase()
+    .replace(/[^a-z0-9._-]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+  return cleaned || null;
+}
+
+function normalizeAcquisitionTouch(input) {
+  if (!input || typeof input !== "object") return null;
+  const capturedAt = cleanIso(input.capturedAt);
+  if (!capturedAt) return null;
+  return {
+    channel: acquisitionChannels.has(input.channel) ? input.channel : "other",
+    landingPath: cleanLandingPath(input.landingPath),
+    referrerHost: cleanHost(input.referrerHost),
+    utmSource: cleanCampaignToken(input.utmSource),
+    utmMedium: cleanCampaignToken(input.utmMedium),
+    utmCampaign: cleanCampaignToken(input.utmCampaign),
+    capturedAt,
+  };
+}
+
+export function normalizeAcquisitionContext(input) {
+  const firstTouch = normalizeAcquisitionTouch(input?.firstTouch);
+  const lastTouch = normalizeAcquisitionTouch(input?.lastTouch || input?.firstTouch);
+  return firstTouch && lastTouch ? { firstTouch, lastTouch } : null;
 }
 
 export function redactSensitiveText(value) {
@@ -106,34 +158,44 @@ function normalizeConversation(input) {
     locale: locales.has(input?.locale) ? input.locale : "zh-HK",
     gameId: cleanGameId(input?.gameId),
     serviceId: cleanServiceId(input?.serviceId),
+    acquisition: normalizeAcquisitionContext(input?.acquisition),
     messages: Array.isArray(input?.messages) ? input.messages.slice(-100).map(normalizeMessage).filter(Boolean) : [],
     createdAt,
     updatedAt,
   };
 }
 
-function normalizeDraft(input = {}) {
+export function normalizeEnquiryDraft(input = {}) {
   return {
+    intent: cleanNullableString(input.intent, 40),
     gameId: cleanGameId(input.gameId),
     serviceId: cleanServiceId(input.serviceId),
     currentRankId: cleanNullableString(input.currentRankId, 40),
     currentDivision: cleanNullableString(input.currentDivision, 20),
-    currentStars: cleanNumber(input.currentStars),
-    currentPoints: cleanNumber(input.currentPoints),
+    currentStars: cleanNumber(input.currentStars, null, { min: 0, max: 100_000 }),
+    currentPoints: cleanNumber(input.currentPoints, null, { min: 0, max: 1_000_000 }),
+    currentHeroPowerPoints: cleanNumber(input.currentHeroPowerPoints, null, { min: 0, max: 10_000_000 }),
     targetRankId: cleanNullableString(input.targetRankId, 40),
     targetDivision: cleanNullableString(input.targetDivision, 20),
-    targetStars: cleanNumber(input.targetStars),
-    targetPoints: cleanNumber(input.targetPoints),
-    quantity: cleanNumber(input.quantity),
+    targetStars: cleanNumber(input.targetStars, null, { min: 0, max: 100_000 }),
+    targetPoints: cleanNumber(input.targetPoints, null, { min: 0, max: 1_000_000 }),
+    targetHeroPowerPoints: cleanNumber(input.targetHeroPowerPoints, null, { min: 0, max: 10_000_000 }),
+    quantity: cleanNumber(input.quantity, null, { min: 0, max: 100_000 }),
+    points: cleanNumber(input.points, null, { min: 0, max: 1_000_000 }),
+    duoMode: ["ranked", "match-5v5"].includes(input.duoMode) ? input.duoMode : null,
+    duoGuarantee: ["guaranteed", "standard"].includes(input.duoGuarantee) ? input.duoGuarantee : null,
+    otherServiceType: cleanNullableString(input.otherServiceType, 50),
     preferredHero: cleanNullableString(input.preferredHero, 80),
     preferredRole: cleanNullableString(input.preferredRole, 40),
+    heroPowerMarkId: cleanNullableString(input.heroPowerMarkId, 40),
     preferredStartTime: cleanNullableString(input.preferredStartTime, 80),
     additionalRequirements: redactSensitiveText(input.additionalRequirements) || null,
     displayCurrency: ["HKD", "TWD", "CNY"].includes(input.displayCurrency) ? input.displayCurrency : "HKD",
   };
 }
 
-function normalizeQuote(input = {}) {
+function normalizeQuote(input) {
+  if (!input || typeof input !== "object") return null;
   return {
     reference: cleanNullableString(input.reference || input.referenceNumber, 60),
     status: ["quoted", "manual_review", "incomplete"].includes(input.status) ? input.status : "manual_review",
@@ -141,6 +203,7 @@ function normalizeQuote(input = {}) {
     finalTotal: cleanNumber(input.finalTotal, null, { min: 0, max: 10_000_000 }),
     sourceFinalTotal: cleanNumber(input.sourceFinalTotal, null, { min: 0, max: 10_000_000 }),
     requiresManualReview: cleanBoolean(input.requiresManualReview, true),
+    reason: cleanNullableString(input.reason, 80),
   };
 }
 
@@ -149,8 +212,15 @@ function normalizeEnquiry(input) {
   const createdAt = cleanIso(input?.createdAt);
   const updatedAt = cleanIso(input?.updatedAt) || createdAt;
   if (!id || !createdAt || !updatedAt) return null;
+  const submissionId = cleanUuid(input?.submissionId);
+  const submissionIds = [...new Set([
+    submissionId,
+    ...(Array.isArray(input?.submissionIds) ? input.submissionIds.map(cleanUuid) : []),
+  ].filter(Boolean))].slice(-50);
   return {
     id,
+    submissionId,
+    submissionIds,
     conversationId: cleanUuid(input?.conversationId),
     sessionId: cleanUuid(input?.sessionId),
     status: cleanStatus(input?.status),
@@ -159,7 +229,8 @@ function normalizeEnquiry(input) {
     gameId: cleanGameId(input?.gameId || input?.draft?.gameId),
     serviceId: cleanServiceId(input?.serviceId || input?.draft?.serviceId),
     quoteReference: cleanNullableString(input?.quoteReference || input?.quote?.reference, 60),
-    draft: normalizeDraft(input?.draft),
+    acquisition: normalizeAcquisitionContext(input?.acquisition),
+    draft: normalizeEnquiryDraft(input?.draft),
     quote: normalizeQuote(input?.quote),
     customerName: redactSensitiveText(input?.customerName).slice(0, 100) || null,
     contactMethod: ["whatsapp", "line", "instagram", "discord", "carousell", "other"].includes(input?.contactMethod) ? input.contactMethod : null,

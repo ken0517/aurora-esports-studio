@@ -1,15 +1,17 @@
 import { useCallback, useEffect, useState } from "react";
-import { CalendarDays, LoaderCircle, MessageSquareText, RefreshCw, Users } from "lucide-react";
+import { BarChart3, CalendarDays, LoaderCircle, MessageSquareText, RefreshCw, Users } from "lucide-react";
 
 import ConversationsPanel from "./ConversationsPanel.jsx";
 import OrdersPanel from "./OrdersPanel.jsx";
 import StaffRulesPanel from "./StaffRulesPanel.jsx";
+import TrafficPanel from "./TrafficPanel.jsx";
 import { loadOperations, runOperationsAction } from "./operationsClient.js";
 
 const panels = [
   ["conversations", "對話與查詢", MessageSquareText],
   ["orders", "訂單與預約", CalendarDays],
   ["staff", "人員與營業規則", Users],
+  ["traffic", "客源概況", BarChart3],
 ];
 
 export default function OperationsApp({ onUnauthorized }) {
@@ -72,6 +74,7 @@ export default function OperationsApp({ onUnauthorized }) {
       {activePanel === "conversations" ? <ConversationsPanel state={state} onAction={action} busy={status === "saving"} /> : null}
       {activePanel === "orders" ? <OrdersPanel state={state} onAction={action} busy={status === "saving"} warnings={warnings} /> : null}
       {activePanel === "staff" ? <StaffRulesPanel key={state.revision} state={state} onAction={action} busy={status === "saving"} /> : null}
+      {activePanel === "traffic" ? <TrafficPanel state={state} /> : null}
     </main>
   );
 }

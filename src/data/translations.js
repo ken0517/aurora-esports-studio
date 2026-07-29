@@ -329,7 +329,8 @@ const zhHK = {
     },
     whatsapp: {
       greeting: "你好，我想查詢 Aurora Esports Studio 報價。",
-      closing: "請客服按以上資料人工確認，謝謝。",
+      quotedClosing: "以上為網站暫估報價，金額已按 Aurora 已核准價格自動計算；最終安排以客服確認為準。",
+      manualClosing: "此項目未有可自動計算的正式金額，請 Aurora 客服確認正式報價，謝謝。",
     },
     reviewBillingNotice: "復盤教學按實際通話時間每分鐘 {{unitPrice}} 計算，最少 {{minimumMinutes}} 分鐘；此金額是預約付款，超時部分於結束後補款。",
   },
@@ -426,7 +427,11 @@ const en = {
     table: { title: "Aurora professional quote", service: "Service", currentRank: "Current rank", targetRank: "Target rank", currentStars: "Current stars", targetStars: "Target stars", quantity: "Quantity required", basePrice: "Base price", optionalCharges: "Optional charges", discount: "Discount", newCustomerDiscount: "New customer 15% discount", estimatedCompletionTime: "Estimated completion", preferredStartTime: "Appointment start time", bookingDeposit: "Booking payment", finalTotal: "Final total", reference: "Quote reference" },
     actions: { start: "Start quote", submit: "Submit", copy: "Copy quote", copied: "Copied", whatsapp: "Send to WhatsApp", line: "Send to LINE", lineCopied: "Quote copied. Add Aurora on LINE, then paste and send it.", lineCopyFailed: "Your browser could not copy automatically. Copy the quote first, then open LINE.", edit: "Edit selections", human: "Contact human support", reset: "Start over" },
     errors: { gameRequired: "Select a game.", serviceRequired: "Select a service.", invalidRank: "That rank is not valid for this game.", currentRankRequired: "Select the current rank.", targetRankRequired: "Select the target rank.", divisionRequired: "Select a division.", invalidDivision: "That division is not valid for the selected rank.", targetMustBeHigher: "The target must be above the current rank.", numberRequired: "Enter a valid number; stars may be zero.", positiveNumber: "Enter a number greater than zero.", invalidStarRange: "The star value is outside the selected rank range.", heroRequired: "Enter the preferred hero.", roleRequired: "Select a preferred role or lane.", invalidRole: "That lane is not available for this game.", heroPowerMarkRequired: "Select a hero power mark.", invalidHeroPowerMark: "That hero power mark is not available for this game.", expressRequired: "Select whether express service is required.", requirementsRequired: "Describe the package or special requirements.", completionTimeRequired: "Select a preferred completion time.", preferredStartTimeRequired: "Select a preferred start time.", duoGuaranteeRequired: "Choose guaranteed or standard play.", invalidDuoGuarantee: "That win/loss option is invalid.", minimumQuantity: "This service requires at least 2 matches.", pricingUnavailable: "Pricing is not configured and requires human confirmation." },
-    whatsapp: { greeting: "Hello, I would like an Aurora Esports Studio quote.", closing: "Please review these details and confirm the quote. Thank you." },
+    whatsapp: {
+      greeting: "Hello, I would like an Aurora Esports Studio quote.",
+      quotedClosing: "This website estimate was calculated from Aurora's approved pricing. Final scheduling is subject to support confirmation.",
+      manualClosing: "No approved automatic amount is available for this request. Please ask Aurora Support to confirm the formal quote.",
+    },
     reviewBillingNotice: "Review coaching is billed at {{unitPrice}} per actual call minute, with a {{minimumMinutes}}-minute minimum. This is the booking payment; extra time is settled after the session.",
   },
 };
@@ -486,7 +491,11 @@ const zhCN = {
     table: { title: "Aurora 专业报价", service: "服务", currentRank: "目前段位", targetRank: "目标段位", currentStars: "目前星数", targetStars: "目标星数", quantity: "所需数量", basePrice: "基本价格", optionalCharges: "附加费用", discount: "折扣", newCustomerDiscount: "新人优惠 85 折", estimatedCompletionTime: "预计完成时间", preferredStartTime: "预约开始时间", bookingDeposit: "预约付款", finalTotal: "最终总额", reference: "报价编号" },
     actions: { start: "开始查询", submit: "提交", copy: "复制报价", copied: "已复制", whatsapp: "发送到 WhatsApp", line: "发送至 LINE", lineCopied: "报价已复制；添加好友后请粘贴并发送。", lineCopyFailed: "浏览器未能自动复制。请先点击“复制报价”，再前往 LINE。", edit: "修改选择", human: "联系人工客服", reset: "重新开始" },
     errors: { gameRequired: "请选择游戏。", serviceRequired: "请选择服务。", invalidRank: "所选段位不适用于这款游戏。", currentRankRequired: "请选择目前段位。", targetRankRequired: "请选择目标段位。", divisionRequired: "请选择小分级。", invalidDivision: "所选小分级不适用于这个段位。", targetMustBeHigher: "目标段位必须高于目前段位。", numberRequired: "请输入有效数字；星数可以是零。", positiveNumber: "请输入大于零的数字。", invalidStarRange: "星数不符合所选段位的范围。", heroRequired: "请输入指定英雄。", roleRequired: "请选择指定位置／分路。", invalidRole: "所选分路不适用于这款游戏。", heroPowerMarkRequired: "请选择英雄战力标。", invalidHeroPowerMark: "所选英雄战力标不适用于这款游戏。", expressRequired: "请选择是否需要加急。", requirementsRequired: "请说明套餐或特殊要求。", completionTimeRequired: "请选择理想完成时间。", preferredStartTimeRequired: "请选择理想开始时间。", duoGuaranteeRequired: "请选择包赢或不包赢方案。", invalidDuoGuarantee: "胜负方案不正确。", minimumQuantity: "此项服务最少需要 2 局。", pricingUnavailable: "价格尚未设置，必须人工确认。" },
-    whatsapp: { greeting: "你好，我想咨询 Aurora Esports Studio 报价。", closing: "请客服按以上资料人工确认，谢谢。" },
+    whatsapp: {
+      greeting: "你好，我想咨询 Aurora Esports Studio 报价。",
+      quotedClosing: "以上为网站暂估报价，金额已按 Aurora 已核准价格自动计算；最终安排以客服确认为准。",
+      manualClosing: "此项目没有可自动计算的正式金额，请 Aurora 客服确认正式报价，谢谢。",
+    },
     reviewBillingNotice: "复盘教学按实际通话时间每分钟 {{unitPrice}} 计算，最少 {{minimumMinutes}} 分钟；此金额是预约付款，超时部分于结束后补款。",
   },
 };

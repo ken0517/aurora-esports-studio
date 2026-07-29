@@ -920,7 +920,7 @@ export function createQuoteAiHandler({
       return;
     }
 
-    const quoteContext = cleanQuoteContext(body.quoteContext, locale);
+    let quoteContext = cleanQuoteContext(body.quoteContext, locale);
     const inferredGameId = inferGameIdFromMessages(messages);
     if (inferredGameId) quoteContext.gameId = inferredGameId;
     const deterministicFollowUp = buildDeterministicFollowUp(messages, quoteContext, locale);
@@ -951,6 +951,8 @@ export function createQuoteAiHandler({
           messages,
           assistantMessage: message,
           quoteContext,
+          quoteResult,
+          acquisition: body.acquisition,
         });
       } catch {
         // Conversation storage must never prevent customer service from replying.
@@ -1034,6 +1036,7 @@ export function createQuoteAiHandler({
           return { functionCall, context, result };
         });
         const [{ context: toolQuoteContext, result: firstToolResult }] = toolResults;
+        quoteContext = toolQuoteContext;
         quoteResult = firstToolResult;
         const modelContent = firstResponse?.candidates?.[0]?.content || {
           role: "model",

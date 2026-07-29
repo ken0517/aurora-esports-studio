@@ -161,10 +161,22 @@ test("AI conversation storage requires consent and redacts sensitive messages", 
       conversationConsent: true,
       messages: [{ role: "user", content: "我想做莉莉安紫標，驗證碼 654321" }],
       quoteContext: {},
+      acquisition: {
+        firstTouch: {
+          channel: "google",
+          landingPath: "/hok-hero-power/",
+          referrerHost: "www.google.com",
+          capturedAt: "2026-07-29T10:00:00.000Z",
+        },
+      },
     });
     assert.equal(consented.response.status, 200);
     assert.equal(operationsStore.state.conversations.length, 1);
+    assert.equal(operationsStore.state.enquiries.length, 1);
     assert.ok(operationsStore.state.conversations[0].consentedAt);
+    assert.equal(operationsStore.state.enquiries[0].source, "ai");
+    assert.equal(operationsStore.state.enquiries[0].conversationId, operationsStore.state.conversations[0].id);
+    assert.equal(operationsStore.state.enquiries[0].acquisition.firstTouch.channel, "google");
     assert.doesNotMatch(JSON.stringify(operationsStore.state.conversations[0]), /654321/);
   });
 });
@@ -218,6 +230,45 @@ function functionCallResponse(args, overrides = {}) {
     ...overrides,
   };
 }
+
+test("AI function-call quotes persist the tool-selected draft rather than the stale request context", async () => {
+  const operationsStore = createConversationStore();
+  const toolDraft = {
+    gameId: "hok-global",
+    serviceId: "duo",
+    duoMode: "match-5v5",
+    quantity: 3,
+  };
+  const { handler } = createConfiguredHandler({
+    operationsStore,
+    responses: [
+      functionCallResponse(toolDraft),
+      responseWithText("Aurora 客服已整理你的雙排資料。"),
+    ],
+  });
+
+  await withHttpServer(handler, async (baseUrl) => {
+    const { response } = await postJson(baseUrl, {
+      locale: "zh-HK",
+      sessionId: "88888888-8888-4888-8888-888888888888",
+      conversationConsent: true,
+      messages: [{ role: "user", content: "請幫我整理報價資料" }],
+      quoteContext: validChinaRankContext(),
+    });
+    assert.equal(response.status, 200);
+  });
+
+  assert.equal(operationsStore.state.enquiries.length, 1);
+  assert.deepEqual(
+    {
+      gameId: operationsStore.state.enquiries[0].draft.gameId,
+      serviceId: operationsStore.state.enquiries[0].draft.serviceId,
+      duoMode: operationsStore.state.enquiries[0].draft.duoMode,
+      quantity: operationsStore.state.enquiries[0].draft.quantity,
+    },
+    toolDraft,
+  );
+});
 
 test("status and POST stay offline without a Gemini key", async () => {
   let clientCreations = 0;

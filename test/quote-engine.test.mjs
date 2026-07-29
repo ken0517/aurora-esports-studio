@@ -97,6 +97,66 @@ test("WhatsApp and LINE use the same authoritative quote message", () => {
   assert.match(line, /HK\$/);
 });
 
+test("completed HOK quotes are not described as waiting for a manual price", () => {
+  const automatic = calculateQuote({
+    ...rankDraft,
+    gameId: "hok-global",
+  }, { reference: "AUR-HOK-AUTO-COPY" });
+  const automaticMessage = formatWhatsAppMessage(automatic, "zh-HK");
+
+  assert.equal(automatic.status, "quoted");
+  assert.match(automaticMessage, /報價狀態: 報價完成/);
+  assert.match(automaticMessage, /網站暫估報價/);
+  assert.doesNotMatch(automaticMessage, /請客服按以上資料人工確認/);
+
+  const manual = calculateQuote({
+    ...heroPowerDraft,
+    gameId: "hok-global",
+    heroPowerMarkId: "red",
+  }, { reference: "AUR-HOK-MANUAL-COPY" });
+  const manualMessage = formatWhatsAppMessage(manual, "zh-HK");
+
+  assert.equal(manual.status, "manual_review");
+  assert.match(manualMessage, /報價狀態: 待人工確認/);
+  assert.match(manualMessage, /請 Aurora 客服確認正式報價/);
+});
+
+test("HOK Global ranked duo, 5V5 duo, and teaching WhatsApp copies remain completed quotes", () => {
+  const drafts = [
+    {
+      serviceId: "duo",
+      duoMode: "ranked",
+      duoGuarantee: "standard",
+      currentRankId: "diamond",
+      currentDivision: "III",
+      currentStars: 0,
+      targetRankId: "veteran",
+      targetDivision: "V",
+      targetStars: 0,
+      preferredStartTime: "2026-07-20T20:00",
+    },
+    {
+      serviceId: "duo",
+      duoMode: "match-5v5",
+      quantity: 2,
+      preferredStartTime: "2026-07-20T20:00",
+    },
+    {
+      serviceId: "other",
+      otherServiceType: "hero-coaching",
+      preferredStartTime: "2026-07-20T20:00",
+    },
+  ];
+
+  for (const draft of drafts) {
+    const quote = calculateQuote({ locale: "zh-HK", gameId: "hok-global", ...draft });
+    const message = formatWhatsAppMessage(quote, "zh-HK");
+    assert.equal(quote.status, "quoted");
+    assert.match(message, /報價狀態: 報價完成/);
+    assert.doesNotMatch(message, /待人工確認/);
+  }
+});
+
 function withoutField(draft, field) {
   const copy = { ...draft };
   delete copy[field];

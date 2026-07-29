@@ -43,6 +43,7 @@ import {
   formatQuoteText,
   validateQuoteDraft,
 } from "../lib/quoteEngine";
+import { getAcquisitionContext } from "../lib/acquisition.js";
 import { trackContactClick, trackQuoteResult } from "../lib/analytics.js";
 
 const AI_ENDPOINT =
@@ -113,7 +114,7 @@ const copyByLocale = {
     suggested: "相關建議",
     noPricePromise: "Aurora 客服只會引用已確認的資料；未設定的價錢會交由真人客服確認。",
     privacyWarning: "請勿傳送帳號密碼、驗證碼、付款資料或身分證明。",
-    dataConsent: "我同意 Aurora 保存本次報價及對話資料，以便跟進服務。請勿傳送密碼、驗證碼或付款資料。",
+    dataConsent: "我同意 Aurora 保存本次報價、對話及基本客源資料，以便跟進服務。請勿傳送密碼、驗證碼或付款資料。",
     consentRequired: "請先同意保存本次對話，Aurora 客服才可以回覆並跟進。",
   },
   en: {
@@ -176,7 +177,7 @@ const copyByLocale = {
     suggested: "Suggestions",
     noPricePromise: "Aurora support only cites confirmed information. Unconfigured prices are handed to human support.",
     privacyWarning: "Do not send account passwords, verification codes, payment details, or identity documents.",
-    dataConsent: "I agree that Aurora may save this quote and conversation for follow-up. Do not send passwords, verification codes, or payment details.",
+    dataConsent: "I agree that Aurora may save this quote, conversation, and basic acquisition source for follow-up. Do not send passwords, verification codes, or payment details.",
     consentRequired: "Please consent to saving this conversation before Aurora support replies.",
   },
   "zh-CN": {
@@ -239,7 +240,7 @@ const copyByLocale = {
     suggested: "相关建议",
     noPricePromise: "Aurora 客服只会引用已确认的资料；未设置的价格会交由真人客服确认。",
     privacyWarning: "请勿发送账号密码、验证码、付款资料或身份证明。",
-    dataConsent: "我同意 Aurora 保存本次报价及对话资料，以便跟进服务。请勿发送密码、验证码或付款资料。",
+    dataConsent: "我同意 Aurora 保存本次报价、对话及基本客源资料，以便跟进服务。请勿发送密码、验证码或付款资料。",
     consentRequired: "请先同意保存本次对话，Aurora 客服才可以回复并跟进。",
   },
 };
@@ -967,11 +968,13 @@ export function QuoteAssistant({
         headers: { "Content-Type": "application/json", Accept: "application/json" },
         body: JSON.stringify({
           sessionId,
+          submissionId: result.submissionId,
           consent: true,
           source: "manual_quote",
           locale: localeId,
           draft,
           quote: result,
+          acquisition: getAcquisitionContext(),
         }),
       });
     } catch {
@@ -996,14 +999,18 @@ export function QuoteAssistant({
       return;
     }
     try {
-      const result = calculateQuote(
-        { ...draft, locale: localeId },
-        { pricingCatalog },
-      );
+      const result = {
+        ...calculateQuote(
+          { ...draft, locale: localeId },
+          { pricingCatalog },
+        ),
+        submissionId: createSessionId(),
+      };
       setQuote(result);
       void captureEnquiry(result);
     } catch {
       const result = {
+        submissionId: createSessionId(),
         status: "manual_review",
         requiresManualReview: true,
         draft: { ...draft },
@@ -1119,6 +1126,7 @@ export function QuoteAssistant({
             conversationConsent,
             messages: requestMessages,
             quoteContext: nextDraft,
+            acquisition: getAcquisitionContext(),
           }),
           signal: controller.signal,
         });

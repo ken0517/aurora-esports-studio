@@ -57,7 +57,27 @@ test("normalization strips unknown fields and rejects invalid order statuses", (
       messages: [{ role: "user", text: "我的密碼是 abc123", createdAt: "2026-07-16T10:00:00.000Z", providerTrace: "drop" }],
       providerTrace: "drop",
     }],
-    enquiries: [{ id: ids.enquiry, conversationId: ids.conversation, status: "new_enquiry", createdAt: "2026-07-16T10:01:00.000Z", updatedAt: "2026-07-16T10:01:00.000Z", source: "ai", quoteReference: "AUR-TEST", extra: "drop" }],
+    enquiries: [{
+      id: ids.enquiry,
+      conversationId: ids.conversation,
+      status: "new_enquiry",
+      createdAt: "2026-07-16T10:01:00.000Z",
+      updatedAt: "2026-07-16T10:01:00.000Z",
+      source: "ai",
+      quoteReference: "AUR-TEST",
+      quote: { status: "manual_review", reason: "pricing-unconfigured" },
+      acquisition: {
+        firstTouch: {
+          channel: "google",
+          landingPath: "/hok-rank-boost/?query=drop",
+          referrerHost: "www.google.com/search/private",
+          utmCampaign: "campaign",
+          capturedAt: "2026-07-16T10:00:00.000Z",
+          clickId: "drop",
+        },
+      },
+      extra: "drop",
+    }],
     orders: [
       { id: ids.order, enquiryId: ids.enquiry, status: "scheduled", createdAt: "2026-07-16T10:02:00.000Z", updatedAt: "2026-07-16T10:02:00.000Z", internalNotes: "ok", extra: "drop" },
       { id: "66666666-6666-4666-8666-666666666666", status: "paid-ish", createdAt: "2026-07-16T10:02:00.000Z", updatedAt: "2026-07-16T10:02:00.000Z" },
@@ -70,10 +90,34 @@ test("normalization strips unknown fields and rejects invalid order statuses", (
   assert.equal(state.conversations[0].messages[0].providerTrace, undefined);
   assert.doesNotMatch(state.conversations[0].messages[0].text, /abc123/);
   assert.equal(state.enquiries[0].extra, undefined);
+  assert.equal(state.enquiries[0].quote.reason, "pricing-unconfigured");
+  assert.deepEqual(state.enquiries[0].acquisition.firstTouch, {
+    channel: "google",
+    landingPath: "/hok-rank-boost/",
+    referrerHost: "www.google.com",
+    utmSource: null,
+    utmMedium: null,
+    utmCampaign: "campaign",
+    capturedAt: "2026-07-16T10:00:00.000Z",
+  });
   assert.equal(state.orders.length, 1);
   assert.equal(state.orders[0].status, "scheduled");
   assert.deepEqual(state.staff[0].gameIds, ["aov"]);
   assert.deepEqual(state.staff[0].serviceIds, ["rank"]);
+});
+
+test("legacy enquiries without a quote preserve the absence instead of manufacturing manual review", () => {
+  const state = normalizeOperationsState({
+    enquiries: [{
+      id: ids.enquiry,
+      status: "new_enquiry",
+      source: "manual_quote",
+      createdAt: "2026-07-16T10:01:00.000Z",
+      updatedAt: "2026-07-16T10:01:00.000Z",
+    }],
+  });
+
+  assert.equal(state.enquiries[0].quote, null);
 });
 
 test("memory operations store persists writes and enforces revision conflicts", async () => {

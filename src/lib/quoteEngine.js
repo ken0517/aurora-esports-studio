@@ -946,7 +946,12 @@ export function formatContactMessage(quoteOrDraft, locale = null) {
     "",
     formatQuoteText(quote, resolvedLocale),
     "",
-    translate(resolvedLocale, "quote.whatsapp.closing"),
+    translate(
+      resolvedLocale,
+      quote.status === "quoted"
+        ? "quote.whatsapp.quotedClosing"
+        : "quote.whatsapp.manualClosing",
+    ),
   ].join("\n");
 }
 

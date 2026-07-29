@@ -53,12 +53,27 @@ test("admin can edit the newcomer discount and approved exchange rates without r
 
 test("quote assistant saves only consented conversations and enquiries", async () => {
   const quote = await source("src/components/QuoteAssistant.jsx");
-  assert.match(quote, /我同意 Aurora 保存本次報價及對話資料/);
+  assert.match(quote, /我同意 Aurora 保存本次報價、對話及基本客源資料/);
   assert.match(quote, /請勿傳送密碼、驗證碼或付款資料/);
   assert.match(quote, /conversationConsent/);
   assert.match(quote, /sessionId/);
   assert.match(quote, /\/api\/enquiries/);
   assert.match(quote, /!conversationConsent/);
+});
+
+test("admin labels an enquiry with no recorded quote as not yet quoted", async () => {
+  const panel = await source("src/admin/ConversationsPanel.jsx");
+  assert.match(panel, /尚未報價／未記錄/);
+});
+
+test("application startup delegates storage resolution to safe acquisition tracking", async () => {
+  const main = await source("src/main.jsx");
+  assert.doesNotMatch(main, /storage:\s*window\.sessionStorage/);
+});
+
+test("manual quote capture sends a stable client submission ID", async () => {
+  const quote = await source("src/components/QuoteAssistant.jsx");
+  assert.match(quote, /submissionId:\s*result\.submissionId/);
 });
 
 test("homepage game stories link to the three dedicated service pages", async () => {

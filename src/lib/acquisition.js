@@ -1,0 +1,133 @@
+const STORAGE_KEY = "aurora:acquisition:v1";
+const CHANNELS = new Set(["google", "carousell", "instagram", "direct", "other"]);
+
+function safeUrl(value, base = "https://auroraesportstudio.com/") {
+  try {
+    return new URL(String(value || ""), base);
+  } catch {
+    return null;
+  }
+}
+
+function cleanToken(value, maxLength = 80) {
+  const cleaned = String(value || "")
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9._-]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, maxLength);
+  return cleaned || null;
+}
+
+function cleanLandingPath(url) {
+  const path = String(url?.pathname || "/").slice(0, 240);
+  return path.startsWith("/") ? path : "/";
+}
+
+function cleanReferrerHost(referrer) {
+  const url = safeUrl(referrer);
+  return String(url?.hostname || "").toLowerCase().slice(0, 120) || null;
+}
+
+function channelFromSource(source) {
+  const normalized = cleanToken(source);
+  if (!normalized) return null;
+  if (normalized.includes("carousell")) return "carousell";
+  if (normalized.includes("instagram") || normalized === "ig") return "instagram";
+  if (normalized.includes("google")) return "google";
+  if (normalized === "direct") return "direct";
+  return "other";
+}
+
+function channelFromHost(host, ownHost) {
+  if (!host || host === ownHost || host.endsWith(`.${ownHost}`)) return "direct";
+  if (/(^|\.)google\./.test(host)) return "google";
+  if (/(^|\.)carousell\./.test(host)) return "carousell";
+  if (host === "instagram.com" || host.endsWith(".instagram.com")) return "instagram";
+  return "other";
+}
+
+function normalizeStoredTouch(input) {
+  if (!input || typeof input !== "object") return null;
+  const channel = CHANNELS.has(input.channel) ? input.channel : "other";
+  const capturedAt = typeof input.capturedAt === "string" && Number.isFinite(Date.parse(input.capturedAt))
+    ? new Date(input.capturedAt).toISOString()
+    : null;
+  if (!capturedAt) return null;
+  return {
+    channel,
+    landingPath: cleanLandingPath(safeUrl(input.landingPath)),
+    referrerHost: cleanReferrerHost(input.referrerHost ? `https://${input.referrerHost}` : ""),
+    utmSource: cleanToken(input.utmSource),
+    utmMedium: cleanToken(input.utmMedium),
+    utmCampaign: cleanToken(input.utmCampaign),
+    capturedAt,
+  };
+}
+
+function resolveStorage(storage) {
+  try {
+    return storage ?? globalThis?.sessionStorage ?? null;
+  } catch {
+    return null;
+  }
+}
+
+export function classifyAcquisition({
+  locationHref,
+  referrer = "",
+  capturedAt = new Date().toISOString(),
+} = {}) {
+  const location = safeUrl(locationHref);
+  const referrerHost = cleanReferrerHost(referrer);
+  const utmSource = cleanToken(location?.searchParams.get("utm_source"));
+  return {
+    channel: channelFromSource(utmSource) || channelFromHost(referrerHost, String(location?.hostname || "").toLowerCase()),
+    landingPath: cleanLandingPath(location),
+    referrerHost,
+    utmSource,
+    utmMedium: cleanToken(location?.searchParams.get("utm_medium")),
+    utmCampaign: cleanToken(location?.searchParams.get("utm_campaign")),
+    capturedAt: new Date(capturedAt).toISOString(),
+  };
+}
+
+export function getAcquisitionContext(storage) {
+  try {
+    const resolvedStorage = resolveStorage(storage);
+    if (!resolvedStorage?.getItem) return null;
+    const parsed = JSON.parse(resolvedStorage.getItem(STORAGE_KEY) || "null");
+    const firstTouch = normalizeStoredTouch(parsed?.firstTouch);
+    const lastTouch = normalizeStoredTouch(parsed?.lastTouch);
+    return firstTouch && lastTouch ? { firstTouch, lastTouch } : null;
+  } catch {
+    return null;
+  }
+}
+
+export function captureAcquisitionContext({
+  locationHref = globalThis?.location?.href,
+  referrer = globalThis?.document?.referrer || "",
+  storage,
+  now = () => new Date(),
+} = {}) {
+  const resolvedStorage = resolveStorage(storage);
+  if (!resolvedStorage) return null;
+  const touch = classifyAcquisition({
+    locationHref,
+    referrer,
+    capturedAt: now().toISOString(),
+  });
+  const current = getAcquisitionContext(resolvedStorage);
+  const context = {
+    firstTouch: current?.firstTouch || touch,
+    lastTouch: touch,
+  };
+  try {
+    resolvedStorage.setItem?.(STORAGE_KEY, JSON.stringify(context));
+  } catch {
+    // Tracking must never interrupt the public website.
+    return null;
+  }
+  return context;
+}
