@@ -412,6 +412,34 @@ test("normal chat preserves the frontend response shape and maps assistant histo
   });
 });
 
+test("sensitive customer content is redacted before Gemini receives it", async () => {
+  const verificationCode = "654321";
+  const paymentCard = "4111 1111 1111 1111";
+  const sensitiveText = `OTP ${verificationCode}, card ${paymentCard}`;
+  const { handler, fake } = createConfiguredHandler({
+    responses: [responseWithText("Aurora 客服已收到你的服務要求。")],
+  });
+
+  await withHttpServer(handler, async (baseUrl) => {
+    const { response } = await postJson(baseUrl, {
+      locale: "zh-HK",
+      messages: [{ role: "user", content: sensitiveText }],
+      quoteContext: { additionalRequirements: sensitiveText },
+    });
+    assert.equal(response.status, 200);
+  });
+
+  assert.equal(fake.calls.length, 1);
+  const contents = JSON.stringify(fake.calls[0].contents);
+  const instructions = fake.calls[0].config.systemInstruction;
+  for (const sensitiveValue of [verificationCode, paymentCard]) {
+    assert.doesNotMatch(contents, new RegExp(sensitiveValue.replaceAll(" ", "\\s+")));
+    assert.doesNotMatch(instructions, new RegExp(sensitiveValue.replaceAll(" ", "\\s+")));
+  }
+  assert.match(contents, /\[已過濾\]/u);
+  assert.match(instructions, /\[已過濾\]/u);
+});
+
 test("Gemini receives all three games from the shared central configuration", async () => {
   const { handler, fake } = createConfiguredHandler({
     responses: [responseWithText("請告訴我你想查詢哪個服務。")],

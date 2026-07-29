@@ -34,6 +34,7 @@ import {
 import { getDivisionsForRank, getRankLabel, getRanksForGame } from "../data/ranks";
 import { findSuggestions } from "../data/suggestions";
 import { isPricingConfigured } from "../data/pricing";
+import { privacyContent } from "../data/privacyContent.js";
 import { normalizeLocale as normalizeDataLocale, translate as translateFromData } from "../data/translations";
 import {
   buildWhatsAppUrl,
@@ -114,8 +115,6 @@ const copyByLocale = {
     suggested: "相關建議",
     noPricePromise: "Aurora 客服只會引用已確認的資料；未設定的價錢會交由真人客服確認。",
     privacyWarning: "請勿傳送帳號密碼、驗證碼、付款資料或身分證明。",
-    dataConsent: "我同意 Aurora 保存本次報價、對話及基本客源資料，以便跟進服務。請勿傳送密碼、驗證碼或付款資料。",
-    consentRequired: "請先同意保存本次對話，Aurora 客服才可以回覆並跟進。",
   },
   en: {
     title: "Aurora private quote",
@@ -177,8 +176,6 @@ const copyByLocale = {
     suggested: "Suggestions",
     noPricePromise: "Aurora support only cites confirmed information. Unconfigured prices are handed to human support.",
     privacyWarning: "Do not send account passwords, verification codes, payment details, or identity documents.",
-    dataConsent: "I agree that Aurora may save this quote, conversation, and basic acquisition source for follow-up. Do not send passwords, verification codes, or payment details.",
-    consentRequired: "Please consent to saving this conversation before Aurora support replies.",
   },
   "zh-CN": {
     title: "Aurora 私人报价",
@@ -240,8 +237,6 @@ const copyByLocale = {
     suggested: "相关建议",
     noPricePromise: "Aurora 客服只会引用已确认的资料；未设置的价格会交由真人客服确认。",
     privacyWarning: "请勿发送账号密码、验证码、付款资料或身份证明。",
-    dataConsent: "我同意 Aurora 保存本次报价、对话及基本客源资料，以便跟进服务。请勿发送密码、验证码或付款资料。",
-    consentRequired: "请先同意保存本次对话，Aurora 客服才可以回复并跟进。",
   },
 };
 
@@ -619,6 +614,7 @@ export function QuoteAssistant({
   const reduceMotion = useReducedMotion();
   const localeId = normalizedLocale(locale);
   const ui = copyByLocale[localeId] ?? copyByLocale["zh-HK"];
+  const privacyUi = privacyContent[localeId] ?? privacyContent["zh-HK"];
   const [open, setOpen] = useState(Boolean(initialPane));
   const [mobilePane, setMobilePane] = useState(initialPane || "manual");
   const [draft, setDraft] = useState(() => makeDraft(localeId));
@@ -627,7 +623,6 @@ export function QuoteAssistant({
   const [copied, setCopied] = useState(false);
   const [lineCopyStatus, setLineCopyStatus] = useState("");
   const [sessionId, setSessionId] = useState(createSessionId);
-  const [conversationConsent, setConversationConsent] = useState(false);
   const portalTarget = typeof document === "undefined" ? null : document.body;
   const [aiStatus, setAiStatus] = useState("checking");
   const [aiMessages, setAiMessages] = useState([]);
@@ -961,7 +956,7 @@ export function QuoteAssistant({
   );
 
   const captureEnquiry = useCallback(async (result) => {
-    if (!conversationConsent || !result) return;
+    if (!result) return;
     try {
       await fetch(ENQUIRY_ENDPOINT, {
         method: "POST",
@@ -980,7 +975,7 @@ export function QuoteAssistant({
     } catch {
       // A storage outage must not block the customer from viewing a quote.
     }
-  }, [conversationConsent, draft, localeId, sessionId]);
+  }, [draft, localeId, sessionId]);
 
   const generateQuote = useCallback(() => {
     setFormError("");
@@ -1095,10 +1090,6 @@ export function QuoteAssistant({
     async (rawMessage, nextDraft = draft) => {
       const message = String(rawMessage || "").trim();
       if (!message || aiLoading) return;
-      if (!conversationConsent) {
-        setAiError(ui.consentRequired);
-        return;
-      }
       if (aiStatus !== "online") {
         setAiError(ui.aiSetup);
         return;
@@ -1123,7 +1114,7 @@ export function QuoteAssistant({
           body: JSON.stringify({
             locale: localeId,
             sessionId,
-            conversationConsent,
+            conversationConsent: true,
             messages: requestMessages,
             quoteContext: nextDraft,
             acquisition: getAcquisitionContext(),
@@ -1145,7 +1136,7 @@ export function QuoteAssistant({
         setAiLoading(false);
       }
     },
-    [aiLoading, aiMessages, aiStatus, conversationConsent, draft, localeId, sessionId, ui.aiError, ui.aiSetup, ui.consentRequired],
+    [aiLoading, aiMessages, aiStatus, draft, localeId, sessionId, ui.aiError, ui.aiSetup],
   );
 
   const chooseSuggestion = useCallback(
@@ -1475,16 +1466,11 @@ export function QuoteAssistant({
             {pricingReady ? ui.pricingConfigured : ui.pricingManual}
           </p>
         ) : null}
-        <label className="quote-data-consent" htmlFor="aurora-data-consent-manual">
-          <input
-            id="aurora-data-consent-manual"
-            type="checkbox"
-            checked={conversationConsent}
-            onChange={(event) => setConversationConsent(event.target.checked)}
-          />
-          <span>{ui.dataConsent}</span>
-        </label>
         {formError ? <p className="quote-error" role="alert">{formError}</p> : null}
+        <p className="service-data-notice">
+          <ShieldCheck size={14} />
+          <span>{privacyUi.inlineNotice} <a href="/privacy/">{privacyUi.links.privacyNotice}</a></span>
+        </p>
         <div className="quote-form__actions">
           <button type="button" className="quote-button quote-button--text" onClick={resetForm}>{ui.reset}</button>
           <button type="submit" className="quote-button quote-button--primary">{ui.generate}<ArrowRight size={17} /></button>
@@ -1614,19 +1600,6 @@ export function QuoteAssistant({
       </div>
       {aiStatus === "unavailable" ? <p className="quote-ai-setup">{ui.aiSetup}</p> : null}
 
-      <label className="quote-data-consent" htmlFor="aurora-data-consent-ai">
-        <input
-          id="aurora-data-consent-ai"
-          type="checkbox"
-          checked={conversationConsent}
-          onChange={(event) => {
-            setConversationConsent(event.target.checked);
-            if (event.target.checked) setAiError("");
-          }}
-        />
-        <span>{ui.dataConsent}</span>
-      </label>
-
       <div className="quote-chat" ref={messageListRef} role="log" aria-live="polite" aria-label={ui.aiTitle}>
         <div className="quote-message quote-message--assistant">
           <span className="quote-message__avatar"><MessageCircle size={15} /></span>
@@ -1698,17 +1671,21 @@ export function QuoteAssistant({
         <button
           type="button"
           className="quote-ai-send"
-          disabled={aiStatus !== "online" || aiLoading || !aiInput.trim() || !conversationConsent}
+          disabled={aiStatus !== "online" || aiLoading || !aiInput.trim()}
           aria-label={ui.send}
           onClick={() => sendAiMessage(aiInput)}
         >
           {aiLoading ? <LoaderCircle size={18} className="quote-spin" /> : <Send size={18} />}
         </button>
       </div>
+      <p className="service-data-notice">
+        <ShieldCheck size={14} />
+        <span>{privacyUi.inlineNotice} <a href="/privacy/">{privacyUi.links.privacyNotice}</a></span>
+      </p>
       <div className="quote-ai-footer">
         <p><ShieldCheck size={13} /><span>{ui.noPricePromise} {ui.privacyWarning}</span></p>
         <div>
-          <button type="button" onClick={() => { setAiMessages([]); setAiError(""); setAiInput(""); setSessionId(createSessionId()); setConversationConsent(false); aiInputRef.current?.focus(); }}><RefreshCw size={14} />{ui.newChat}</button>
+          <button type="button" onClick={() => { setAiMessages([]); setAiError(""); setAiInput(""); setSessionId(createSessionId()); aiInputRef.current?.focus(); }}><RefreshCw size={14} />{ui.newChat}</button>
           <a href={contactLinks.whatsapp || "https://wa.me/447442619658"} target="_blank" rel="noreferrer"><ExternalLink size={14} />{ui.human}</a>
         </div>
       </div>

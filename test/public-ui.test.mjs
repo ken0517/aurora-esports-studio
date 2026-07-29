@@ -51,14 +51,16 @@ test("admin can edit the newcomer discount and approved exchange rates without r
   assert.doesNotMatch(admin, /"USD", "GBP"/);
 });
 
-test("quote assistant saves only consented conversations and enquiries", async () => {
+test("quote assistant acknowledges service-data processing on active submission without checkboxes", async () => {
   const quote = await source("src/components/QuoteAssistant.jsx");
-  assert.match(quote, /我同意 Aurora 保存本次報價、對話及基本客源資料/);
-  assert.match(quote, /請勿傳送密碼、驗證碼或付款資料/);
-  assert.match(quote, /conversationConsent/);
+  assert.doesNotMatch(quote, /aurora-data-consent-manual|aurora-data-consent-ai/);
+  assert.doesNotMatch(quote, /const\s*\[\s*conversationConsent|setConversationConsent|!conversationConsent|ui\.consentRequired/);
+  assert.match(quote, /service-data-notice/);
+  assert.match(quote, /href="\/privacy\/"/);
+  assert.match(quote, /consent:\s*true/);
+  assert.match(quote, /conversationConsent:\s*true/);
   assert.match(quote, /sessionId/);
   assert.match(quote, /\/api\/enquiries/);
-  assert.match(quote, /!conversationConsent/);
 });
 
 test("admin labels an enquiry with no recorded quote as not yet quoted", async () => {

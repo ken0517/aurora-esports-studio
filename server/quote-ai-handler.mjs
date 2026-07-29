@@ -17,6 +17,7 @@ import { pricingCatalog } from "../src/data/pricing.js";
 import { calculateQuote, validateQuoteDraft } from "../src/lib/quoteEngine.js";
 import { createCatalogStore } from "./catalog-store.mjs";
 import { persistConversationTurn } from "./enquiry-api.mjs";
+import { redactSensitiveText } from "./operations-model.mjs";
 import { createOperationsStore } from "./operations-store.mjs";
 
 export const DEFAULT_GEMINI_MODEL = "gemini-3.1-flash-lite";
@@ -192,7 +193,9 @@ export function cleanMessages(value) {
     .filter((message) => message && ["user", "assistant"].includes(message.role))
     .map((message) => ({
       role: message.role,
-      content: String(message.content || "").trim().slice(0, MAX_MESSAGE_LENGTH),
+      content: message.role === "user"
+        ? redactSensitiveText(String(message.content || "").trim().slice(0, MAX_MESSAGE_LENGTH))
+        : String(message.content || "").trim().slice(0, MAX_MESSAGE_LENGTH),
     }))
     .filter((message) => message.content)
     .slice(-MAX_MESSAGES);
@@ -203,7 +206,7 @@ export function cleanQuoteContext(value, locale) {
   if (!value || typeof value !== "object" || Array.isArray(value)) return result;
   for (const [key, rawValue] of Object.entries(value)) {
     if (!quoteFields.has(key)) continue;
-    if (typeof rawValue === "string") result[key] = rawValue.trim().slice(0, 500);
+    if (typeof rawValue === "string") result[key] = redactSensitiveText(rawValue.trim().slice(0, 500));
     else if (typeof rawValue === "number" && Number.isFinite(rawValue)) result[key] = rawValue;
     else if (typeof rawValue === "boolean" || rawValue === null) result[key] = rawValue;
   }
