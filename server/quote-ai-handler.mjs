@@ -193,9 +193,7 @@ export function cleanMessages(value) {
     .filter((message) => message && ["user", "assistant"].includes(message.role))
     .map((message) => ({
       role: message.role,
-      content: message.role === "user"
-        ? redactSensitiveText(String(message.content || "").trim().slice(0, MAX_MESSAGE_LENGTH))
-        : String(message.content || "").trim().slice(0, MAX_MESSAGE_LENGTH),
+      content: redactSensitiveText(String(message.content || "").trim().slice(0, MAX_MESSAGE_LENGTH)),
     }))
     .filter((message) => message.content)
     .slice(-MAX_MESSAGES);
