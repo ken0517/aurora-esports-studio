@@ -4,6 +4,7 @@ import test from "node:test";
 import {
   captureAcquisitionContext,
   classifyAcquisition,
+  clearAcquisitionContext,
   getAcquisitionContext,
 } from "../src/lib/acquisition.js";
 import { acquisitionChannelLabels, summarizeAcquisition } from "../src/admin/acquisitionSummary.js";
@@ -16,6 +17,9 @@ function memoryStorage() {
     },
     setItem(key, value) {
       values.set(key, String(value));
+    },
+    removeItem(key) {
+      values.delete(key);
     },
   };
 }
@@ -63,19 +67,45 @@ test("session capture preserves first touch and updates only the latest touch", 
     referrer: "",
     storage,
     now: () => new Date("2026-07-29T10:00:00.000Z"),
+    consentGranted: true,
   });
   captureAcquisitionContext({
     locationHref: "https://auroraesportstudio.com/hok-rank-boost/",
     referrer: "https://www.google.com/",
     storage,
     now: () => new Date("2026-07-29T10:05:00.000Z"),
+    consentGranted: true,
   });
 
-  const context = getAcquisitionContext(storage);
+  const context = getAcquisitionContext(storage, { consentGranted: true });
   assert.equal(context.firstTouch.channel, "carousell");
   assert.equal(context.firstTouch.capturedAt, "2026-07-29T10:00:00.000Z");
   assert.equal(context.lastTouch.channel, "google");
   assert.equal(context.lastTouch.landingPath, "/hok-rank-boost/");
+});
+
+test("acquisition does not write without analytics consent", () => {
+  const storage = memoryStorage();
+  assert.equal(captureAcquisitionContext({
+    locationHref: "https://auroraesportstudio.com/?utm_source=carousell",
+    referrer: "",
+    storage,
+    consentGranted: false,
+  }), null);
+  assert.equal(getAcquisitionContext(storage), null);
+  assert.equal(getAcquisitionContext(storage, { consentGranted: true }), null);
+});
+
+test("acquisition context can be cleared after consent is revoked", () => {
+  const storage = memoryStorage();
+  captureAcquisitionContext({
+    locationHref: "https://auroraesportstudio.com/?utm_source=google",
+    storage,
+    consentGranted: true,
+  });
+
+  assert.equal(clearAcquisitionContext(storage), true);
+  assert.equal(getAcquisitionContext(storage, { consentGranted: true }), null);
 });
 
 test("acquisition tracking is a no-op when sessionStorage access throws a SecurityError", () => {

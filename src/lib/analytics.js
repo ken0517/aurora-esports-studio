@@ -26,6 +26,45 @@ function runtimeObjects(harness = {}) {
   };
 }
 
+function ensureGtag(windowObject) {
+  windowObject.dataLayer = windowObject.dataLayer || [];
+  windowObject.gtag = windowObject.gtag || function gtag() {
+    windowObject.dataLayer.push(arguments);
+  };
+}
+
+function setDefaultDenied(windowObject) {
+  if (windowObject.__auroraAnalyticsDefaultDenied === true) return;
+  windowObject.gtag("consent", "default", {
+    analytics_storage: "denied",
+    ad_storage: "denied",
+    ad_user_data: "denied",
+    ad_personalization: "denied",
+  });
+  windowObject.__auroraAnalyticsDefaultDenied = true;
+}
+
+function loadGoogleTagOnce(measurementId, { windowObject, documentObject }) {
+  if (windowObject.__auroraAnalyticsMeasurementId !== measurementId) {
+    windowObject.gtag("js", new Date());
+    windowObject.gtag("config", measurementId, {
+      allow_google_signals: false,
+      allow_ad_personalization_signals: false,
+      anonymize_ip: true,
+      send_page_view: false,
+    });
+    windowObject.__auroraAnalyticsMeasurementId = measurementId;
+  }
+
+  if (!documentObject.getElementById(GOOGLE_TAG_ID)) {
+    const script = documentObject.createElement("script");
+    script.id = GOOGLE_TAG_ID;
+    script.async = true;
+    script.src = `https://www.googletagmanager.com/gtag/js?id=${encodeURIComponent(measurementId)}`;
+    documentObject.head.appendChild(script);
+  }
+}
+
 export function getConfiguredMeasurementId() {
   return String(import.meta.env?.VITE_GA_MEASUREMENT_ID || "").trim();
 }
@@ -44,7 +83,7 @@ export function sanitizeAnalyticsParameters(parameters = {}) {
   );
 }
 
-export function initializeAnalytics(
+export function enableAnalytics(
   measurementId = getConfiguredMeasurementId(),
   harness = {},
 ) {
@@ -54,42 +93,72 @@ export function initializeAnalytics(
   if (!isValidMeasurementId(id) || !windowObject || !documentObject) return false;
   if (windowObject.navigator?.doNotTrack === "1") return false;
 
-  windowObject.dataLayer = windowObject.dataLayer || [];
-  windowObject.gtag = windowObject.gtag || function gtag() {
-    windowObject.dataLayer.push(arguments);
-  };
-
-  if (windowObject.__auroraAnalyticsMeasurementId !== id) {
-    windowObject.gtag("consent", "default", {
-      analytics_storage: "denied",
-      ad_storage: "denied",
-      ad_user_data: "denied",
-      ad_personalization: "denied",
-    });
-    windowObject.gtag("js", new Date());
-    windowObject.gtag("config", id, {
-      allow_google_signals: false,
-      allow_ad_personalization_signals: false,
-      anonymize_ip: true,
-      send_page_view: false,
-    });
-    windowObject.__auroraAnalyticsMeasurementId = id;
-  }
-
-  if (!documentObject.getElementById(GOOGLE_TAG_ID)) {
-    const script = documentObject.createElement("script");
-    script.id = GOOGLE_TAG_ID;
-    script.async = true;
-    script.src = `https://www.googletagmanager.com/gtag/js?id=${encodeURIComponent(id)}`;
-    documentObject.head.appendChild(script);
-  }
-
+  ensureGtag(windowObject);
+  setDefaultDenied(windowObject);
+  windowObject.gtag("consent", "update", {
+    analytics_storage: "granted",
+    ad_storage: "denied",
+    ad_user_data: "denied",
+    ad_personalization: "denied",
+  });
+  windowObject.__auroraAnalyticsConsent = true;
+  loadGoogleTagOnce(id, { windowObject, documentObject });
   return true;
 }
 
-export function trackEvent(eventName, parameters = {}, harness = {}) {
-  if (!allowedEvents.has(eventName)) return false;
+export function disableAnalytics(harness = {}) {
   const { windowObject } = runtimeObjects(harness);
+  if (!windowObject) return false;
+  windowObject.__auroraAnalyticsConsent = false;
+  ensureGtag(windowObject);
+  setDefaultDenied(windowObject);
+  windowObject.gtag("consent", "update", {
+    analytics_storage: "denied",
+    ad_storage: "denied",
+    ad_user_data: "denied",
+    ad_personalization: "denied",
+  });
+  return true;
+}
+
+export function clearAnalyticsCookies(harness = {}) {
+  const { documentObject, windowObject } = runtimeObjects(harness);
+  if (!documentObject) return 0;
+
+  try {
+    const cookieNames = [...new Set(
+      String(documentObject.cookie || "")
+        .split(";")
+        .map((cookie) => cookie.split("=")[0].trim())
+        .filter((name) => /^_ga(?:_|$)/.test(name)),
+    )];
+    const hostname = String(windowObject?.location?.hostname || "")
+      .trim()
+      .toLowerCase()
+      .replace(/^\.+|\.+$/g, "");
+    const labels = hostname.split(".");
+    const domains = [
+      hostname,
+      labels.length > 2 ? labels.slice(1).join(".") : "",
+    ].filter(Boolean);
+
+    for (const name of cookieNames) {
+      const expired = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/; SameSite=Lax`;
+      documentObject.cookie = expired;
+      for (const domain of domains) {
+        documentObject.cookie = `${expired}; domain=.${domain}`;
+      }
+    }
+    return cookieNames.length;
+  } catch {
+    return 0;
+  }
+}
+
+export function trackEvent(eventName, parameters = {}, harness = {}) {
+  const { windowObject } = runtimeObjects(harness);
+  if (windowObject?.__auroraAnalyticsConsent !== true) return false;
+  if (!allowedEvents.has(eventName)) return false;
   if (typeof windowObject?.gtag !== "function") return false;
   windowObject.gtag("event", eventName, sanitizeAnalyticsParameters(parameters));
   return true;

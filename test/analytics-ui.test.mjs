@@ -8,10 +8,13 @@ async function source(path) {
   return readFile(new URL(path, root), "utf8");
 }
 
-test("the public entry point initializes analytics and records one page view", async () => {
+test("the public entry point only resolves the route and renders the root app", async () => {
   const main = await source("src/main.jsx");
-  assert.match(main, /initializeAnalytics/);
-  assert.match(main, /trackPageView/);
+  assert.doesNotMatch(main, /captureAcquisitionContext/);
+  assert.doesNotMatch(main, /initializeAnalytics/);
+  assert.doesNotMatch(main, /trackPageView/);
+  assert.match(main, /resolvePublicRoute/);
+  assert.match(main, /<RootApp route=\{route\}/);
   assert.match(main, /window\.location\.pathname/);
 });
 

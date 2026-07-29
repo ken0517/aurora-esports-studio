@@ -5,6 +5,7 @@ const analyticsModuleUrl = new URL("../src/lib/analytics.js", import.meta.url);
 
 function createBrowserHarness() {
   const scripts = [];
+  const cookieWrites = [];
   const documentObject = {
     head: {
       appendChild(node) {
@@ -17,29 +18,43 @@ function createBrowserHarness() {
     getElementById(id) {
       return scripts.find((script) => script.id === id) || null;
     },
+    get cookie() {
+      return "_ga=GA1.1.123.456; _ga_AURORA=GS1.1.123; session=keep";
+    },
+    set cookie(value) {
+      cookieWrites.push(value);
+    },
   };
   const windowObject = {
     dataLayer: [],
+    location: { hostname: "www.auroraesportstudio.com" },
     navigator: { doNotTrack: "0" },
   };
-  return { documentObject, scripts, windowObject };
+  return { cookieWrites, documentObject, scripts, windowObject };
 }
 
 test("analytics remains disabled without a valid GA4 measurement ID", async () => {
-  const { initializeAnalytics } = await import(analyticsModuleUrl);
+  const { enableAnalytics } = await import(analyticsModuleUrl);
   const harness = createBrowserHarness();
 
-  assert.equal(initializeAnalytics("", harness), false);
-  assert.equal(initializeAnalytics("UA-1234", harness), false);
+  assert.equal(enableAnalytics("", harness), false);
+  assert.equal(enableAnalytics("UA-1234", harness), false);
   assert.equal(harness.scripts.length, 0);
 });
 
-test("analytics loads Google tag once with privacy-first configuration", async () => {
-  const { initializeAnalytics } = await import(analyticsModuleUrl);
+test("analytics does not load or queue events before explicit enablement", async () => {
+  const { trackEvent } = await import(analyticsModuleUrl);
   const harness = createBrowserHarness();
+  assert.equal(trackEvent("page_view", { page_path: "/" }, harness), false);
+  assert.equal(harness.scripts.length, 0);
+  assert.equal(harness.windowObject.dataLayer.length, 0);
+});
 
-  assert.equal(initializeAnalytics("G-AURORA123", harness), true);
-  assert.equal(initializeAnalytics("G-AURORA123", harness), true);
+test("enablement grants analytics only and loads the Google tag once", async () => {
+  const { enableAnalytics } = await import(analyticsModuleUrl);
+  const harness = createBrowserHarness();
+  assert.equal(enableAnalytics("G-AURORA123", harness), true);
+  assert.equal(enableAnalytics("G-AURORA123", harness), true);
   assert.equal(harness.scripts.length, 1);
   assert.equal(harness.scripts[0].id, "aurora-google-analytics");
   assert.match(harness.scripts[0].src, /googletagmanager\.com\/gtag\/js\?id=G-AURORA123/);
@@ -47,10 +62,40 @@ test("analytics loads Google tag once with privacy-first configuration", async (
   const commands = harness.windowObject.dataLayer.map((args) => Array.from(args));
   assert.deepEqual(commands[0].slice(0, 2), ["consent", "default"]);
   assert.equal(commands[0][2].analytics_storage, "denied");
-  assert.equal(commands[2][0], "config");
-  assert.equal(commands[2][2].allow_google_signals, false);
-  assert.equal(commands[2][2].allow_ad_personalization_signals, false);
-  assert.equal(commands[2][2].send_page_view, false);
+  assert.deepEqual(commands[1].slice(0, 2), ["consent", "update"]);
+  assert.equal(commands[1][2].analytics_storage, "granted");
+  assert.equal(commands[1][2].ad_storage, "denied");
+});
+
+test("disablement blocks later events and queues a denied consent update", async () => {
+  const { disableAnalytics, enableAnalytics, trackEvent } = await import(analyticsModuleUrl);
+  const harness = createBrowserHarness();
+  enableAnalytics("G-AURORA123", harness);
+  const beforeDisable = harness.windowObject.dataLayer.length;
+
+  assert.equal(disableAnalytics(harness), true);
+  assert.equal(trackEvent("page_view", { page_path: "/private" }, harness), false);
+
+  const commands = harness.windowObject.dataLayer.map((args) => Array.from(args));
+  assert.deepEqual(commands[beforeDisable].slice(0, 2), ["consent", "update"]);
+  assert.equal(commands[beforeDisable][2].analytics_storage, "denied");
+  assert.equal(commands.length, beforeDisable + 1);
+});
+
+test("analytics cookies are cleared without touching unrelated cookies", async () => {
+  const { clearAnalyticsCookies } = await import(analyticsModuleUrl);
+  const harness = createBrowserHarness();
+
+  assert.equal(clearAnalyticsCookies(harness), 2);
+  assert.equal(harness.cookieWrites.some((value) => value.startsWith("session=")), false);
+  assert.equal(
+    harness.cookieWrites.some((value) => value.startsWith("_ga=;") && value.includes("domain=.auroraesportstudio.com")),
+    true,
+  );
+  assert.equal(
+    harness.cookieWrites.some((value) => value.startsWith("_ga_AURORA=;") && value.includes("domain=.www.auroraesportstudio.com")),
+    true,
+  );
 });
 
 test("analytics strips customer content and keeps only approved event metadata", async () => {
@@ -78,9 +123,9 @@ test("analytics strips customer content and keeps only approved event metadata",
 });
 
 test("analytics ignores unknown event names", async () => {
-  const { initializeAnalytics, trackEvent } = await import(analyticsModuleUrl);
+  const { enableAnalytics, trackEvent } = await import(analyticsModuleUrl);
   const harness = createBrowserHarness();
-  initializeAnalytics("G-AURORA123", harness);
+  enableAnalytics("G-AURORA123", harness);
   const before = harness.windowObject.dataLayer.length;
 
   assert.equal(trackEvent("send_customer_message", { game_id: "aov" }, harness), false);

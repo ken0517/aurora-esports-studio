@@ -1,3 +1,5 @@
+import { readPrivacyConsent } from "./privacyConsent.js";
+
 const STORAGE_KEY = "aurora:acquisition:v1";
 const CHANNELS = new Set(["google", "carousell", "instagram", "direct", "other"]);
 
@@ -65,12 +67,23 @@ function normalizeStoredTouch(input) {
   };
 }
 
-function resolveStorage(storage) {
+function safeSessionStorage() {
   try {
-    return storage ?? globalThis?.sessionStorage ?? null;
+    return globalThis?.sessionStorage ?? null;
   } catch {
     return null;
   }
+}
+
+function analyticsConsentGranted({
+  consentGranted,
+  consentStorage,
+  windowObject = globalThis.window,
+} = {}) {
+  const navigatorObject = windowObject?.navigator || globalThis.navigator;
+  if (navigatorObject?.doNotTrack === "1") return false;
+  if (typeof consentGranted === "boolean") return consentGranted;
+  return readPrivacyConsent(consentStorage, windowObject)?.analytics === true;
 }
 
 export function classifyAcquisition({
@@ -92,11 +105,14 @@ export function classifyAcquisition({
   };
 }
 
-export function getAcquisitionContext(storage) {
+export function getAcquisitionContext(
+  storage = safeSessionStorage(),
+  options = {},
+) {
+  if (!analyticsConsentGranted(options)) return null;
   try {
-    const resolvedStorage = resolveStorage(storage);
-    if (!resolvedStorage?.getItem) return null;
-    const parsed = JSON.parse(resolvedStorage.getItem(STORAGE_KEY) || "null");
+    if (!storage?.getItem) return null;
+    const parsed = JSON.parse(storage.getItem(STORAGE_KEY) || "null");
     const firstTouch = normalizeStoredTouch(parsed?.firstTouch);
     const lastTouch = normalizeStoredTouch(parsed?.lastTouch);
     return firstTouch && lastTouch ? { firstTouch, lastTouch } : null;
@@ -108,26 +124,38 @@ export function getAcquisitionContext(storage) {
 export function captureAcquisitionContext({
   locationHref = globalThis?.location?.href,
   referrer = globalThis?.document?.referrer || "",
-  storage,
+  storage = safeSessionStorage(),
   now = () => new Date(),
+  consentGranted,
+  consentStorage,
+  windowObject = globalThis.window,
 } = {}) {
-  const resolvedStorage = resolveStorage(storage);
-  if (!resolvedStorage) return null;
+  if (!analyticsConsentGranted({ consentGranted, consentStorage, windowObject })) return null;
+  if (!storage) return null;
   const touch = classifyAcquisition({
     locationHref,
     referrer,
     capturedAt: now().toISOString(),
   });
-  const current = getAcquisitionContext(resolvedStorage);
+  const current = getAcquisitionContext(storage, { consentGranted: true, windowObject });
   const context = {
     firstTouch: current?.firstTouch || touch,
     lastTouch: touch,
   };
   try {
-    resolvedStorage.setItem?.(STORAGE_KEY, JSON.stringify(context));
+    storage.setItem?.(STORAGE_KEY, JSON.stringify(context));
   } catch {
     // Tracking must never interrupt the public website.
     return null;
   }
   return context;
+}
+
+export function clearAcquisitionContext(storage = safeSessionStorage()) {
+  try {
+    storage?.removeItem(STORAGE_KEY);
+    return true;
+  } catch {
+    return false;
+  }
 }
