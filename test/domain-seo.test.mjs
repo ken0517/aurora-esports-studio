@@ -51,6 +51,13 @@ test("production output does not publish obsolete keyword metadata", async () =>
   }
 });
 
+test("Vercel deployment excludes local worktrees and private environment files", async () => {
+  const ignoreRules = await read(".vercelignore");
+
+  assert.match(ignoreRules, /^\.worktrees\/$/m);
+  assert.match(ignoreRules, /^\.env\.\*$/m);
+});
+
 test("homepage schema gives KLG, Aurora, and the official website their distinct roles", async () => {
   const home = await read("index.html");
 
