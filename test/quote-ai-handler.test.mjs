@@ -619,6 +619,144 @@ test("internal references in model output are removed from the customer reply an
   assert.doesNotMatch(storedAssistantMessage.text, /AUR-[A-Z0-9-]+/i);
 });
 
+test("internal reference filtering covers Markdown wrapping and adjacent ASCII text", async () => {
+  const cases = [
+    {
+      sessionId: "11111111-1111-4111-8111-111111111111",
+      modelText: "內部編號：_AUR-20260729-WRAPPED_",
+    },
+    {
+      sessionId: "22222222-2222-4222-8222-222222222222",
+      modelText: "內部編號：refAUR-20260729-ADJACENT",
+    },
+  ];
+  const operationsStore = createConversationStore();
+  const { handler } = createConfiguredHandler({
+    operationsStore,
+    responses: cases.map(({ modelText }) => responseWithText(modelText)),
+  });
+
+  await withHttpServer(handler, async (baseUrl) => {
+    for (const { sessionId } of cases) {
+      const { response, payload } = await postJson(baseUrl, {
+        locale: "zh-HK",
+        sessionId,
+        conversationConsent: true,
+        messages: [{ role: "user", content: "請繼續處理我的服務查詢。" }],
+        quoteContext: {},
+      });
+      assert.equal(response.status, 200);
+      assert.doesNotMatch(payload.message, /AUR-[A-Z0-9-]+/i);
+
+      const conversation = operationsStore.state.conversations.find(
+        (item) => item.sessionId === sessionId,
+      );
+      const storedAssistantMessage = conversation.messages.findLast(
+        (message) => message.role === "assistant",
+      );
+      assert.ok(storedAssistantMessage);
+      assert.doesNotMatch(storedAssistantMessage.text, /AUR-[A-Z0-9-]+/i);
+    }
+  });
+});
+
+test("an internal-reference-only model reply uses a localized non-empty fallback before persistence", async () => {
+  const operationsStore = createConversationStore();
+  const { handler } = createConfiguredHandler({
+    operationsStore,
+    responses: [responseWithText("AUR-20260729-ONLY")],
+  });
+  let payload;
+
+  await withHttpServer(handler, async (baseUrl) => {
+    const result = await postJson(baseUrl, {
+      locale: "zh-HK",
+      sessionId: "33333333-3333-4333-8333-333333333333",
+      conversationConsent: true,
+      messages: [{ role: "user", content: "請繼續處理我的服務查詢。" }],
+      quoteContext: {},
+    });
+    assert.equal(result.response.status, 200);
+    payload = result.payload;
+  });
+
+  const storedAssistantMessage = operationsStore.state.conversations[0].messages.findLast(
+    (message) => message.role === "assistant",
+  );
+  const expectedFallback = "Aurora 客服暫時繁忙，請稍後再試，或透過 WhatsApp 聯絡我們。";
+  assert.deepEqual(
+    {
+      pricingStatus: payload.pricingStatus,
+      customerMessage: payload.message,
+      storedMessage: storedAssistantMessage?.text,
+    },
+    {
+      pricingStatus: "incomplete",
+      customerMessage: expectedFallback,
+      storedMessage: expectedFallback,
+    },
+  );
+  assert.doesNotMatch(JSON.stringify(operationsStore.state.conversations[0]), /AUR-[A-Z0-9-]+/i);
+});
+
+test("an internal-reference-only quoted reply falls back to the authoritative server total", async () => {
+  const operationsStore = createConversationStore();
+  const { handler } = createConfiguredHandler({
+    operationsStore,
+    responses: [responseWithText("AUR-20260729-QUOTED-ONLY")],
+    validateQuoteDraftFn() {
+      return { valid: true };
+    },
+    calculateQuoteFn() {
+      return {
+        status: "quoted",
+        requiresManualReview: false,
+        basePrice: 987,
+        optionalCharges: 0,
+        discount: 0,
+        finalTotal: 987,
+        currency: "HKD",
+        estimatedCompletionTime: "三日內",
+        referenceNumber: "AUR-INTERNAL-PERSISTED",
+      };
+    },
+  });
+  let payload;
+
+  await withHttpServer(handler, async (baseUrl) => {
+    const result = await postJson(baseUrl, {
+      locale: "zh-HK",
+      sessionId: "44444444-4444-4444-8444-444444444444",
+      conversationConsent: true,
+      messages: [{ role: "user", content: "請提供已確認的報價。" }],
+      quoteContext: validChinaRankContext(),
+    });
+    assert.equal(result.response.status, 200);
+    payload = result.payload;
+  });
+
+  const storedAssistantMessage = operationsStore.state.conversations[0].messages.findLast(
+    (message) => message.role === "assistant",
+  );
+  const expectedFallback = "伺服器確認的總額為 HKD 987。下單前請與 Aurora 客服確認報價資料。";
+  assert.deepEqual(
+    {
+      pricingStatus: payload.pricingStatus,
+      customerMessage: payload.message,
+      storedMessage: storedAssistantMessage?.text,
+      internalQuoteReference: operationsStore.state.enquiries[0].quoteReference,
+    },
+    {
+      pricingStatus: "quoted",
+      customerMessage: expectedFallback,
+      storedMessage: expectedFallback,
+      internalQuoteReference: "AUR-INTERNAL-PERSISTED",
+    },
+  );
+  assert.doesNotMatch(payload.message, /AUR-[A-Z0-9-]+/i);
+  assert.doesNotMatch(storedAssistantMessage.text, /AUR-[A-Z0-9-]+/i);
+});
+
 test("calculate_quote rejects a lane and hero-power mark from another game", async () => {
   let calculatorCalls = 0;
   const invalidAovRequest = {

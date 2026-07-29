@@ -805,7 +805,7 @@ export function enforceCustomerServiceIdentity(message, locale) {
 
 function removeInternalReferences(value) {
   return String(value || "")
-    .replace(/\bAUR-[A-Z0-9-]{1,64}\b/gi, "")
+    .replace(/AUR-[A-Z0-9-]{1,64}/gi, "")
     .replace(/[ \t]{2,}/g, " ")
     .trim();
 }
@@ -1121,6 +1121,13 @@ export function createQuoteAiHandler({
       message = ensureManualReviewStatus(message, locale, quoteResult);
       message = enforceCustomerServiceIdentity(message, locale);
       message = removeInternalReferences(message);
+      if (!message) {
+        message = quoteResult.status === "quoted"
+          ? approvedQuoteReply(locale, quoteResult)
+          : quoteResult.status === "manual_review"
+            ? manualReviewReply(locale)
+            : friendlyUnavailableReply(locale);
+      }
       await persistReply(message);
 
       sendJson(
