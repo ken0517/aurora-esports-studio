@@ -79,6 +79,26 @@ test("manual quote capture sends a stable client submission ID", async () => {
   assert.match(quote, /submissionId:\s*result\.submissionId/);
 });
 
+test("manual quote capture excludes internal references before serialising the public request", async () => {
+  const quote = await source("src/components/QuoteAssistant.jsx");
+  const captureStart = quote.indexOf("const captureEnquiry");
+  const projectionStart = quote.indexOf(
+    "const { reference: _reference, referenceNumber: _referenceNumber, ...customerQuote } = result;",
+    captureStart,
+  );
+  const serialisationStart = quote.indexOf("body: JSON.stringify", captureStart);
+  const captureEnd = quote.indexOf("const generateQuote", serialisationStart);
+  const requestProjection = quote.slice(serialisationStart, captureEnd);
+
+  assert.notEqual(captureStart, -1, "manual enquiry capture should be found");
+  assert.ok(
+    projectionStart > captureStart && projectionStart < serialisationStart,
+    "internal references should be removed before request serialisation",
+  );
+  assert.match(requestProjection, /quote:\s*customerQuote/);
+  assert.doesNotMatch(requestProjection, /quote:\s*result/);
+});
+
 test("quote result rows exclude internal quote references", async () => {
   const quote = await source("src/components/QuoteAssistant.jsx");
   const resultCardStart = quote.indexOf('<div className="quote-result">');

@@ -83,7 +83,16 @@ test("a consented completed quote creates a redacted enquiry and never an order"
           additionalRequirements: "台灣身分證 A123456789；passport no. K12345678",
           displayCurrency: "TWD",
         },
-        quote: { reference: "AUR-CONSENT-1", status: "quoted", currency: "TWD", finalTotal: 212.5, sourceFinalTotal: 50, requiresManualReview: false, reason: null },
+        quote: {
+          reference: "AUR-CUSTOMER-CHOSEN",
+          referenceNumber: "AUR-CUSTOMER-CHOSEN",
+          status: "quoted",
+          currency: "TWD",
+          finalTotal: 212.5,
+          sourceFinalTotal: 50,
+          requiresManualReview: false,
+          reason: null,
+        },
         acquisition: {
           firstTouch: {
             channel: "carousell",
@@ -106,12 +115,14 @@ test("a consented completed quote creates a redacted enquiry and never an order"
     });
     assert.equal(response.status, 201);
     const payload = await response.json();
-    assert.match(payload.enquiryId, /^[0-9a-f-]{36}$/);
-    assert.equal(payload.reference, "AUR-CONSENT-1");
+    assert.deepEqual(payload, { accepted: true });
 
     const state = await store.read();
+    const savedEnquiry = state.enquiries[0];
     assert.equal(state.enquiries.length, 1);
     assert.equal(state.orders.length, 0);
+    assert.notEqual(savedEnquiry.quoteReference, "AUR-CUSTOMER-CHOSEN");
+    assert.match(savedEnquiry.quoteReference, /^AUR-/);
     assert.ok(state.enquiries[0].consentedAt);
     assert.equal(state.enquiries[0].gameId, "aov");
     assert.doesNotMatch(
@@ -167,6 +178,7 @@ test("manual enquiry submissions are idempotent and only an explicit new interac
     const retry = await post(firstSubmissionId);
     const retryPayload = await retry.json();
     const distinct = await post(secondSubmissionId);
+    const distinctPayload = await distinct.json();
     const explicitNew = await post(thirdSubmissionId, true);
     const explicitNewPayload = await explicitNew.json();
     const followUp = await post(fourthSubmissionId);
@@ -175,11 +187,14 @@ test("manual enquiry submissions are idempotent and only an explicit new interac
 
     assert.equal(first.status, 201);
     assert.equal(retry.status, 200);
-    assert.equal(firstPayload.enquiryId, retryPayload.enquiryId);
+    assert.deepEqual(firstPayload, { accepted: true });
+    assert.deepEqual(retryPayload, { accepted: true });
     assert.equal(distinct.status, 200);
+    assert.deepEqual(distinctPayload, { accepted: true });
     assert.equal(explicitNew.status, 201);
+    assert.deepEqual(explicitNewPayload, { accepted: true });
     assert.equal(followUp.status, 200);
-    assert.equal(followUpPayload.enquiryId, explicitNewPayload.enquiryId);
+    assert.deepEqual(followUpPayload, { accepted: true });
     assert.equal(invalid.status, 400);
   });
 
@@ -227,7 +242,8 @@ test("manual enquiry rejects forged amounts and stores the authoritative central
 
   const state = await store.read();
   assert.equal(state.enquiries.length, 1);
-  assert.equal(state.enquiries[0].quoteReference, "AUR-FORGED-AMOUNT");
+  assert.notEqual(state.enquiries[0].quoteReference, "AUR-FORGED-AMOUNT");
+  assert.match(state.enquiries[0].quoteReference, /^AUR-/);
   assert.equal(state.enquiries[0].quote.status, "quoted");
   assert.equal(state.enquiries[0].quote.currency, "HKD");
   assert.equal(state.enquiries[0].quote.finalTotal, 51);
@@ -362,7 +378,7 @@ test("an AI enquiry and later manual quote for the same session, game and servic
       }),
     });
     assert.equal(response.status, 200);
-    assert.equal((await response.json()).enquiryId, originalId);
+    assert.deepEqual(await response.json(), { accepted: true });
   });
 
   const state = await store.read();
@@ -370,7 +386,8 @@ test("an AI enquiry and later manual quote for the same session, game and servic
   assert.equal(state.enquiries[0].id, originalId);
   assert.equal(state.enquiries[0].conversationId, conversationId);
   assert.equal(state.enquiries[0].source, "manual_quote");
-  assert.equal(state.enquiries[0].quoteReference, "AUR-MANUAL-AFTER-AI");
+  assert.notEqual(state.enquiries[0].quoteReference, "AUR-MANUAL-AFTER-AI");
+  assert.match(state.enquiries[0].quoteReference, /^AUR-/);
   assert.equal(state.enquiries[0].quote.finalTotal, 51);
 });
 
@@ -402,7 +419,9 @@ test("a manual enquiry and later AI quote for the same session, game and service
       }),
     });
     assert.equal(response.status, 201);
-    manualEnquiryId = (await response.json()).enquiryId;
+    assert.deepEqual(await response.json(), { accepted: true });
+    const state = await store.read();
+    manualEnquiryId = state.enquiries[0].id;
   });
 
   await persistConversationTurn({
@@ -456,16 +475,20 @@ test("a later quote never mutates an enquiry that has already been converted int
       "AUR-CONVERTED-FIRST",
     );
     assert.equal(first.status, 201);
-    const firstEnquiryId = (await first.json()).enquiryId;
+    assert.deepEqual(await first.json(), { accepted: true });
 
     const current = await store.read();
+    const firstEnquiry = current.enquiries.find((item) => (
+      item.submissionId === "12121212-1212-4212-8212-121212121212"
+    ));
+    const firstEnquiryId = firstEnquiry.id;
     current.orders.push({
       id: "13131313-1313-4313-8313-131313131313",
       enquiryId: firstEnquiryId,
       status: "awaiting_payment",
       gameId: "hok-global",
       serviceId: "duo",
-      quoteReference: "AUR-CONVERTED-FIRST",
+      quoteReference: firstEnquiry.quoteReference,
       currency: "HKD",
       finalTotal: 17,
       createdAt: "2026-07-29T12:00:00.000Z",
@@ -479,14 +502,22 @@ test("a later quote never mutates an enquiry that has already been converted int
       "AUR-AFTER-CONVERSION",
     );
     assert.equal(later.status, 201);
-    assert.notEqual((await later.json()).enquiryId, firstEnquiryId);
+    assert.deepEqual(await later.json(), { accepted: true });
   });
 
   const state = await store.read();
   assert.equal(state.enquiries.length, 2);
   assert.equal(state.orders.length, 1);
-  const converted = state.enquiries.find((item) => item.quoteReference === "AUR-CONVERTED-FIRST");
-  const later = state.enquiries.find((item) => item.quoteReference === "AUR-AFTER-CONVERSION");
+  const converted = state.enquiries.find((item) => (
+    item.submissionId === "12121212-1212-4212-8212-121212121212"
+  ));
+  const later = state.enquiries.find((item) => (
+    item.submissionId === "14141414-1414-4414-8414-141414141414"
+  ));
+  assert.notEqual(converted.quoteReference, "AUR-CONVERTED-FIRST");
+  assert.notEqual(later.quoteReference, "AUR-AFTER-CONVERSION");
+  assert.match(converted.quoteReference, /^AUR-/);
+  assert.match(later.quoteReference, /^AUR-/);
   assert.equal(converted.quote.finalTotal, 17);
   assert.equal(later.quote.finalTotal, 51);
 });
@@ -571,10 +602,11 @@ test("retrying any submission id remains idempotent after its enquiry becomes an
       body: JSON.stringify({ ...payload, submissionId }),
     });
     const first = await post(firstSubmissionId);
-    const enquiryId = (await first.json()).enquiryId;
+    assert.deepEqual(await first.json(), { accepted: true });
     assert.equal((await post(followUpSubmissionId)).status, 200);
 
     const current = await store.read();
+    const enquiryId = current.enquiries[0].id;
     current.orders.push({
       id: "18181818-1818-4818-8818-181818181818",
       enquiryId,
@@ -590,7 +622,7 @@ test("retrying any submission id remains idempotent after its enquiry becomes an
 
     const retry = await post(followUpSubmissionId);
     assert.equal(retry.status, 200);
-    assert.equal((await retry.json()).enquiryId, enquiryId);
+    assert.deepEqual(await retry.json(), { accepted: true });
   });
 
   const state = await store.read();

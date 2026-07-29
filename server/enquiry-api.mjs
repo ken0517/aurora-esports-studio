@@ -12,7 +12,6 @@ const MAX_BODY_BYTES = 64 * 1024;
 const RATE_WINDOW_MS = 60_000;
 const RATE_LIMIT = 24;
 const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-const quoteReferencePattern = /^AUR-[A-Z0-9-]{1,56}$/i;
 const defaultRateBuckets = new Map();
 const defaultLocalOrigins = new Set([
   "http://localhost:4173",
@@ -81,15 +80,6 @@ function withinRateLimit(req, rateBuckets, now, trustProxy) {
   }
   bucket.count += 1;
   return bucket.count <= RATE_LIMIT;
-}
-
-function safeQuoteReference(quote) {
-  const raw = typeof quote?.reference === "string"
-    ? quote.reference.trim()
-    : typeof quote?.referenceNumber === "string"
-      ? quote.referenceNumber.trim()
-      : "";
-  return quoteReferencePattern.test(raw) ? raw.toUpperCase() : null;
 }
 
 function enquiryStatusForQuote(quote) {
@@ -230,7 +220,6 @@ export async function handlePublicEnquiry(req, res, {
     const timestamp = new Date(Number.isFinite(requestTimeMs) ? requestTimeMs : Date.now()).toISOString();
     const locale = ["zh-HK", "en", "zh-CN"].includes(body.locale) ? body.locale : "zh-HK";
     const draft = normalizeEnquiryDraft(body.draft);
-    const requestedReference = safeQuoteReference(body.quote);
     let activePricingCatalog = pricingCatalog;
     try {
       activePricingCatalog = await catalogStore.read();
@@ -241,7 +230,6 @@ export async function handlePublicEnquiry(req, res, {
       { ...draft, locale },
       {
         pricingCatalog: activePricingCatalog,
-        ...(requestedReference ? { reference: requestedReference } : {}),
         now: new Date(Number.isFinite(requestTimeMs) ? requestTimeMs : Date.now()),
       },
     );
@@ -303,7 +291,7 @@ export async function handlePublicEnquiry(req, res, {
     });
     const enquiry = state.enquiries.find((item) => item.id === enquiryId);
     if (!enquiry) return send(res, 400, { error: "invalid-enquiry" }, cors);
-    return send(res, created ? 201 : 200, { enquiryId: enquiry.id, reference: enquiry.quoteReference }, cors);
+    return send(res, created ? 201 : 200, { accepted: true }, cors);
   } catch (error) {
     if (error.status === 413 || error.message === "request-too-large") return send(res, 413, { error: "request-too-large" }, cors);
     if (error.message === "operations-revision-conflict") return send(res, 409, { error: error.message }, cors);

@@ -957,6 +957,7 @@ export function QuoteAssistant({
 
   const captureEnquiry = useCallback(async (result) => {
     if (!result) return;
+    const { reference: _reference, referenceNumber: _referenceNumber, ...customerQuote } = result;
     try {
       await fetch(ENQUIRY_ENDPOINT, {
         method: "POST",
@@ -968,7 +969,7 @@ export function QuoteAssistant({
           source: "manual_quote",
           locale: localeId,
           draft,
-          quote: result,
+          quote: customerQuote,
           acquisition: getAcquisitionContext(),
         }),
       });
