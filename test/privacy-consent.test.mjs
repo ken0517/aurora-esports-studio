@@ -101,6 +101,35 @@ test("privacy consent returns a decision when storage is unavailable", () => {
   assert.equal(readPrivacyConsent(blockedStorage), null);
 });
 
+test("Do Not Track keeps analytics denied despite an opt-in request", () => {
+  const storage = memoryStorage();
+  const windowObject = eventWindow();
+  windowObject.navigator = { doNotTrack: "1" };
+  const changes = [];
+  windowObject.addEventListener(PRIVACY_CHANGE_EVENT, (event) => changes.push(event.detail));
+
+  const decision = writePrivacyConsent(
+    { analytics: true },
+    { storage, windowObject, now: () => new Date("2026-07-29T12:45:00.000Z") },
+  );
+
+  assert.equal(decision.analytics, false);
+  assert.equal(readPrivacyConsent(storage).analytics, false);
+  assert.equal(changes[0].analytics, false);
+});
+
+test("only a boolean true grants analytics consent", () => {
+  const storage = memoryStorage();
+
+  const decision = writePrivacyConsent(
+    { analytics: "false" },
+    { storage, now: () => new Date("2026-07-29T12:50:00.000Z") },
+  );
+
+  assert.equal(decision.analytics, false);
+  assert.equal(readPrivacyConsent(storage).analytics, false);
+});
+
 test("privacy choices and settings requests dispatch their current events", () => {
   const storage = memoryStorage();
   const windowObject = eventWindow();

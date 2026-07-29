@@ -38,7 +38,7 @@ export function writePrivacyConsent(
 ) {
   const decision = {
     version: PRIVACY_POLICY_VERSION,
-    analytics: Boolean(analytics),
+    analytics: analytics === true && windowObject?.navigator?.doNotTrack !== "1",
     decidedAt: now().toISOString(),
   };
 
