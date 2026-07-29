@@ -37,6 +37,20 @@ test("public SEO metadata uses the official Aurora domain", async () => {
   assert.doesNotMatch(html, /ken0517\.github\.io\/aurora-esports-studio/);
 });
 
+test("production output does not publish obsolete keyword metadata", async () => {
+  for (const path of [
+    "dist/index.html",
+    "dist/privacy/index.html",
+    "dist/arena-of-valor-boosting/index.html",
+    "dist/honor-of-kings-cn-boosting/index.html",
+    "dist/honor-of-kings-global-boosting/index.html",
+    "dist/klg-studio/index.html",
+  ]) {
+    const html = await read(path);
+    assert.doesNotMatch(html, /<meta\s+name=["']keywords["']/i, path);
+  }
+});
+
 test("homepage schema gives KLG, Aurora, and the official website their distinct roles", async () => {
   const home = await read("index.html");
 
