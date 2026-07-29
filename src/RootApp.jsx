@@ -35,8 +35,8 @@ export default function RootApp({ route = { type: "home" }, isAdmin = route.type
     >
       {isAdmin ? <AdminApp /> : (
         <>
-          {renderPublicRoute(route)}
           <PrivacyConsent route={route} />
+          {renderPublicRoute(route)}
         </>
       )}
     </Suspense>

@@ -28,6 +28,7 @@ export default function PrivacyConsent({ route = { type: "home" } }) {
   const [locale, setLocale] = useState(currentLocale);
   const openerRef = useRef(null);
   const closeButtonRef = useRef(null);
+  const dialogRef = useRef(null);
   const initialDecisionRef = useRef(decision);
   const initialDecisionAppliedRef = useRef(false);
   const copy = privacyContent[locale];
@@ -78,6 +79,24 @@ export default function PrivacyConsent({ route = { type: "home" } }) {
       if (event.key === "Escape") {
         event.preventDefault();
         closeSettings();
+        return;
+      }
+
+      if (event.key !== "Tab" || !dialogRef.current) return;
+      const focusable = dialogRef.current.querySelectorAll(
+        'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), '
+          + 'textarea:not([disabled]), [tabindex]:not([tabindex="-1"])',
+      );
+      if (!focusable.length) return;
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
       }
     };
 
@@ -127,6 +146,7 @@ export default function PrivacyConsent({ route = { type: "home" } }) {
       {settingsOpen ? (
         <div className="privacy-consent__backdrop">
           <section
+            ref={dialogRef}
             className="privacy-consent__dialog"
             role="dialog"
             aria-modal="true"

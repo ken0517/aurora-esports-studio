@@ -18,6 +18,16 @@ test("public routes mount privacy consent outside the admin application", () => 
   assert.match(root, /isAdmin\s*\?\s*<AdminApp\s*\/>\s*:\s*\([\s\S]*?<PrivacyConsent/);
 });
 
+test("privacy controller mounts before public pages can dispatch their initial locale", () => {
+  const root = source("../src/RootApp.jsx");
+  const privacyMount = root.indexOf("<PrivacyConsent route={route}");
+  const publicPageMount = root.indexOf("{renderPublicRoute(route)}");
+
+  assert.notEqual(privacyMount, -1);
+  assert.notEqual(publicPageMount, -1);
+  assert.ok(privacyMount < publicPageMount);
+});
+
 test("privacy consent exposes equal banner choices and an accessible settings dialog", () => {
   const component = source("../src/components/PrivacyConsent.jsx");
 
@@ -32,6 +42,22 @@ test("privacy consent exposes equal banner choices and an accessible settings di
   assert.match(component, /event\.key === "Escape"/);
   assert.match(component, /openerRef\.current\?\.focus/);
   assert.match(component, /applyPrivacyDecision\(initialDecisionRef\.current\)/);
+});
+
+test("privacy settings trap forward and reverse tab navigation inside the dialog", () => {
+  const component = source("../src/components/PrivacyConsent.jsx");
+
+  assert.match(component, /ref=\{dialogRef\}/);
+  assert.match(component, /event\.key !== "Tab" \|\| !dialogRef\.current/);
+  assert.match(component, /dialogRef\.current\.querySelectorAll/);
+  assert.match(
+    component,
+    /event\.shiftKey && document\.activeElement === first[\s\S]*?last\.focus\(\)/,
+  );
+  assert.match(
+    component,
+    /!event\.shiftKey && document\.activeElement === last[\s\S]*?first\.focus\(\)/,
+  );
 });
 
 test("privacy actions remain accessible on narrow screens", () => {
