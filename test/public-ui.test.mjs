@@ -79,6 +79,16 @@ test("manual quote capture sends a stable client submission ID", async () => {
   assert.match(quote, /submissionId:\s*result\.submissionId/);
 });
 
+test("quote result rows exclude internal quote references", async () => {
+  const quote = await source("src/components/QuoteAssistant.jsx");
+  const resultCardStart = quote.indexOf('<div className="quote-result">');
+  const resultRowsStart = quote.lastIndexOf("const rows = [", resultCardStart);
+  const resultRows = quote.slice(resultRowsStart, resultCardStart);
+
+  assert.notEqual(resultRowsStart, -1, "quote result rows should be found");
+  assert.doesNotMatch(resultRows, /quote\?\.referenceNumber|quote\?\.reference/);
+});
+
 test("homepage game stories link to the three dedicated service pages", async () => {
   const app = await source("src/App.jsx");
   assert.match(app, /buildGameLandingPath/);

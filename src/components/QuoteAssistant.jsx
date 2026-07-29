@@ -1549,7 +1549,6 @@ export function QuoteAssistant({
         formatValue(quote?.finalTotal, localeId, currency, ui.pending),
       ],
       [text("quoteStatus", "報價狀態"), statusLabel],
-      [text("reference", "報價編號"), quote?.referenceNumber ?? quote?.reference ?? "—"],
     ];
     return (
       <div className="quote-result">

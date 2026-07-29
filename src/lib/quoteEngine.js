@@ -911,7 +911,6 @@ export function formatQuoteText(quoteOrDraft, locale = null) {
 
   const rows = [
     translate(resolvedLocale, "quote.table.title"),
-    `${translate(resolvedLocale, "quote.table.reference")}: ${quote.referenceNumber ?? quote.reference ?? "—"}`,
     `${translate(resolvedLocale, "quote.fields.game")}: ${quote.gameLabel || getGameRankLabel(draft.gameId, resolvedLocale) || "—"}`,
     `${translate(resolvedLocale, "quote.table.service")}: ${quote.serviceLabel || getServiceLabel(draft.serviceId, resolvedLocale) || draft.serviceId || "—"}`,
     ...detailRows,

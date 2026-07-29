@@ -93,7 +93,9 @@ test("WhatsApp and LINE use the same authoritative quote message", () => {
   const line = formatLineMessage(quote, "zh-HK");
 
   assert.equal(line, whatsapp);
-  assert.match(line, /AUR-LINE-SAME-COPY/);
+  assert.equal(quote.reference, "AUR-LINE-SAME-COPY");
+  assert.doesNotMatch(whatsapp, /AUR-LINE-SAME-COPY/);
+  assert.doesNotMatch(line, /AUR-LINE-SAME-COPY/);
   assert.match(line, /HK\$/);
 });
 
