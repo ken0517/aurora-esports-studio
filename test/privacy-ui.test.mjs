@@ -95,3 +95,47 @@ test("home locale changes notify the privacy controller", () => {
   assert.match(app, /new CustomEvent\("aurora:locale-changed",\s*\{\s*detail:\s*\{\s*locale\s*\}\s*\}\)/);
   assert.match(component, /aurora:locale-changed/);
 });
+
+test("privacy policy copy covers every required section in all three locales", async () => {
+  const { privacyContent } = await import("../src/data/privacyContent.js");
+  const expectedSections = [
+    "collection",
+    "purposes",
+    "storage-and-analytics",
+    "service-providers",
+    "fields-and-consequences",
+    "retention",
+    "rights-and-contact",
+    "sensitive-data-warning",
+  ];
+
+  assert.deepEqual(Object.keys(privacyContent), ["zh-HK", "en", "zh-CN"]);
+  for (const locale of ["zh-HK", "en", "zh-CN"]) {
+    const policy = privacyContent[locale].policy;
+    assert.deepEqual(
+      policy.sections.map((section) => section.id),
+      expectedSections,
+      `${locale} policy sections`,
+    );
+    assert.ok(policy.summary.length > 40, `${locale} policy needs a useful summary`);
+    assert.match(JSON.stringify(policy), /Google Analytics/);
+    assert.match(JSON.stringify(policy), /Google Gemini/);
+    assert.match(JSON.stringify(policy), /90/);
+  }
+});
+
+test("privacy page offers language, cookie, contact, and safe-submission controls", () => {
+  const page = source("../src/PrivacyPolicyPage.jsx");
+  const css = source("../src/styles/privacy-policy.css");
+
+  assert.match(page, /privacyContent\[locale\]\.policy/);
+  assert.match(page, /\["zh-HK", "en", "zh-CN"\]/);
+  assert.match(page, /localStorage\.setItem\("aurora-locale", nextLocale\)/);
+  assert.match(page, /new CustomEvent\("aurora:locale-changed"/);
+  assert.match(page, /openPrivacySettings/);
+  assert.match(page, /PRIVACY_POLICY_VERSION/);
+  assert.match(page, /policy\.sections\.map/);
+  assert.match(page, /contactLinks\.whatsapp/);
+  assert.match(css, /@media \(max-width:\s*760px\)/);
+  assert.match(css, /:focus-visible/);
+});

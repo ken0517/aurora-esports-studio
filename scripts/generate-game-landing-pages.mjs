@@ -5,6 +5,8 @@ import { fileURLToPath } from "node:url";
 import { gameLandingPages } from "../src/data/gameLandingPages.js";
 import { publicBrandIdentity } from "../src/data/publicBrand.js";
 import { publicInfoPages } from "../src/data/publicInfoPages.js";
+import { privacyContent } from "../src/data/privacyContent.js";
+import { PRIVACY_POLICY_VERSION } from "../src/lib/privacyConsent.js";
 
 const projectRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const distRoot = resolve(projectRoot, "dist");
@@ -17,6 +19,11 @@ const websiteId = `${officialOrigin}/#website`;
 const verifiedProfiles = publicBrandIdentity.verifiedProfiles;
 const serviceMarketNames = publicBrandIdentity.serviceMarkets.map((market) => market.english);
 const supportedLanguageIds = publicBrandIdentity.supportedLanguages.map((language) => language.id);
+const privacyPage = {
+  canonical: `${officialOrigin}/privacy/`,
+  seoTitle: "私隱聲明｜Aurora Esports Studio",
+  seoDescription: "閱讀 Aurora Esports Studio 私隱聲明，了解網站查詢、報價、客服、訂單跟進、Google Analytics、Google Gemini 及 Cookie 選擇相關資料的處理方式。",
+};
 
 const markers = {
   description: 'name="description"',
@@ -112,6 +119,21 @@ function renderInfoCrawlerContent(page) {
       ${reviewEvidenceLink}
       <section><h2>常見問題</h2>${page.faqs.map((faq) => `<h3>${escapeHtml(faq.question)}</h3><p>${escapeHtml(faq.answer)}</p>`).join("")}</section>
       <nav><a href="/klg-studio/">KLG Studio 官方服務網站</a><a href="/arena-of-valor-boosting/">傳說對決服務</a><a href="/honor-of-kings-cn-boosting/">王者榮耀國服服務</a><a href="/honor-of-kings-global-boosting/">HOK 國際服服務</a></nav>
+    </article>
+  </main>`;
+}
+
+function renderPrivacyCrawlerContent() {
+  const policy = privacyContent["zh-HK"].policy;
+  return `<main class="crawler-content">
+    <header><a href="/">Aurora Esports Studio 官方網站</a></header>
+    <article>
+      <p>${escapeHtml(policy.eyebrow)}</p>
+      <h1>${escapeHtml(policy.title)}</h1>
+      <p>${escapeHtml(policy.summary)}</p>
+      <p>${escapeHtml(policy.lastUpdatedLabel)}：${escapeHtml(policy.lastUpdated)} · ${escapeHtml(policy.versionLabel)}：${escapeHtml(PRIVACY_POLICY_VERSION)}</p>
+      ${policy.sections.map((section) => `<section id="${escapeHtml(section.id)}"><h2>${escapeHtml(section.title)}</h2>${section.body.map((text) => `<p>${escapeHtml(text)}</p>`).join("")}${renderTextList(section.points)}</section>`).join("")}
+      <nav><a href="/">Aurora 首頁</a><a href="/arena-of-valor-boosting/">傳說對決服務</a><a href="/honor-of-kings-cn-boosting/">王者榮耀國服服務</a><a href="/honor-of-kings-global-boosting/">HOK 國際服服務</a><a href="/service-process-safety/">服務流程與安全</a></nav>
     </article>
   </main>`;
 }
@@ -283,6 +305,45 @@ function makeInfoStructuredData(page) {
   };
 }
 
+function makePrivacyStructuredData() {
+  return {
+    "@context": "https://schema.org",
+    "@graph": [
+      makeOrganizationData(),
+      makeWebsiteData(),
+      {
+        "@type": "WebPage",
+        "@id": `${privacyPage.canonical}#webpage`,
+        url: privacyPage.canonical,
+        name: privacyPage.seoTitle,
+        description: privacyPage.seoDescription,
+        about: { "@id": organizationId },
+        isPartOf: { "@id": websiteId },
+        inLanguage: ["zh-Hant", "en", "zh-Hans"],
+        dateModified: PRIVACY_POLICY_VERSION,
+      },
+      {
+        "@type": "BreadcrumbList",
+        "@id": `${privacyPage.canonical}#breadcrumb`,
+        itemListElement: [
+          {
+            "@type": "ListItem",
+            position: 1,
+            name: "Aurora Esports Studio",
+            item: officialWebsiteUrl,
+          },
+          {
+            "@type": "ListItem",
+            position: 2,
+            name: privacyContent["zh-HK"].policy.title,
+            item: privacyPage.canonical,
+          },
+        ],
+      },
+    ],
+  };
+}
+
 function renderLandingDocument(template, page) {
   const imageUrl = `${officialOrigin}/${page.image}`;
   let html = replaceRequired(
@@ -360,6 +421,47 @@ function renderInfoDocument(template, page) {
   return replaceRootContent(html, renderInfoCrawlerContent(page));
 }
 
+function renderPrivacyDocument(template) {
+  const imageUrl = `${officialOrigin}/assets/generated/aurora-cinematic.webp`;
+  let html = replaceRequired(
+    template,
+    /<title>[\s\S]*?<\/title>/i,
+    `<title>${escapeHtml(privacyPage.seoTitle)}</title>`,
+    "<title>",
+  );
+  html = replaceMetaContent(html, markers.description, privacyPage.seoDescription);
+  html = replaceCanonical(html, privacyPage.canonical);
+  html = replaceMetaContent(html, markers.ogTitle, privacyPage.seoTitle);
+  html = replaceMetaContent(html, markers.ogDescription, privacyPage.seoDescription);
+  html = replaceMetaContent(html, markers.ogUrl, privacyPage.canonical);
+  html = replaceMetaContent(html, markers.ogImage, imageUrl);
+  html = replaceMetaContent(
+    html,
+    markers.ogImageAlt,
+    "Aurora Esports Studio 私隱聲明",
+  );
+  html = replaceMetaContent(html, markers.twitterTitle, privacyPage.seoTitle);
+  html = replaceMetaContent(html, markers.twitterDescription, privacyPage.seoDescription);
+  html = replaceMetaContent(html, markers.twitterImage, imageUrl);
+
+  const structuredData = JSON.stringify(makePrivacyStructuredData(), null, 2).replaceAll(
+    "<",
+    "\\u003c",
+  );
+  const structuredPattern = new RegExp(
+    `<script\\s+${escapeRegExp(markers.structuredData)}>[\\s\\S]*?<\\/script>`,
+    "i",
+  );
+  html = replaceRequired(
+    html,
+    structuredPattern,
+    `<script type="application/ld+json">\n${structuredData}\n    </script>`,
+    "application/ld+json",
+  );
+
+  return replaceRootContent(html, renderPrivacyCrawlerContent());
+}
+
 const template = await readFile(sourcePath, "utf8");
 
 for (const page of gameLandingPages) {
@@ -374,6 +476,10 @@ for (const page of publicInfoPages) {
   await writeFile(outputPath, renderInfoDocument(template, page), "utf8");
 }
 
+const privacyOutputPath = resolve(distRoot, "privacy", "index.html");
+await mkdir(dirname(privacyOutputPath), { recursive: true });
+await writeFile(privacyOutputPath, renderPrivacyDocument(template), "utf8");
+
 console.log(
-  `Generated ${gameLandingPages.length + publicInfoPages.length} crawler-ready public pages.`,
+  `Generated ${gameLandingPages.length + publicInfoPages.length + 1} crawler-ready public pages.`,
 );

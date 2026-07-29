@@ -11,6 +11,7 @@ export function resolvePublicRoute(pathname = "/") {
     .replace(/\/+$/, "") || "/";
 
   if (cleanPath === "/admin") return { type: "admin" };
+  if (cleanPath === "/privacy") return { type: "privacy" };
 
   const infoPage = getPublicInfoPageBySlug(cleanPath);
   if (infoPage) return { type: "info", slug: infoPage.slug };

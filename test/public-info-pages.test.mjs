@@ -65,6 +65,15 @@ test("public trust routes lazy-load one shared responsive page", async () => {
   assert.match(css, /@media \(max-width: 760px\)/);
 });
 
+test("privacy has a dedicated public route and lazy-loaded page", async () => {
+  const { resolvePublicRoute } = await import("../src/lib/publicRoutes.js");
+  const root = await source("src/RootApp.jsx");
+
+  assert.deepEqual(resolvePublicRoute("/privacy/"), { type: "privacy" });
+  assert.match(root, /lazy\(\(\) => import\("\.\/PrivacyPolicyPage\.jsx"\)\)/);
+  assert.match(root, /route\.type === "privacy"/);
+});
+
 test("shared public info renderer supports sourced review quotations", async () => {
   const page = await source("src/PublicInfoPage.jsx");
   const css = await source("src/styles/public-info.css");

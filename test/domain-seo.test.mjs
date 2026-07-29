@@ -131,7 +131,27 @@ test("robots and sitemap advertise the official Aurora domain", async () => {
   assert.match(sitemap, new RegExp(`<loc>${officialOrigin}/arena-of-valor-boosting/</loc>`));
   assert.match(sitemap, new RegExp(`<loc>${officialOrigin}/honor-of-kings-cn-boosting/</loc>`));
   assert.match(sitemap, new RegExp(`<loc>${officialOrigin}/honor-of-kings-global-boosting/</loc>`));
+  assert.match(sitemap, new RegExp(`<loc>${officialOrigin}/privacy/</loc>`));
   assert.doesNotMatch(`${robots}\n${sitemap}`, /ken0517\.github\.io\/aurora-esports-studio/);
+});
+
+test("production output exposes a crawler-ready privacy policy", async () => {
+  const html = await read("dist/privacy/index.html");
+
+  assert.match(html, /<title>[^<]*私隱[^<]*Aurora Esports Studio[^<]*<\/title>/);
+  assert.match(html, /name="description"[\s\S]*?content="[^"]*私隱[^"]*"/);
+  assert.match(
+    html,
+    /<link rel="canonical" href="https:\/\/auroraesportstudio\.com\/privacy\/" \/>/,
+  );
+  assert.match(html, /<main class="crawler-content">/);
+  assert.match(html, /Aurora Esports Studio/);
+  assert.match(html, /Google Analytics/);
+  assert.match(html, /Google Gemini/);
+  assert.match(html, /90 日/);
+  assert.match(html, /href="\/"/);
+  assert.match(html, /href="\/arena-of-valor-boosting\/"/);
+  assert.doesNotMatch(html, /FAQPage/);
 });
 
 test("public crawler files explicitly expose only public Aurora pages", async () => {
