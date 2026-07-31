@@ -75,10 +75,10 @@ function replaceRootContent(source, content) {
 
 function renderGameCrawlerContent(page) {
   const cases = page.caseStudies?.length
-    ? `<section><h2>實際遊戲紀錄</h2>${page.caseStudies
+    ? `<section><h2>${escapeHtml(page.caseStudySection.title)}</h2><p>${escapeHtml(page.caseStudySection.description)}</p>${page.caseStudies
         .map(
           (item) =>
-            `<article><h3>${escapeHtml(item.title)}</h3><p>${escapeHtml(item.description)}</p><img src="/${escapeHtml(item.image)}" alt="${escapeHtml(item.alt)}" width="${item.width}" height="${item.height}" loading="lazy"></article>`,
+            `<article><h3>${escapeHtml(item.title)}</h3><p>${escapeHtml(item.description)}</p><a href="/${escapeHtml(item.image)}"><img src="/${escapeHtml(item.image)}" alt="${escapeHtml(item.alt)}" width="${item.width}" height="${item.height}" loading="lazy"></a></article>`,
         )
         .join("")}</section>`
     : "";

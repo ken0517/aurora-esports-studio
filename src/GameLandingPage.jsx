@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { ArrowLeft, ArrowRight, MessageCircle, ShieldCheck } from "lucide-react";
 import PrivacyFooterLinks from "./components/PrivacyFooterLinks.jsx";
 import { contactLinks } from "./data/content.js";
@@ -27,6 +27,7 @@ function updateMeta(selector, attribute, value) {
 export default function GameLandingPage({ gameId }) {
   const page = getGameLandingPageById(gameId);
   const services = getEditorialServicesForGame(gameId);
+  const [activeCaseStudy, setActiveCaseStudy] = useState(null);
 
   useEffect(() => {
     if (!page) return;
@@ -37,6 +38,22 @@ export default function GameLandingPage({ gameId }) {
     updateMeta('meta[property="og:description"]', "content", page.seoDescription);
     updateMeta('meta[property="og:url"]', "content", page.canonical);
   }, [page]);
+
+  useEffect(() => {
+    if (!activeCaseStudy) return undefined;
+
+    const previousOverflow = document.body.style.overflow;
+    const handleKeyDown = (event) => {
+      if (event.key === "Escape") setActiveCaseStudy(null);
+    };
+
+    document.body.style.overflow = "hidden";
+    window.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [activeCaseStudy]);
 
   if (!page) return null;
 
@@ -158,13 +175,18 @@ export default function GameLandingPage({ gameId }) {
             <div className="game-landing-shell">
               <div className="game-landing-section__heading">
                 <p className="game-landing__eyebrow">REAL GAME RECORDS</p>
-                <h2 id="case-studies-title">《傳說對決》實際遊戲紀錄。</h2>
-                <p>以下圖片由 Aurora 提供，展示近期賽季、段位及排位對局紀錄；玩家可識別資料會按需要隱藏。</p>
+                <h2 id="case-studies-title">{page.caseStudySection.title}</h2>
+                <p>{page.caseStudySection.description}</p>
               </div>
               <div className="game-landing-cases__grid">
                 {page.caseStudies.map((caseStudy, index) => (
                   <figure className={`game-landing-case${index === 0 ? " game-landing-case--wide" : ""}`} key={caseStudy.image}>
-                    <div className="game-landing-case__media">
+                    <button
+                      className="game-landing-case__media"
+                      onClick={() => setActiveCaseStudy(caseStudy)}
+                      type="button"
+                      aria-label={`放大查看：${caseStudy.alt}`}
+                    >
                       <img
                         src={publicAsset(caseStudy.image)}
                         alt={caseStudy.alt}
@@ -173,7 +195,7 @@ export default function GameLandingPage({ gameId }) {
                         loading="lazy"
                         decoding="async"
                       />
-                    </div>
+                    </button>
                     <figcaption>
                       <span>0{index + 1}</span>
                       <div><h3>{caseStudy.title}</h3><p>{caseStudy.description}</p></div>
@@ -253,6 +275,37 @@ export default function GameLandingPage({ gameId }) {
           </div>
         </section>
       </main>
+
+      {activeCaseStudy ? (
+        <div
+          className="game-landing-lightbox"
+          onMouseDown={(event) => {
+            if (event.target === event.currentTarget) setActiveCaseStudy(null);
+          }}
+        >
+          <div
+            className="game-landing-lightbox__dialog"
+            role="dialog"
+            aria-modal="true"
+            aria-label={`查看${activeCaseStudy.title}`}
+          >
+            <button
+              className="game-landing-lightbox__close"
+              type="button"
+              aria-label="關閉圖片預覽"
+              onClick={() => setActiveCaseStudy(null)}
+            >
+              關閉
+            </button>
+            <img
+              src={publicAsset(activeCaseStudy.image)}
+              alt={activeCaseStudy.alt}
+              width={activeCaseStudy.width}
+              height={activeCaseStudy.height}
+            />
+          </div>
+        </div>
+      ) : null}
 
       <footer className="game-landing-footer">
         <a href="/">Aurora Esports Studio</a>

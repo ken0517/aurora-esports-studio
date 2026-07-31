@@ -143,6 +143,11 @@ test("landing page UI renders optional real cases and related games without bloc
 
   assert.match(page, /id="case-studies"/);
   assert.match(page, /page\.caseStudies\?\.length/);
+  assert.match(page, /page\.caseStudySection\.title/);
+  assert.match(page, /page\.caseStudySection\.description/);
+  assert.match(page, /<button[\s\S]*?className="game-landing-case__media"[\s\S]*?onClick=\{\(\) => setActiveCaseStudy\(caseStudy\)\}/);
+  assert.match(page, /role="dialog"[\s\S]*aria-modal="true"/);
+  assert.match(page, /event\.key === "Escape"/);
   assert.match(page, /loading="lazy"/);
   assert.match(page, /width=\{caseStudy\.width\}/);
   assert.match(page, /height=\{caseStudy\.height\}/);
@@ -151,6 +156,11 @@ test("landing page UI renders optional real cases and related games without bloc
   assert.match(page, /relatedGameIds/);
   assert.match(page, /buildGameLandingPath/);
   assert.match(css, /game-landing-cases__grid/);
+  assert.match(css, /game-landing-lightbox/);
+  assert.match(
+    css,
+    /@media \(max-width: 760px\) \{[\s\S]*?\.game-landing-cases__grid \{ display: flex;[^}]*overflow-x: auto;[^}]*scroll-snap-type: x mandatory;/,
+  );
   assert.match(css, /game-landing-related__grid/);
 });
 

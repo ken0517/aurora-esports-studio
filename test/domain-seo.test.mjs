@@ -263,6 +263,20 @@ test("production output exposes readable HTML for every public route before Java
   }
 });
 
+test("generated HOK Global HTML exposes its case-study copy and original image links", async () => {
+  const [{ getGameLandingPageById }, html] = await Promise.all([
+    import("../src/data/gameLandingPages.js"),
+    read("dist/honor-of-kings-global-boosting/index.html"),
+  ]);
+  const page = getGameLandingPageById("hok-global");
+
+  assert.ok(html.includes(page.caseStudySection.title));
+  for (const caseStudy of page.caseStudies) {
+    const path = `/${caseStudy.image}`;
+    assert.match(html, new RegExp(`<a href="${path.replaceAll(".", "\\.")}"><img`));
+  }
+});
+
 test("GitHub Pages builds from the root and preserves the custom domain", async () => {
   const [workflow, cname] = await Promise.all([
     read(".github/workflows/deploy-pages.yml"),
