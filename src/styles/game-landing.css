@@ -107,6 +107,8 @@ body { margin: 0; }
 .game-landing-cases__disclaimer { margin: 32px 0 0; padding-top: 22px; border-top: 1px solid rgba(255,255,255,.14); color: rgba(255,255,255,.48); font-size: 12px; line-height: 1.8; }
 .game-landing-lightbox { position: fixed; z-index: 20; inset: 0; display: grid; place-items: center; padding: 28px; background: rgba(11, 10, 8, .9); transition: opacity .2s ease; }
 .game-landing-lightbox__dialog { position: relative; display: grid; place-items: center; width: min(1400px, 100%); max-height: 100%; padding: 54px 20px 20px; border: 1px solid rgba(210,173,115,.45); background: #171511; box-shadow: 0 24px 70px rgba(0,0,0,.45); transition: transform .2s ease; }
+.game-landing-lightbox--closing { pointer-events: none; opacity: 0; }
+.game-landing-lightbox--closing .game-landing-lightbox__dialog { transform: scale(.98); }
 .game-landing-lightbox__dialog img { display: block; max-width: 100%; max-height: calc(100svh - 130px); width: auto; height: auto; object-fit: contain; }
 .game-landing-lightbox__close { position: absolute; top: 14px; right: 16px; padding: 8px 12px; border: 1px solid rgba(255,255,255,.4); background: transparent; color: #f7f1e7; cursor: pointer; font: inherit; font-size: 12px; letter-spacing: .08em; transition: background .2s ease, border-color .2s ease, color .2s ease; }
 .game-landing-lightbox__close:hover, .game-landing-lightbox__close:focus-visible { border-color: #d2ad73; background: #d2ad73; color: #171511; }

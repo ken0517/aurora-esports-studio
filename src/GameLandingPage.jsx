@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { ArrowLeft, ArrowRight, MessageCircle, ShieldCheck } from "lucide-react";
 import PrivacyFooterLinks from "./components/PrivacyFooterLinks.jsx";
 import { contactLinks } from "./data/content.js";
@@ -28,6 +28,10 @@ export default function GameLandingPage({ gameId }) {
   const page = getGameLandingPageById(gameId);
   const services = getEditorialServicesForGame(gameId);
   const [activeCaseStudy, setActiveCaseStudy] = useState(null);
+  const [isLightboxClosing, setIsLightboxClosing] = useState(false);
+  const closeButtonRef = useRef(null);
+  const triggerRef = useRef(null);
+  const closeTimerRef = useRef(null);
 
   useEffect(() => {
     if (!page) return;
@@ -39,21 +43,60 @@ export default function GameLandingPage({ gameId }) {
     updateMeta('meta[property="og:url"]', "content", page.canonical);
   }, [page]);
 
+  const closeLightbox = useCallback(() => {
+    if (!activeCaseStudy || closeTimerRef.current !== null) return;
+
+    if (window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) {
+      setActiveCaseStudy(null);
+      return;
+    }
+
+    setIsLightboxClosing(true);
+    closeTimerRef.current = window.setTimeout(() => {
+      closeTimerRef.current = null;
+      setActiveCaseStudy(null);
+      setIsLightboxClosing(false);
+    }, 190);
+  }, [activeCaseStudy]);
+
+  const openLightbox = (caseStudy, trigger) => {
+    if (closeTimerRef.current !== null) {
+      window.clearTimeout(closeTimerRef.current);
+      closeTimerRef.current = null;
+    }
+    triggerRef.current = trigger;
+    setIsLightboxClosing(false);
+    setActiveCaseStudy(caseStudy);
+  };
+
   useEffect(() => {
-    if (!activeCaseStudy) return undefined;
+    if (!activeCaseStudy) {
+      triggerRef.current?.focus();
+      triggerRef.current = null;
+      return undefined;
+    }
 
     const previousOverflow = document.body.style.overflow;
     const handleKeyDown = (event) => {
-      if (event.key === "Escape") setActiveCaseStudy(null);
+      if (event.key === "Escape") closeLightbox();
+      if (event.key === "Tab") {
+        event.preventDefault();
+        closeButtonRef.current?.focus();
+      }
     };
 
     document.body.style.overflow = "hidden";
+    closeButtonRef.current?.focus();
     window.addEventListener("keydown", handleKeyDown);
     return () => {
       document.body.style.overflow = previousOverflow;
       window.removeEventListener("keydown", handleKeyDown);
     };
-  }, [activeCaseStudy]);
+  }, [activeCaseStudy, closeLightbox]);
+
+  useEffect(() => () => {
+    if (closeTimerRef.current !== null) window.clearTimeout(closeTimerRef.current);
+  }, []);
 
   if (!page) return null;
 
@@ -183,7 +226,7 @@ export default function GameLandingPage({ gameId }) {
                   <figure className={`game-landing-case${index === 0 ? " game-landing-case--wide" : ""}`} key={caseStudy.image}>
                     <button
                       className="game-landing-case__media"
-                      onClick={() => setActiveCaseStudy(caseStudy)}
+                      onClick={(event) => openLightbox(caseStudy, event.currentTarget)}
                       type="button"
                       aria-label={`放大查看：${caseStudy.alt}`}
                     >
@@ -278,9 +321,9 @@ export default function GameLandingPage({ gameId }) {
 
       {activeCaseStudy ? (
         <div
-          className="game-landing-lightbox"
+          className={`game-landing-lightbox${isLightboxClosing ? " game-landing-lightbox--closing" : ""}`}
           onMouseDown={(event) => {
-            if (event.target === event.currentTarget) setActiveCaseStudy(null);
+            if (event.target === event.currentTarget) closeLightbox();
           }}
         >
           <div
@@ -291,9 +334,10 @@ export default function GameLandingPage({ gameId }) {
           >
             <button
               className="game-landing-lightbox__close"
+              ref={closeButtonRef}
               type="button"
               aria-label="關閉圖片預覽"
-              onClick={() => setActiveCaseStudy(null)}
+              onClick={closeLightbox}
             >
               關閉
             </button>
