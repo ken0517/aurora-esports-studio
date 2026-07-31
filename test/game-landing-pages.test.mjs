@@ -56,10 +56,15 @@ test("each game page has useful search guidance, expanded FAQs and internal disc
   }
 });
 
-test("the supplied AOV evidence is isolated to the Arena of Valor page", async () => {
-  const { gameLandingPages } = await import("../src/data/gameLandingPages.js");
+test("game result evidence remains isolated to its matching game", async () => {
+  const [{ gameLandingPages }, { games }, { translations }] = await Promise.all([
+    import("../src/data/gameLandingPages.js"),
+    import("../src/data/content.js"),
+    import("../src/data/translations.js"),
+  ]);
   const aov = gameLandingPages.find((page) => page.gameId === "aov");
-  const otherPages = gameLandingPages.filter((page) => page.gameId !== "aov");
+  const hokChina = gameLandingPages.find((page) => page.gameId === "hok-cn");
+  const hokGlobal = gameLandingPages.find((page) => page.gameId === "hok-global");
 
   assert.deepEqual(
     aov.caseStudies.map((item) => item.image),
@@ -70,14 +75,46 @@ test("the supplied AOV evidence is isolated to the Arena of Valor page", async (
     ],
   );
   assert.equal(aov.caseStudies.length, 3);
-  for (const item of aov.caseStudies) {
+  assert.ok(aov.caseStudySection?.title);
+  assert.ok(aov.caseStudySection?.description);
+
+  assert.equal(hokChina.caseStudies, undefined);
+  assert.deepEqual(
+    hokGlobal.caseStudies.map((item) => item.image),
+    [
+      "assets/cases/hok-global-battle-zone-top10-01.jpg",
+      "assets/cases/hok-global-battle-zone-top10-02.jpg",
+      "assets/cases/hok-global-battle-zone-top10-03.jpg",
+      "assets/cases/hok-global-battle-zone-top10-04.jpg",
+    ],
+  );
+  assert.ok(hokGlobal.caseStudySection?.title);
+  assert.ok(hokGlobal.caseStudySection?.description);
+
+  for (const item of [...aov.caseStudies, ...hokGlobal.caseStudies]) {
     assert.ok(item.title);
     assert.ok(item.description);
     assert.ok(item.alt);
     assert.ok(item.width > 0);
     assert.ok(item.height > 0);
   }
-  assert.ok(otherPages.every((page) => !page.caseStudies?.length));
+
+  assert.equal(
+    games.find((game) => game.id === "hok-global").image,
+    "/assets/cases/hok-global-battle-zone-top10-04.jpg",
+  );
+  assert.deepEqual(
+    [
+      translations["zh-HK"].games["hok-global"].imageAlt,
+      translations.en.games["hok-global"].imageAlt,
+      translations["zh-CN"].games["hok-global"].imageAlt,
+    ],
+    [
+      "HOK 國際服月度戰區 Top 10 九位英雄紀錄",
+      "HOK Global monthly battle-zone Top 10 record showing nine heroes",
+      "HOK 国际服月度战区 Top 10 九位英雄记录",
+    ],
+  );
 });
 
 test("root app lazy-loads one shared responsive game landing page", async () => {

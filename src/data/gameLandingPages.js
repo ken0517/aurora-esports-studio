@@ -26,6 +26,10 @@ export const gameLandingPages = Object.freeze([
       ],
     },
     relatedGameIds: ["aov", "hok-cn", "hok-global"],
+    caseStudySection: {
+      title: "《傳說對決》實際遊戲紀錄。",
+      description: "以下圖片由 Aurora 提供，展示近期賽季、段位及排位對局紀錄；玩家可識別資料會按需要隱藏。",
+    },
     caseStudies: [
       {
         image: "assets/cases/aov-season-record.jpeg",
@@ -152,6 +156,44 @@ export const gameLandingPages = Object.freeze([
       ],
     },
     relatedGameIds: ["aov", "hok-cn", "hok-global"],
+    caseStudySection: {
+      title: "HOK 國際服月度戰區 Top 10 紀錄。",
+      description: "以下圖片展示月度戰區 Top 10 中可見的英雄排名歷史紀錄；不代表未來名次、結果或勝率。",
+    },
+    caseStudies: [
+      {
+        image: "assets/cases/hok-global-battle-zone-top10-01.jpg",
+        alt: "HOK 國際服月度戰區 Top 10 三位英雄排名紀錄",
+        width: 1280,
+        height: 574,
+        title: "月度戰區 Top 10 三位英雄紀錄",
+        description: "畫面顯示月度戰區 Top 10 中三位英雄的可見排名紀錄。",
+      },
+      {
+        image: "assets/cases/hok-global-battle-zone-top10-02.jpg",
+        alt: "HOK 國際服月度戰區 Top 10 三位英雄排名紀錄",
+        width: 1280,
+        height: 587,
+        title: "月度戰區 Top 10 三位英雄紀錄",
+        description: "畫面顯示月度戰區 Top 10 中三位英雄的可見排名紀錄。",
+      },
+      {
+        image: "assets/cases/hok-global-battle-zone-top10-03.jpg",
+        alt: "HOK 國際服月度戰區 Top 10 六位英雄排名紀錄",
+        width: 1280,
+        height: 587,
+        title: "月度戰區 Top 10 六位英雄紀錄",
+        description: "畫面顯示月度戰區 Top 10 中六位英雄的可見排名紀錄。",
+      },
+      {
+        image: "assets/cases/hok-global-battle-zone-top10-04.jpg",
+        alt: "HOK 國際服月度戰區 Top 10 九位英雄排名紀錄",
+        width: 1280,
+        height: 592,
+        title: "月度戰區 Top 10 九位英雄紀錄",
+        description: "畫面顯示月度戰區 Top 10 中九位英雄的可見排名紀錄。",
+      },
+    ],
     rankSummary: "支援倔強青銅至至尊星耀，以及最強王者、無雙王者、榮耀王者與傳奇王者。",
     lanes: ["對抗路", "打野", "中路", "發育路", "輔助"],
     marks: ["銅標", "銀標", "金標", "小國標", "大國標", "紅標"],

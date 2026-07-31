@@ -93,7 +93,7 @@ const zhHK = {
       shortName: "HOK 國際服",
       englishName: "王者榮耀（國際服）",
       eyebrow: "GLOBAL SERVER",
-      imageAlt: "Honor of Kings 國際服遊戲主視覺",
+      imageAlt: "HOK 國際服月度戰區 Top 10 九位英雄紀錄",
       description: "面向國際服玩家的排位支援、雙排協作與個人化教學。",
     },
   },
@@ -371,7 +371,7 @@ const en = {
     eyebrow: "CHOOSE YOUR ARENA", title: "What do you want to play? We’re ready.", description: "Choose a game and server, then explore the right service.", viewServices: "View services",
     aov: { name: "Arena of Valor", shortName: "AOV", englishName: "Arena of Valor", eyebrow: "AOV · HK / TW / MO", imageAlt: "Arena of Valor editorial game visual", description: "Ranked support, peak play, duo play and focused coaching with high-rank players." },
     "hok-cn": { name: "Honor of Kings (China)", shortName: "HOK China", englishName: "Honor of Kings · China", eyebrow: "CN SERVER", imageAlt: "Honor of Kings China server editorial game visual", description: "Support tailored to the China server's pace, roles and current environment." },
-    "hok-global": { name: "Honor of Kings", shortName: "HOK Global", englishName: "Honor of Kings · Global", eyebrow: "GLOBAL SERVER", imageAlt: "Honor of Kings Global editorial game visual", description: "Ranked support, duo collaboration and personal coaching for Global players." },
+    "hok-global": { name: "Honor of Kings", shortName: "HOK Global", englishName: "Honor of Kings · Global", eyebrow: "GLOBAL SERVER", imageAlt: "HOK Global monthly battle-zone Top 10 record showing nine heroes", description: "Ranked support, duo collaboration and personal coaching for Global players." },
   },
   services: {
     eyebrow: "OUR SERVICES", title: "Choose by objective, not a rigid package.", description: "Every arrangement depends on the game, rank, schedule and actual requirements.", gameFilter: "Filter services by game", details: "View details", close: "Close service details", modalNote: "Pricing depends on game, rank, objective and schedule.",
@@ -451,7 +451,7 @@ const zhCN = {
     eyebrow: "CHOOSE YOUR ARENA", title: "想玩哪个？我们已经准备就绪", description: "选择你的游戏与服务器，再查看合适服务。", viewServices: "查看服务",
     aov: { name: "传说对决", shortName: "传说对决", englishName: "Arena of Valor", eyebrow: "AOV · HK / TW / MO", imageAlt: "《传说对决》游戏主视觉", description: "排位、巅峰赛、陪打及专项训练，一站式匹配高端玩家。" },
     "hok-cn": { name: "王者荣耀（国服）", shortName: "王者国服", englishName: "Honor of Kings · China", eyebrow: "CN SERVER", imageAlt: "《王者荣耀》国服游戏主视觉", description: "熟悉国服节奏、分路及版本环境，按目标安排合适方案。" },
-    "hok-global": { name: "Honor of Kings", shortName: "HOK 国际服", englishName: "王者荣耀（国际服）", eyebrow: "GLOBAL SERVER", imageAlt: "Honor of Kings 国际服游戏主视觉", description: "面向国际服玩家的排位支持、双排协作与个性化教学。" },
+    "hok-global": { name: "Honor of Kings", shortName: "HOK 国际服", englishName: "王者荣耀（国际服）", eyebrow: "GLOBAL SERVER", imageAlt: "HOK 国际服月度战区 Top 10 九位英雄记录", description: "面向国际服玩家的排位支持、双排协作与个性化教学。" },
   },
   services: {
     eyebrow: "OUR SERVICES", title: "按目标选择，不受固定套餐限制。", description: "所有方案按游戏、段位、时段及实际需求确认。", gameFilter: "按游戏筛选服务", details: "查看详情", close: "关闭服务详情", modalNote: "价格按游戏、段位、目标与时段私人报价。",

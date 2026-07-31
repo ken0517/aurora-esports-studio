@@ -35,5 +35,6 @@ test("content uses compressed game evidence images", async () => {
   assert.doesNotMatch(content, /game-(?:aov|hok-cn|hok-global)-user\.png/);
   assert.match(content, /game-aov-user\.webp/);
   assert.match(content, /game-hok-cn-user\.webp/);
-  assert.match(content, /game-hok-global-user\.webp/);
+  assert.match(content, /hok-global-battle-zone-top10-04\.jpg/);
+  assert.doesNotMatch(content, /game-hok-global-user\.webp/);
 });

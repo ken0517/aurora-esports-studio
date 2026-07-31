@@ -51,7 +51,7 @@ export const games = [
     name: "Honor of Kings",
     englishName: "王者榮耀（國際服）",
     description: "面向國際服玩家的排位支援、雙排協作與個人化教學。",
-    image: publicAsset("assets/generated/game-hok-global-user.webp"),
+    image: publicAsset("assets/cases/hok-global-battle-zone-top10-04.jpg"),
     tone: "sky",
     accent: "#327ac9",
   },
