@@ -11,7 +11,14 @@ import {
 const shared = {
   locale: "zh-HK",
   gameId: "hok-cn",
+  devicePlatformId: "ios",
   completionTime: "三日內",
+};
+
+const gameRequirements = {
+  aov: { serverRegionId: null, devicePlatformId: null },
+  "hok-cn": { serverRegionId: null, devicePlatformId: "ios", heroPowerRegionId: null },
+  "hok-global": { serverRegionId: "southeast-asia", devicePlatformId: null, heroPowerRegionId: null },
 };
 
 const rankDraft = {
@@ -103,6 +110,7 @@ test("completed HOK quotes are not described as waiting for a manual price", () 
   const automatic = calculateQuote({
     ...rankDraft,
     gameId: "hok-global",
+    ...gameRequirements["hok-global"],
   }, { reference: "AUR-HOK-AUTO-COPY" });
   const automaticMessage = formatWhatsAppMessage(automatic, "zh-HK");
 
@@ -114,6 +122,7 @@ test("completed HOK quotes are not described as waiting for a manual price", () 
   const manual = calculateQuote({
     ...heroPowerDraft,
     gameId: "hok-global",
+    ...gameRequirements["hok-global"],
     heroPowerMarkId: "red",
   }, { reference: "AUR-HOK-MANUAL-COPY" });
   const manualMessage = formatWhatsAppMessage(manual, "zh-HK");
@@ -151,7 +160,12 @@ test("HOK Global ranked duo, 5V5 duo, and teaching WhatsApp copies remain comple
   ];
 
   for (const draft of drafts) {
-    const quote = calculateQuote({ locale: "zh-HK", gameId: "hok-global", ...draft });
+    const quote = calculateQuote({
+      locale: "zh-HK",
+      gameId: "hok-global",
+      ...gameRequirements["hok-global"],
+      ...draft,
+    });
     const message = formatWhatsAppMessage(quote, "zh-HK");
     assert.equal(quote.status, "quoted");
     assert.match(message, /報價狀態: 報價完成/);
@@ -175,6 +189,59 @@ test("all five services accept their minimum complete field sets and use only co
     assert.equal(quote.status, automatic.has(name) ? "quoted" : "manual_review", `${name} status`);
     if (!automatic.has(name)) assert.equal(quote.finalTotal, null, `${name} must not expose a total`);
   }
+});
+
+test("game-specific server, device and hero-power regions are required without changing prices", () => {
+  const serviceDrafts = [rankDraft, peakDraft, duoRankedDraft, duoMatchDraft, heroPowerDraft, otherDraft];
+
+  for (const source of serviceDrafts) {
+    const globalDraft = {
+      ...source,
+      gameId: "hok-global",
+      ...gameRequirements["hok-global"],
+      heroPowerMarkId: source.serviceId === "hero-power" ? "red" : source.heroPowerMarkId,
+    };
+    const validGlobal = validateQuoteDraft(globalDraft);
+    assert.equal(validGlobal.valid, true, `hok-global.${source.serviceId}: ${validGlobal.errors.join(" ")}`);
+    const missingGlobal = validateQuoteDraft({ ...globalDraft, serverRegionId: null });
+    assert.ok(missingGlobal.missingFields.includes("serverRegionId"));
+
+    const chinaDraft = { ...source, gameId: "hok-cn", ...gameRequirements["hok-cn"] };
+    const validChina = validateQuoteDraft(chinaDraft);
+    assert.equal(validChina.valid, true, `hok-cn.${source.serviceId}: ${validChina.errors.join(" ")}`);
+    const missingChina = validateQuoteDraft({ ...chinaDraft, devicePlatformId: null });
+    assert.ok(missingChina.missingFields.includes("devicePlatformId"));
+  }
+
+  const aovHeroPower = {
+    ...heroPowerDraft,
+    gameId: "aov",
+    ...gameRequirements.aov,
+    currentDivision: "III",
+    heroPowerMarkId: "green",
+    devicePlatformId: null,
+    heroPowerRegionId: "hong-kong",
+  };
+  assert.equal(validateQuoteDraft(aovHeroPower).valid, true);
+  assert.ok(
+    validateQuoteDraft({ ...aovHeroPower, heroPowerRegionId: null }).missingFields.includes("heroPowerRegionId"),
+  );
+  assert.equal(validateQuoteDraft({ ...rankDraft, gameId: "aov", devicePlatformId: null }).valid, true);
+
+  assert.ok(validateQuoteDraft({ ...rankDraft, devicePlatformId: "windows" }).invalidFields.includes("devicePlatformId"));
+  assert.ok(validateQuoteDraft({
+    ...rankDraft,
+    gameId: "hok-global",
+    devicePlatformId: null,
+    serverRegionId: "north-america",
+  }).invalidFields.includes("serverRegionId"));
+  assert.ok(validateQuoteDraft({ ...aovHeroPower, heroPowerRegionId: "southeast-asia" }).invalidFields.includes("heroPowerRegionId"));
+  assert.ok(validateQuoteDraft({
+    ...rankDraft,
+    gameId: "aov",
+    devicePlatformId: null,
+    heroPowerRegionId: "hong-kong",
+  }).invalidFields.includes("heroPowerRegionId"));
 });
 
 test("each service rejects every missing field from its active field set", () => {
@@ -342,9 +409,9 @@ test("hero-power score fields are required, non-negative and strictly increase",
 
 test("hero-power marks remain isolated across all three games", () => {
   const validDrafts = [
-    { ...heroPowerDraft, gameId: "aov", currentDivision: "III", heroPowerMarkId: "green" },
-    { ...heroPowerDraft, gameId: "hok-cn", heroPowerMarkId: "minor-national" },
-    { ...heroPowerDraft, gameId: "hok-global", heroPowerMarkId: "red" },
+    { ...heroPowerDraft, gameId: "aov", ...gameRequirements.aov, currentDivision: "III", heroPowerMarkId: "green", heroPowerRegionId: "hong-kong" },
+    { ...heroPowerDraft, gameId: "hok-cn", ...gameRequirements["hok-cn"], heroPowerMarkId: "minor-national" },
+    { ...heroPowerDraft, gameId: "hok-global", ...gameRequirements["hok-global"], heroPowerMarkId: "red" },
   ];
   for (const draft of validDrafts) {
     const validation = validateQuoteDraft(draft);
@@ -352,9 +419,9 @@ test("hero-power marks remain isolated across all three games", () => {
   }
 
   for (const draft of [
-    { ...heroPowerDraft, gameId: "aov", currentDivision: "III", heroPowerMarkId: "minor-national" },
-    { ...heroPowerDraft, gameId: "hok-cn", heroPowerMarkId: "green" },
-    { ...heroPowerDraft, gameId: "hok-global", heroPowerMarkId: "server-wide" },
+    { ...heroPowerDraft, gameId: "aov", ...gameRequirements.aov, currentDivision: "III", heroPowerMarkId: "minor-national", heroPowerRegionId: "hong-kong" },
+    { ...heroPowerDraft, gameId: "hok-cn", ...gameRequirements["hok-cn"], heroPowerMarkId: "green" },
+    { ...heroPowerDraft, gameId: "hok-global", ...gameRequirements["hok-global"], heroPowerMarkId: "server-wide" },
   ]) {
     const validation = validateQuoteDraft(draft);
     assert.equal(validation.valid, false);
@@ -509,6 +576,31 @@ test("contact summaries localize service-specific field labels", () => {
   );
   assert.match(otherMessage, /其他服務類型:/);
   assert.doesNotMatch(otherMessage, /quote\.fields\.otherServiceType/);
+
+  const globalMessage = formatWhatsAppMessage(
+    calculateQuote({
+      ...rankDraft,
+      gameId: "hok-global",
+      ...gameRequirements["hok-global"],
+    }),
+    "zh-HK",
+  );
+  assert.match(globalMessage, /遊戲地區／伺服器大區: 東南亞/);
+
+  const chinaMessage = formatWhatsAppMessage(calculateQuote(rankDraft), "zh-HK");
+  assert.match(chinaMessage, /手機系統: iOS/);
+
+  const aovHeroMessage = formatWhatsAppMessage(
+    calculateQuote({
+      ...heroPowerDraft,
+      gameId: "aov",
+      devicePlatformId: null,
+      heroPowerRegionId: "hong-kong",
+      heroPowerMarkId: "green",
+    }),
+    "zh-HK",
+  );
+  assert.match(aovHeroMessage, /戰力地區: 香港/);
 });
 
 test("approved AOV rank pricing accumulates divisions, star bands and minimum order after surcharges", () => {
@@ -630,8 +722,8 @@ test("China-server and HOK Global use the approved 85% and 80% rounded rank tabl
     completionTime: "三日內",
     express: false,
   };
-  const china = calculateQuote({ ...draft, gameId: "hok-cn" });
-  const global = calculateQuote({ ...draft, gameId: "hok-global" });
+  const china = calculateQuote({ ...draft, gameId: "hok-cn", ...gameRequirements["hok-cn"] });
+  const global = calculateQuote({ ...draft, gameId: "hok-global", ...gameRequirements["hok-global"] });
   assert.equal(china.status, "quoted");
   assert.equal(china.basePrice, 130);
   assert.equal(china.finalTotal, 110.5);
@@ -642,6 +734,7 @@ test("China-server and HOK Global use the approved 85% and 80% rounded rank tabl
   const chinaTenthStar = calculateQuote({
     ...draft,
     gameId: "hok-cn",
+    ...gameRequirements["hok-cn"],
     currentRankId: "strongest-king",
     currentDivision: null,
     currentStars: 9,
@@ -658,6 +751,7 @@ test("China-server and HOK Global duo and teaching rules share the approved stru
     const matches = calculateQuote({
       locale: "zh-HK",
       gameId,
+      ...gameRequirements[gameId],
       serviceId: "duo",
       duoMode: "match-5v5",
       preferredStartTime: "2026-07-20T20:00",
@@ -671,6 +765,7 @@ test("China-server and HOK Global duo and teaching rules share the approved stru
       const teaching = calculateQuote({
         locale: "zh-HK",
         gameId,
+        ...gameRequirements[gameId],
         serviceId: "other",
         otherServiceType,
         preferredStartTime: "2026-07-20T20:00",

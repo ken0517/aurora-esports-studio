@@ -21,12 +21,22 @@ import {
 import {
   getCentralServiceDefinition,
   getCentralServiceLabel,
+  getDevicePlatformById,
+  getDevicePlatformLabel,
+  getDevicePlatformsForGame,
   getGameOptions,
   getHeroPowerMarkLabel,
   getHeroPowerMarksForGame,
+  getHeroPowerRegionById,
+  getHeroPowerRegionLabel,
+  getHeroPowerRegionsForGame,
   getLaneById,
   getLaneLabel,
   getLanesForGame,
+  getRequiredQuoteFieldsForGame,
+  getServerRegionById,
+  getServerRegionLabel,
+  getServerRegionsForGame,
   getServicesForGame,
   getHeroPowerMarkById,
   localizeGameValue,
@@ -242,6 +252,9 @@ const copyByLocale = {
 
 const translationKeys = {
   game: "quote.fields.game",
+  serverRegion: "quote.fields.serverRegion",
+  devicePlatform: "quote.fields.devicePlatform",
+  heroPowerRegion: "quote.fields.heroPowerRegion",
   service: "quote.fields.service",
   currentRank: "quote.fields.currentRank",
   currentDivision: "quote.fields.currentDivision",
@@ -306,6 +319,9 @@ function makeDraft(locale) {
     preferredHero: "",
     preferredRole: "",
     heroPowerMarkId: null,
+    serverRegionId: null,
+    devicePlatformId: null,
+    heroPowerRegionId: null,
     duoMode: null,
     duoGuarantee: null,
     otherServiceType: null,
@@ -330,6 +346,9 @@ const gameScopedDraftReset = {
   preferredHero: "",
   preferredRole: "",
   heroPowerMarkId: null,
+  serverRegionId: null,
+  devicePlatformId: null,
+  heroPowerRegionId: null,
   duoMode: null,
   duoGuarantee: null,
   preferredStartTime: "",
@@ -353,6 +372,7 @@ const serviceScopedDraftReset = {
   preferredHero: "",
   preferredRole: "",
   heroPowerMarkId: null,
+  heroPowerRegionId: null,
   duoMode: null,
   duoGuarantee: null,
   otherServiceType: null,
@@ -404,6 +424,7 @@ function mergeDraftPatch(current, patch) {
     next.targetHeroPowerPoints = null;
     next.heroPowerMarkId = null;
   }
+  if (next.serviceId !== "hero-power") next.heroPowerRegionId = null;
 
   if (next.serviceId !== "duo") {
     next.duoMode = null;
@@ -462,6 +483,19 @@ function mergeDraftPatch(current, patch) {
     if (next.heroPowerMarkId && !getHeroPowerMarkById(next.gameId, next.heroPowerMarkId)) {
       next.heroPowerMarkId = null;
     }
+    if (next.serverRegionId && !getServerRegionById(next.gameId, next.serverRegionId)) {
+      next.serverRegionId = null;
+    }
+    if (next.devicePlatformId && !getDevicePlatformById(next.gameId, next.devicePlatformId)) {
+      next.devicePlatformId = null;
+    }
+    if (next.heroPowerRegionId && !getHeroPowerRegionById(next.gameId, next.heroPowerRegionId)) {
+      next.heroPowerRegionId = null;
+    }
+  } else {
+    next.serverRegionId = null;
+    next.devicePlatformId = null;
+    next.heroPowerRegionId = null;
   }
   return next;
 }
@@ -878,6 +912,22 @@ export function QuoteAssistant({
     () => getHeroPowerMarksForGame(draft.gameId),
     [draft.gameId],
   );
+  const serverRegions = useMemo(
+    () => getServerRegionsForGame(draft.gameId),
+    [draft.gameId],
+  );
+  const devicePlatforms = useMemo(
+    () => getDevicePlatformsForGame(draft.gameId),
+    [draft.gameId],
+  );
+  const heroPowerRegions = useMemo(
+    () => getHeroPowerRegionsForGame(draft.gameId),
+    [draft.gameId],
+  );
+  const requiredGameFields = useMemo(
+    () => getRequiredQuoteFieldsForGame(draft.gameId, draft.serviceId),
+    [draft.gameId, draft.serviceId],
+  );
   const currentDivisions = useMemo(
     () => safeDivisions(draft.gameId, draft.currentRankId),
     [draft.currentRankId, draft.gameId],
@@ -1235,6 +1285,54 @@ export function QuoteAssistant({
             </Select>
           </Field>
 
+          {requiredGameFields.includes("serverRegionId") ? (
+            <Field label={text("serverRegion", "遊戲地區／伺服器大區")}>
+              <Select
+                id="manual-quote-server-region"
+                value={draft.serverRegionId}
+                onChange={(event) => updateDraft("serverRegionId", event.target.value || null)}
+                required
+                placeholder={ui.select}
+              >
+                {serverRegions.map((region) => (
+                  <option key={region.id} value={region.id}>{localizeGameValue(region.labels, localeId)}</option>
+                ))}
+              </Select>
+            </Field>
+          ) : null}
+
+          {requiredGameFields.includes("devicePlatformId") ? (
+            <Field label={text("devicePlatform", "手機系統")}>
+              <Select
+                id="manual-quote-device-platform"
+                value={draft.devicePlatformId}
+                onChange={(event) => updateDraft("devicePlatformId", event.target.value || null)}
+                required
+                placeholder={ui.select}
+              >
+                {devicePlatforms.map((platform) => (
+                  <option key={platform.id} value={platform.id}>{localizeGameValue(platform.labels, localeId)}</option>
+                ))}
+              </Select>
+            </Field>
+          ) : null}
+
+          {requiredGameFields.includes("heroPowerRegionId") ? (
+            <Field label={text("heroPowerRegion", "戰力地區")}>
+              <Select
+                id="manual-quote-hero-power-region"
+                value={draft.heroPowerRegionId}
+                onChange={(event) => updateDraft("heroPowerRegionId", event.target.value || null)}
+                required
+                placeholder={ui.select}
+              >
+                {heroPowerRegions.map((region) => (
+                  <option key={region.id} value={region.id}>{localizeGameValue(region.labels, localeId)}</option>
+                ))}
+              </Select>
+            </Field>
+          ) : null}
+
           {isDuo ? (
             <Field label={text("duoMode", ui.duoMode)}>
               <Select
@@ -1491,6 +1589,15 @@ export function QuoteAssistant({
     const rows = [
       [text("game", "遊戲"), selectedGame ? gameName(selectedGame) : "—"],
       [text("service", "服務"), selectedService ? serviceName(selectedService) : "—"],
+      ...(draft.serverRegionId
+        ? [[text("serverRegion", "遊戲地區／伺服器大區"), getServerRegionLabel(draft.gameId, draft.serverRegionId, localeId) || "—"]]
+        : []),
+      ...(draft.devicePlatformId
+        ? [[text("devicePlatform", "手機系統"), getDevicePlatformLabel(draft.gameId, draft.devicePlatformId, localeId) || "—"]]
+        : []),
+      ...(draft.heroPowerRegionId
+        ? [[text("heroPowerRegion", "戰力地區"), getHeroPowerRegionLabel(draft.gameId, draft.heroPowerRegionId, localeId) || "—"]]
+        : []),
       ...(isDuo
         ? [[text("duoMode", ui.duoMode), selectedDuoMode ? localizeGameValue(selectedDuoMode.labels, localeId) : "—"]]
         : []),

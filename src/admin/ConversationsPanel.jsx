@@ -11,6 +11,7 @@ import {
   acquisitionChannelLabels,
   enquiryAcquisitionChannel,
 } from "./acquisitionSummary.js";
+import QuoteDraftDetails from "./QuoteDraftDetails.jsx";
 
 const statusLabels = {
   new_enquiry: "新查詢",
@@ -117,6 +118,7 @@ export default function ConversationsPanel({ state, onAction, busy }) {
             <div><dt>推廣活動</dt><dd>{selected.enquiry.acquisition?.firstTouch?.utmCampaign || "未記錄"}</dd></div>
             <div><dt>同意保存時間</dt><dd>{formatDate(selected.enquiry.consentedAt || selected.conversation?.consentedAt)}</dd></div>
           </dl>
+          <QuoteDraftDetails draft={selected.enquiry.draft} />
           <div className="admin-timeline" aria-label="對話時間線">
             {messages.map((message, index) => (
               <article className={`admin-message admin-message--${message.role}`} key={`${message.createdAt}-${index}`}>

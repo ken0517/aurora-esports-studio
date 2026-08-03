@@ -91,6 +91,7 @@ test("runtime catalogue can produce an authoritative configured quote", () => {
   const quote = calculateQuote({
     locale: "zh-CN",
     gameId: "hok-cn",
+    devicePlatformId: "ios",
     serviceId: "rank",
     currentRankId: "diamond",
     currentDivision: "III",

@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import {
+  normalizeEnquiryDraft,
   normalizeOperationsState,
   operationsOrderStatuses,
   redactSensitiveText,
@@ -130,6 +131,75 @@ test("legacy enquiries without a quote preserve the absence instead of manufactu
   });
 
   assert.equal(state.enquiries[0].quote, null);
+});
+
+test("enquiry draft normalization preserves only fields valid for the selected game and service", () => {
+  const globalDraft = normalizeEnquiryDraft({
+    gameId: "hok-global",
+    serviceId: "hero-power",
+    serverRegionId: "southeast-asia",
+    devicePlatformId: "ios",
+    heroPowerRegionId: "hong-kong",
+  });
+  assert.equal(globalDraft.serverRegionId, "southeast-asia");
+  assert.equal(globalDraft.devicePlatformId, null);
+  assert.equal(globalDraft.heroPowerRegionId, null);
+
+  const chinaDraft = normalizeEnquiryDraft({
+    gameId: "hok-cn",
+    serviceId: "rank",
+    serverRegionId: "southeast-asia",
+    devicePlatformId: "ios",
+  });
+  assert.equal(chinaDraft.serverRegionId, null);
+  assert.equal(chinaDraft.devicePlatformId, "ios");
+
+  const aovHeroPowerDraft = normalizeEnquiryDraft({
+    gameId: "aov",
+    serviceId: "hero-power",
+    heroPowerRegionId: "hong-kong",
+  });
+  assert.equal(aovHeroPowerDraft.heroPowerRegionId, "hong-kong");
+
+  const aovRankDraft = normalizeEnquiryDraft({
+    gameId: "aov",
+    serviceId: "rank",
+    heroPowerRegionId: "hong-kong",
+  });
+  assert.equal(aovRankDraft.heroPowerRegionId, null);
+});
+
+test("enquiry draft normalization rejects unknown regional option ids", () => {
+  assert.equal(normalizeEnquiryDraft({
+    gameId: "hok-global",
+    serviceId: "rank",
+    serverRegionId: "unknown-region",
+  }).serverRegionId, null);
+  assert.equal(normalizeEnquiryDraft({
+    gameId: "hok-cn",
+    serviceId: "rank",
+    devicePlatformId: "windows",
+  }).devicePlatformId, null);
+  assert.equal(normalizeEnquiryDraft({
+    gameId: "aov",
+    serviceId: "hero-power",
+    heroPowerRegionId: "singapore",
+  }).heroPowerRegionId, null);
+});
+
+test("legacy orders without a quote draft remain readable", () => {
+  const state = normalizeOperationsState({
+    orders: [{
+      id: ids.order,
+      status: "scheduled",
+      gameId: "aov",
+      serviceId: "rank",
+      createdAt: "2026-07-16T10:02:00.000Z",
+      updatedAt: "2026-07-16T10:02:00.000Z",
+    }],
+  });
+
+  assert.equal(state.orders[0].quoteDraft, null);
 });
 
 test("memory operations store persists writes and enforces revision conflicts", async () => {

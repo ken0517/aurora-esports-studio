@@ -18,6 +18,31 @@ test("manual quote offers the three approved display currencies and dynamic pric
   assert.match(quote, /此項服務需要由 Aurora 客服人工確認/);
 });
 
+test("manual quote exposes the approved game-specific selectors and result labels", async () => {
+  const quote = await source("src/components/QuoteAssistant.jsx");
+
+  for (const id of [
+    "manual-quote-server-region",
+    "manual-quote-device-platform",
+    "manual-quote-hero-power-region",
+  ]) {
+    assert.match(quote, new RegExp(`id="${id}"`));
+  }
+
+  assert.match(quote, /getRequiredQuoteFieldsForGame/);
+  assert.match(quote, /requiredGameFields\.includes\("serverRegionId"\)/);
+  assert.match(quote, /requiredGameFields\.includes\("devicePlatformId"\)/);
+  assert.match(quote, /requiredGameFields\.includes\("heroPowerRegionId"\)/);
+  assert.match(quote, /getServerRegionLabel\(draft\.gameId, draft\.serverRegionId, localeId\)/);
+  assert.match(quote, /getDevicePlatformLabel\(draft\.gameId, draft\.devicePlatformId, localeId\)/);
+  assert.match(quote, /getHeroPowerRegionLabel\(draft\.gameId, draft\.heroPowerRegionId, localeId\)/);
+
+  assert.match(quote, /serverRegionId:\s*null/);
+  assert.match(quote, /devicePlatformId:\s*null/);
+  assert.match(quote, /heroPowerRegionId:\s*null/);
+  assert.match(quote, /next\.serviceId !== "hero-power"\) next\.heroPowerRegionId = null/);
+});
+
 test("hero contact dock uses branded images and keeps platform names visible on mobile", async () => {
   const app = await source("src/App.jsx");
   const css = await source("src/styles/index.css");

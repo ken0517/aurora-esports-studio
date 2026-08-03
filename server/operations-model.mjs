@@ -1,4 +1,10 @@
-import { serviceDefinitions, supportedGameIds } from "../src/data/gameConfig.js";
+import {
+  getDevicePlatformById,
+  getHeroPowerRegionById,
+  getServerRegionById,
+  serviceDefinitions,
+  supportedGameIds,
+} from "../src/data/gameConfig.js";
 
 export const operationsOrderStatuses = Object.freeze([
   "new_enquiry",
@@ -178,10 +184,20 @@ function normalizeConversation(input) {
 }
 
 export function normalizeEnquiryDraft(input = {}) {
+  const gameId = cleanGameId(input.gameId);
+  const serviceId = cleanServiceId(input.serviceId);
+  const serverRegionId = cleanNullableString(input.serverRegionId, 40);
+  const devicePlatformId = cleanNullableString(input.devicePlatformId, 40);
+  const heroPowerRegionId = cleanNullableString(input.heroPowerRegionId, 40);
   return {
     intent: cleanNullableString(input.intent, 40),
-    gameId: cleanGameId(input.gameId),
-    serviceId: cleanServiceId(input.serviceId),
+    gameId,
+    serviceId,
+    serverRegionId: getServerRegionById(gameId, serverRegionId)?.id ?? null,
+    devicePlatformId: getDevicePlatformById(gameId, devicePlatformId)?.id ?? null,
+    heroPowerRegionId: serviceId === "hero-power"
+      ? getHeroPowerRegionById(gameId, heroPowerRegionId)?.id ?? null
+      : null,
     currentRankId: cleanNullableString(input.currentRankId, 40),
     currentDivision: cleanNullableString(input.currentDivision, 20),
     currentStars: cleanNumber(input.currentStars, null, { min: 0, max: 100_000 }),
@@ -287,6 +303,9 @@ function normalizeOrder(input) {
     quoteReference: cleanNullableString(input?.quoteReference, 60),
     currency: ["HKD", "TWD", "CNY"].includes(input?.currency) ? input.currency : "HKD",
     finalTotal: cleanNumber(input?.finalTotal, null, { min: 0, max: 10_000_000 }),
+    quoteDraft: input?.quoteDraft && typeof input.quoteDraft === "object"
+      ? normalizeEnquiryDraft(input.quoteDraft)
+      : null,
     staffId: cleanUuid(input?.staffId),
     appointment: normalizeAppointment(input?.appointment),
     internalNotes: redactSensitiveText(input?.internalNotes) || null,

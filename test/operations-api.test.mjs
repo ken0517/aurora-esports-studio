@@ -35,8 +35,8 @@ function enquiry(id, reference) {
   };
 }
 
-function createStore() {
-  let state = normalizeOperationsState({ enquiries: [enquiry(enquiryIds[0], "AUR-1"), enquiry(enquiryIds[1], "AUR-2")] });
+function createStore(initialEnquiries = [enquiry(enquiryIds[0], "AUR-1"), enquiry(enquiryIds[1], "AUR-2")]) {
+  let state = normalizeOperationsState({ enquiries: initialEnquiries });
   let revisionNumber = 0;
   return {
     configured: true,
@@ -133,6 +133,36 @@ test("administrator can convert enquiries, manage appointments and receive overl
     const filtered = await request(origin, "?gameId=aov&serviceId=rank&status=awaiting_quote_confirmation");
     assert.equal(filtered.response.status, 200);
     assert.equal(filtered.payload.state.orders.length, 2);
+  });
+});
+
+test("converting an enquiry keeps an immutable normalized quote draft snapshot on the order", async () => {
+  const sourceEnquiry = enquiry(enquiryIds[0], "AUR-REGION-SNAPSHOT");
+  sourceEnquiry.gameId = "hok-global";
+  sourceEnquiry.serviceId = "duo";
+  sourceEnquiry.draft = {
+    gameId: "hok-global",
+    serviceId: "duo",
+    serverRegionId: "southeast-asia",
+    duoMode: "match-5v5",
+    quantity: 3,
+    preferredHero: "Angela",
+    preferredStartTime: "2030-08-08T20:00",
+    additionalRequirements: "Please keep this complete context.",
+    displayCurrency: "TWD",
+  };
+
+  await withServer(createStore([sourceEnquiry]), async (origin) => {
+    const conversion = await request(origin, "/action", {
+      method: "POST",
+      body: { action: "convert_enquiry", enquiryId: enquiryIds[0] },
+    });
+
+    assert.equal(conversion.response.status, 200, JSON.stringify(conversion.payload));
+    assert.deepEqual(conversion.payload.order.quoteDraft, conversion.payload.state.enquiries[0].draft);
+    assert.equal(conversion.payload.order.quoteDraft.serverRegionId, "southeast-asia");
+    assert.equal(conversion.payload.order.quoteDraft.additionalRequirements, "Please keep this complete context.");
+    assert.equal(conversion.payload.order.quoteDraft.displayCurrency, "TWD");
   });
 });
 

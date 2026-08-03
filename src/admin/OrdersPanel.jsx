@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { CalendarClock, Save } from "lucide-react";
 
 import { getCentralServiceLabel, getGameLabel } from "../data/gameConfig.js";
+import QuoteDraftDetails from "./QuoteDraftDetails.jsx";
 
 const statusLabels = {
   new_enquiry: "新查詢",
@@ -24,6 +25,9 @@ export default function OrdersPanel({ state, onAction, busy, warnings }) {
   const [selectedId, setSelectedId] = useState("");
   const [drafts, setDrafts] = useState({});
   const selected = state.orders.find((order) => order.id === selectedId) || state.orders[0] || null;
+  const selectedEnquiry = selected
+    ? state.enquiries.find((enquiry) => enquiry.id === selected.enquiryId) || null
+    : null;
   const draft = selected ? drafts[selected.id] || {
       customerName: selected.customerName || "",
       contactMethod: selected.contactMethod || "whatsapp",
@@ -78,6 +82,7 @@ export default function OrdersPanel({ state, onAction, busy, warnings }) {
       <section className="admin-record-detail">
         {!selected || !draft ? <div className="admin-empty"><CalendarClock /><p>尚未建立訂單。請先在「對話與查詢」將查詢轉為訂單。</p></div> : <>
           <header className="admin-detail-heading"><div><span>ORDER</span><h2>{selected.reference}</h2></div><span className="admin-status-pill">{statusLabels[selected.status]}</span></header>
+          <QuoteDraftDetails draft={selected.quoteDraft || selectedEnquiry?.draft} />
           <div className="admin-form-grid">
             <label><span>顧客名稱</span><input value={draft.customerName} onChange={(event) => patch("customerName", event.target.value)} /></label>
             <label><span>聯絡方式</span><select value={draft.contactMethod} onChange={(event) => patch("contactMethod", event.target.value)}>{contactMethods.map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label>

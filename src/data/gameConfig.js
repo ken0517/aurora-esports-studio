@@ -126,6 +126,11 @@ const heroPowerMark = (id, traditionalChinese, english, simplifiedChinese = trad
   aliases,
 });
 
+const quoteOption = (id, traditionalChinese, english, simplifiedChinese = traditionalChinese) => ({
+  id,
+  labels: labels(traditionalChinese, english, simplifiedChinese),
+});
+
 const aovLanes = [
   lane("slayer-lane", "凱撒路", "Slayer lane", "凯撒路", ["凱撒", "凯撒"]),
   lane("jungle", "打野", "Jungle", "打野"),
@@ -161,6 +166,41 @@ const kingsHeroPowerMarks = [
 const hokGlobalHeroPowerMarks = [
   ...kingsHeroPowerMarks,
   heroPowerMark("red", "紅標", "Red mark", "红标"),
+];
+
+const hokGlobalServerRegions = [
+  quoteOption(
+    "americas",
+    "美洲（北美、南美及巴西）",
+    "Americas (North America, South America and Brazil)",
+    "美洲（北美、南美及巴西）",
+  ),
+  quoteOption(
+    "europe",
+    "歐洲（西歐、東歐及土耳其）",
+    "Europe (Western Europe, Eastern Europe and Türkiye)",
+    "欧洲（西欧、东欧及土耳其）",
+  ),
+  quoteOption("middle-east-africa", "中東及非洲", "Middle East and Africa", "中东及非洲"),
+  quoteOption(
+    "pacific",
+    "太平洋（南亞、南韓、日本及澳洲）",
+    "Pacific (South Asia, South Korea, Japan and Australia)",
+    "太平洋（南亚、韩国、日本及澳大利亚）",
+  ),
+  quoteOption("southeast-asia", "東南亞", "Southeast Asia", "东南亚"),
+  quoteOption("hk-mo-tw", "香港／澳門／台灣", "Hong Kong / Macau / Taiwan", "香港／澳门／台湾"),
+];
+
+const hokChinaDevicePlatforms = [
+  quoteOption("ios", "iOS", "iOS"),
+  quoteOption("android", "Android", "Android"),
+];
+
+const aovHeroPowerRegions = [
+  quoteOption("hong-kong", "香港", "Hong Kong", "香港"),
+  quoteOption("taiwan", "台灣", "Taiwan", "台湾"),
+  quoteOption("macau", "澳門", "Macau", "澳门"),
 ];
 
 export const serviceDefinitions = [
@@ -281,6 +321,10 @@ function makeGameConfig({
   lanes,
   heroPowerMarks,
   heroPowerMarkAmbiguities = {},
+  serverRegions = [],
+  devicePlatforms = [],
+  heroPowerRegions = [],
+  requiredQuoteFields = {},
   verificationStatus,
   source = null,
   sourceNote = null,
@@ -302,6 +346,15 @@ function makeGameConfig({
     lanes,
     heroPowerMarks,
     heroPowerMarkAmbiguities,
+    serverRegions,
+    devicePlatforms,
+    heroPowerRegions,
+    requiredQuoteFields: {
+      allServices: [...(requiredQuoteFields.allServices || [])],
+      byService: Object.fromEntries(
+        Object.entries(requiredQuoteFields.byService || {}).map(([serviceId, fields]) => [serviceId, [...fields]]),
+      ),
+    },
     services: [...sharedServiceIds],
   };
 }
@@ -314,6 +367,12 @@ export const gameConfigs = {
     ranks: aovRanks,
     lanes: aovLanes,
     heroPowerMarks: aovHeroPowerMarks,
+    heroPowerRegions: aovHeroPowerRegions,
+    requiredQuoteFields: {
+      byService: {
+        "hero-power": ["heroPowerRegionId"],
+      },
+    },
     verificationStatus: "official",
     source: "https://moba.garena.tw/news/show/5423",
     sourceNote: labels("段位及高階星數名稱依現有 Aurora 資料保留。", "Existing Aurora rank data is preserved.", "段位及高阶星数名称沿用现有 Aurora 数据。"),
@@ -325,6 +384,10 @@ export const gameConfigs = {
     ranks: hokChinaRanks,
     lanes: kingsLanes,
     heroPowerMarks: kingsHeroPowerMarks,
+    devicePlatforms: hokChinaDevicePlatforms,
+    requiredQuoteFields: {
+      allServices: ["devicePlatformId"],
+    },
     heroPowerMarkAmbiguities: {
       "國標": ["minor-national", "major-national"],
       "国标": ["minor-national", "major-national"],
@@ -339,6 +402,10 @@ export const gameConfigs = {
     ranks: hokGlobalRanks,
     lanes: kingsLanes,
     heroPowerMarks: hokGlobalHeroPowerMarks,
+    serverRegions: hokGlobalServerRegions,
+    requiredQuoteFields: {
+      allServices: ["serverRegionId"],
+    },
     heroPowerMarkAmbiguities: {
       "國標": ["minor-national", "major-national"],
       "国标": ["minor-national", "major-national"],
@@ -388,6 +455,51 @@ export function getHeroPowerMarkById(gameId, markId) {
 
 export function getHeroPowerMarkLabel(gameId, markId, locale = "zh-HK") {
   return localizeGameValue(getHeroPowerMarkById(gameId, markId)?.labels, locale);
+}
+
+export function getServerRegionsForGame(gameId) {
+  return getGameConfig(gameId)?.serverRegions ?? [];
+}
+
+export function getServerRegionById(gameId, regionId) {
+  return getServerRegionsForGame(gameId).find((item) => item.id === regionId) ?? null;
+}
+
+export function getServerRegionLabel(gameId, regionId, locale = "zh-HK") {
+  return localizeGameValue(getServerRegionById(gameId, regionId)?.labels, locale);
+}
+
+export function getDevicePlatformsForGame(gameId) {
+  return getGameConfig(gameId)?.devicePlatforms ?? [];
+}
+
+export function getDevicePlatformById(gameId, platformId) {
+  return getDevicePlatformsForGame(gameId).find((item) => item.id === platformId) ?? null;
+}
+
+export function getDevicePlatformLabel(gameId, platformId, locale = "zh-HK") {
+  return localizeGameValue(getDevicePlatformById(gameId, platformId)?.labels, locale);
+}
+
+export function getHeroPowerRegionsForGame(gameId) {
+  return getGameConfig(gameId)?.heroPowerRegions ?? [];
+}
+
+export function getHeroPowerRegionById(gameId, regionId) {
+  return getHeroPowerRegionsForGame(gameId).find((item) => item.id === regionId) ?? null;
+}
+
+export function getHeroPowerRegionLabel(gameId, regionId, locale = "zh-HK") {
+  return localizeGameValue(getHeroPowerRegionById(gameId, regionId)?.labels, locale);
+}
+
+export function getRequiredQuoteFieldsForGame(gameId, serviceId) {
+  const required = getGameConfig(gameId)?.requiredQuoteFields;
+  if (!required) return [];
+  return [
+    ...(required.allServices || []),
+    ...(required.byService?.[serviceId] || []),
+  ];
 }
 
 export function getServicesForGame(gameId) {

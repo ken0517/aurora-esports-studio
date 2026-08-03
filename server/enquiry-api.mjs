@@ -21,6 +21,15 @@ const defaultLocalOrigins = new Set([
   "http://localhost:4826",
   "http://127.0.0.1:4826",
 ]);
+const gameBoundQuoteFields = ["serverRegionId", "devicePlatformId", "heroPowerRegionId"];
+
+function hasInvalidGameBoundOption(rawDraft, normalizedDraft) {
+  if (!rawDraft || typeof rawDraft !== "object") return false;
+  return gameBoundQuoteFields.some((field) => {
+    const rawValue = typeof rawDraft[field] === "string" ? rawDraft[field].trim() : "";
+    return rawValue && rawValue !== normalizedDraft[field];
+  });
+}
 
 function send(res, status, payload, headers = {}) {
   res.statusCode = status;
@@ -220,6 +229,9 @@ export async function handlePublicEnquiry(req, res, {
     const timestamp = new Date(Number.isFinite(requestTimeMs) ? requestTimeMs : Date.now()).toISOString();
     const locale = ["zh-HK", "en", "zh-CN"].includes(body.locale) ? body.locale : "zh-HK";
     const draft = normalizeEnquiryDraft(body.draft);
+    if (hasInvalidGameBoundOption(body.draft, draft)) {
+      return send(res, 400, { error: "invalid-game-option" }, cors);
+    }
     let activePricingCatalog = pricingCatalog;
     try {
       activePricingCatalog = await catalogStore.read();

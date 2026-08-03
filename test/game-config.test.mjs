@@ -3,9 +3,19 @@ import assert from "node:assert/strict";
 
 import {
   gameConfigs,
+  getDevicePlatformById,
+  getDevicePlatformLabel,
+  getDevicePlatformsForGame,
+  getHeroPowerRegionById,
+  getHeroPowerRegionLabel,
   getHeroPowerMarksForGame,
+  getHeroPowerRegionsForGame,
   getLanesForGame,
   getRanksForGameConfig,
+  getRequiredQuoteFieldsForGame,
+  getServerRegionById,
+  getServerRegionLabel,
+  getServerRegionsForGame,
   localizeGameValue,
   serviceDefinitions,
 } from "../src/data/gameConfig.js";
@@ -15,11 +25,64 @@ const zh = (items) => items.map((item) => localizeGameValue(item.labels, "zh-HK"
 
 test("each game exposes the complete central configuration shape", () => {
   for (const config of Object.values(gameConfigs)) {
-    for (const key of ["aliases", "ranks", "rankDivisions", "starRanges", "lanes", "heroPowerMarks", "services"]) {
+    for (const key of [
+      "aliases",
+      "ranks",
+      "rankDivisions",
+      "starRanges",
+      "lanes",
+      "heroPowerMarks",
+      "serverRegions",
+      "devicePlatforms",
+      "heroPowerRegions",
+      "requiredQuoteFields",
+      "services",
+    ]) {
       assert.ok(Object.hasOwn(config, key), `${config.id} is missing ${key}`);
     }
     assert.strictEqual(getRanksForGame(config.id), getRanksForGameConfig(config.id));
   }
+});
+
+test("server, device and hero-power regions are isolated by game", () => {
+  assert.deepEqual(zh(getServerRegionsForGame("hok-global")), [
+    "美洲（北美、南美及巴西）",
+    "歐洲（西歐、東歐及土耳其）",
+    "中東及非洲",
+    "太平洋（南亞、南韓、日本及澳洲）",
+    "東南亞",
+    "香港／澳門／台灣",
+  ]);
+  assert.deepEqual(zh(getServerRegionsForGame("aov")), []);
+  assert.deepEqual(zh(getServerRegionsForGame("hok-cn")), []);
+
+  assert.deepEqual(zh(getDevicePlatformsForGame("hok-cn")), ["iOS", "Android"]);
+  assert.deepEqual(zh(getDevicePlatformsForGame("aov")), []);
+  assert.deepEqual(zh(getDevicePlatformsForGame("hok-global")), []);
+
+  assert.deepEqual(zh(getHeroPowerRegionsForGame("aov")), ["香港", "台灣", "澳門"]);
+  assert.deepEqual(zh(getHeroPowerRegionsForGame("hok-cn")), []);
+  assert.deepEqual(zh(getHeroPowerRegionsForGame("hok-global")), []);
+});
+
+test("central quote option lookup and required-field helpers reject cross-game values", () => {
+  assert.equal(getServerRegionById("hok-global", "americas")?.id, "americas");
+  assert.equal(getServerRegionLabel("hok-global", "americas", "en"), "Americas (North America, South America and Brazil)");
+  assert.equal(getServerRegionById("hok-cn", "americas"), null);
+
+  assert.equal(getDevicePlatformById("hok-cn", "ios")?.id, "ios");
+  assert.equal(getDevicePlatformLabel("hok-cn", "android", "zh-HK"), "Android");
+  assert.equal(getDevicePlatformById("hok-global", "ios"), null);
+
+  assert.equal(getHeroPowerRegionById("aov", "hong-kong")?.id, "hong-kong");
+  assert.equal(getHeroPowerRegionLabel("aov", "taiwan", "zh-CN"), "台湾");
+  assert.equal(getHeroPowerRegionById("hok-global", "hong-kong"), null);
+
+  assert.deepEqual(getRequiredQuoteFieldsForGame("hok-global", "rank"), ["serverRegionId"]);
+  assert.deepEqual(getRequiredQuoteFieldsForGame("hok-global", "other"), ["serverRegionId"]);
+  assert.deepEqual(getRequiredQuoteFieldsForGame("hok-cn", "duo"), ["devicePlatformId"]);
+  assert.deepEqual(getRequiredQuoteFieldsForGame("aov", "hero-power"), ["heroPowerRegionId"]);
+  assert.deepEqual(getRequiredQuoteFieldsForGame("aov", "rank"), []);
 });
 
 test("game aliases identify HOK as global without leaking into China server", () => {

@@ -15,10 +15,17 @@ import {
   rankRequiresManualReview,
 } from "../data/ranks.js";
 import {
+  getDevicePlatformById,
+  getDevicePlatformLabel,
   getHeroPowerMarkById,
   getHeroPowerMarkLabel,
+  getHeroPowerRegionById,
+  getHeroPowerRegionLabel,
   getLaneById,
   getLaneLabel,
+  getRequiredQuoteFieldsForGame,
+  getServerRegionById,
+  getServerRegionLabel,
 } from "../data/gameConfig.js";
 import {
   defaultLocale,
@@ -52,6 +59,9 @@ const draftDefaults = {
   preferredHero: "",
   preferredRole: "",
   heroPowerMarkId: null,
+  serverRegionId: null,
+  devicePlatformId: null,
+  heroPowerRegionId: null,
   duoMode: null,
   duoGuarantee: null,
   otherServiceType: null,
@@ -229,6 +239,48 @@ function validateOptionalLane(result, draft) {
   }
 }
 
+function validateGameSpecificQuoteFields(result, draft, game) {
+  if (!game) return;
+  const requiredFields = new Set(getRequiredQuoteFieldsForGame(draft.gameId, draft.serviceId));
+  for (const field of requiredFields) {
+    if (!draft[field]) {
+      const requiredCode = {
+        serverRegionId: "serverRegionRequired",
+        devicePlatformId: "devicePlatformRequired",
+        heroPowerRegionId: "heroPowerRegionRequired",
+      }[field];
+      addMissing(result, field, requiredCode || "gameRequired");
+      continue;
+    }
+
+    const valid = {
+      serverRegionId: () => getServerRegionById(draft.gameId, draft.serverRegionId),
+      devicePlatformId: () => getDevicePlatformById(draft.gameId, draft.devicePlatformId),
+      heroPowerRegionId: () => getHeroPowerRegionById(draft.gameId, draft.heroPowerRegionId),
+    }[field]?.();
+    if (!valid) {
+      const invalidCode = {
+        serverRegionId: "invalidServerRegion",
+        devicePlatformId: "invalidDevicePlatform",
+        heroPowerRegionId: "invalidHeroPowerRegion",
+      }[field];
+      addError(result, field, invalidCode || "gameRequired");
+    }
+  }
+
+  // Values hidden for the active game or service are never accepted merely
+  // because a browser submitted them directly.
+  if (!requiredFields.has("serverRegionId") && draft.serverRegionId) {
+    addError(result, "serverRegionId", "invalidServerRegion");
+  }
+  if (!requiredFields.has("devicePlatformId") && draft.devicePlatformId) {
+    addError(result, "devicePlatformId", "invalidDevicePlatform");
+  }
+  if (!requiredFields.has("heroPowerRegionId") && draft.heroPowerRegionId) {
+    addError(result, "heroPowerRegionId", "invalidHeroPowerRegion");
+  }
+}
+
 /**
  * Returns { valid, isValid, errors, errorCodes, missingFields,
  * invalidFields, requiresManualReview, draft }.
@@ -265,6 +317,8 @@ export function validateQuoteDraft(inputDraft, options = {}) {
   if (service && !service.supportedGames.includes(draft.gameId)) {
     addError(result, "serviceId", "serviceRequired");
   }
+
+  validateGameSpecificQuoteFields(result, draft, game);
 
   if (isHeroPower) {
     result.requiresManualReview = true;
@@ -675,6 +729,9 @@ function baseQuoteResult(draft, validation, options = {}) {
     preferredHero: draft.preferredHero,
     preferredRole: draft.preferredRole,
     heroPowerMarkId: draft.heroPowerMarkId,
+    serverRegionId: draft.serverRegionId,
+    devicePlatformId: draft.devicePlatformId,
+    heroPowerRegionId: draft.heroPowerRegionId,
     preferredStartTime: draft.preferredStartTime || null,
     basePrice: null,
     optionalCharges: null,
@@ -840,6 +897,22 @@ export function formatQuoteText(quoteOrDraft, locale = null) {
   const isRankRange = draft.serviceId === "rank" || isDuoRanked;
   const isOther = draft.serviceId === "other";
   const detailRows = [];
+
+  if (draft.serverRegionId) {
+    detailRows.push(
+      `${translate(resolvedLocale, "quote.fields.serverRegion")}: ${getServerRegionLabel(draft.gameId, draft.serverRegionId, resolvedLocale) || "—"}`,
+    );
+  }
+  if (draft.devicePlatformId) {
+    detailRows.push(
+      `${translate(resolvedLocale, "quote.fields.devicePlatform")}: ${getDevicePlatformLabel(draft.gameId, draft.devicePlatformId, resolvedLocale) || "—"}`,
+    );
+  }
+  if (draft.heroPowerRegionId) {
+    detailRows.push(
+      `${translate(resolvedLocale, "quote.fields.heroPowerRegion")}: ${getHeroPowerRegionLabel(draft.gameId, draft.heroPowerRegionId, resolvedLocale) || "—"}`,
+    );
+  }
 
   if (isDuo) {
     detailRows.push(

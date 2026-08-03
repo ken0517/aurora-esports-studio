@@ -58,6 +58,38 @@ test("public enquiry endpoint is write-only and requires explicit consent", asyn
   });
 });
 
+test("public enquiry rejects a game-bound option that belongs to another game", async () => {
+  const store = createMemoryStore();
+  await withServer(store, async (origin) => {
+    const response = await fetch(`${origin}/api/enquiries`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        sessionId,
+        consent: true,
+        source: "manual_quote",
+        locale: "zh-HK",
+        draft: {
+          gameId: "hok-global",
+          serviceId: "rank",
+          serverRegionId: "southeast-asia",
+          devicePlatformId: "ios",
+          currentRankId: "diamond",
+          currentDivision: "III",
+          currentStars: 0,
+          targetRankId: "veteran",
+          targetDivision: "V",
+          targetStars: 0,
+        },
+      }),
+    });
+
+    assert.equal(response.status, 400);
+    assert.equal((await response.json()).error, "invalid-game-option");
+    assert.equal(store.writes, 0);
+  });
+});
+
 test("a consented completed quote creates a redacted enquiry and never an order", async () => {
   const store = createMemoryStore();
   await withServer(store, async (origin) => {
@@ -221,6 +253,7 @@ test("manual enquiry rejects forged amounts and stores the authoritative central
         locale: "zh-HK",
         draft: {
           gameId: "hok-global",
+          serverRegionId: "southeast-asia",
           serviceId: "duo",
           duoMode: "match-5v5",
           quantity: 3,
@@ -267,6 +300,7 @@ test("runtime pricing overrides bundled pricing and any client-supplied amount",
         locale: "zh-HK",
         draft: {
           gameId: "hok-global",
+          serverRegionId: "southeast-asia",
           serviceId: "duo",
           duoMode: "match-5v5",
           quantity: 3,
@@ -342,6 +376,7 @@ test("an AI enquiry and later manual quote for the same session, game and servic
   const aiDraft = {
     locale: "zh-HK",
     gameId: "hok-global",
+    serverRegionId: "southeast-asia",
     serviceId: "duo",
     duoMode: "match-5v5",
     quantity: 2,
@@ -396,6 +431,7 @@ test("a manual enquiry and later AI quote for the same session, game and service
   const draft = {
     locale: "zh-HK",
     gameId: "hok-global",
+    serverRegionId: "southeast-asia",
     serviceId: "duo",
     duoMode: "match-5v5",
     quantity: 2,
@@ -448,6 +484,7 @@ test("a later quote never mutates an enquiry that has already been converted int
   const store = createMemoryStore();
   const baseDraft = {
     gameId: "hok-global",
+    serverRegionId: "southeast-asia",
     serviceId: "duo",
     duoMode: "match-5v5",
     quantity: 1,
@@ -527,6 +564,7 @@ test("a later AI quote never mutates an enquiry that has already been converted 
   const draft = {
     locale: "zh-HK",
     gameId: "hok-global",
+    serverRegionId: "southeast-asia",
     serviceId: "duo",
     duoMode: "match-5v5",
     quantity: 1,

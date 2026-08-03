@@ -167,6 +167,7 @@ function orderFromEnquiry(enquiry, now) {
     quoteReference: enquiry.quoteReference,
     currency: enquiry.quote?.currency || "HKD",
     finalTotal: enquiry.quote?.finalTotal ?? null,
+    quoteDraft: enquiry.draft ? structuredClone(enquiry.draft) : null,
     staffId: null,
     appointment: null,
     internalNotes: enquiry.internalNotes,

@@ -9,6 +9,7 @@ import { FunctionCallingConfigMode, GoogleGenAI } from "@google/genai";
 
 import {
   gameConfigs,
+  getRequiredQuoteFieldsForGame,
   localizeGameValue,
   serviceDefinitions,
   supportedGameIds,
@@ -58,6 +59,9 @@ const quoteFields = new Set([
   "preferredHero",
   "preferredRole",
   "heroPowerMarkId",
+  "serverRegionId",
+  "devicePlatformId",
+  "heroPowerRegionId",
   "duoMode",
   "duoGuarantee",
   "otherServiceType",
@@ -74,6 +78,12 @@ const duoGuaranteeIds = serviceDefinitions
 const otherServiceTypeIds = serviceDefinitions
   .find((service) => service.id === "other")
   ?.options?.map((option) => option.id) || [];
+const uniqueGameOptionIds = (property) => [
+  ...new Set(Object.values(gameConfigs).flatMap((game) => (game[property] || []).map((option) => option.id))),
+];
+const serverRegionIds = uniqueGameOptionIds("serverRegions");
+const devicePlatformIds = uniqueGameOptionIds("devicePlatforms");
+const heroPowerRegionIds = uniqueGameOptionIds("heroPowerRegions");
 
 const calculateQuoteDeclaration = {
   name: "calculate_quote",
@@ -101,6 +111,9 @@ const calculateQuoteDeclaration = {
       preferredHero: { type: "string" },
       preferredRole: { type: "string" },
       heroPowerMarkId: { type: "string" },
+      serverRegionId: { type: "string", enum: serverRegionIds },
+      devicePlatformId: { type: "string", enum: devicePlatformIds },
+      heroPowerRegionId: { type: "string", enum: heroPowerRegionIds },
       duoMode: { type: "string", enum: duoModeIds },
       duoGuarantee: { type: "string", enum: duoGuaranteeIds },
       otherServiceType: { type: "string", enum: otherServiceTypeIds },
@@ -208,7 +221,31 @@ export function cleanQuoteContext(value, locale) {
     else if (typeof rawValue === "number" && Number.isFinite(rawValue)) result[key] = rawValue;
     else if (typeof rawValue === "boolean" || rawValue === null) result[key] = rawValue;
   }
+  const game = gameConfigs[result.gameId];
+  for (const [field, collection] of [
+    ["serverRegionId", "serverRegions"],
+    ["devicePlatformId", "devicePlatforms"],
+    ["heroPowerRegionId", "heroPowerRegions"],
+  ]) {
+    if (result[field] && !game?.[collection]?.some((option) => option.id === result[field])) {
+      delete result[field];
+    }
+  }
+  const requiredGameFields = new Set(
+    getRequiredQuoteFieldsForGame(result.gameId, result.serviceId),
+  );
+  for (const field of ["serverRegionId", "devicePlatformId", "heroPowerRegionId"]) {
+    if (result.serviceId && result[field] && !requiredGameFields.has(field)) delete result[field];
+  }
   return result;
+}
+
+function buildLocalizedOptions(options, locale) {
+  return (options || []).map((option) => ({
+    id: option.id,
+    name: localizeGameValue(option.labels, locale),
+    aliases: option.aliases || [],
+  }));
 }
 
 export function buildGameContext(locale) {
@@ -238,6 +275,10 @@ export function buildGameContext(locale) {
       aliases: mark.aliases || [],
     })),
     heroPowerMarkAmbiguities: game.heroPowerMarkAmbiguities,
+    serverRegions: buildLocalizedOptions(game.serverRegions, locale),
+    devicePlatforms: buildLocalizedOptions(game.devicePlatforms, locale),
+    heroPowerRegions: buildLocalizedOptions(game.heroPowerRegions, locale),
+    requiredQuoteFields: game.requiredQuoteFields,
     services: game.services.map((serviceId) => {
       const service = serviceDefinitions.find((item) => item.id === serviceId);
       return {
@@ -359,6 +400,49 @@ function joinChoices(values, locale) {
   return `${values.slice(0, -1).join("、")}，還是${values.at(-1)}`;
 }
 
+function gameBoundOptionFollowUp(game, serviceId, quoteContext, input, locale, patch) {
+  let field = null;
+  let options = [];
+  let replies = null;
+
+  if (game.id === "hok-global") {
+    field = "serverRegionId";
+    options = game.serverRegions;
+    replies = {
+      "zh-HK": (gameName, choices) => `請問你的《${gameName}》帳號屬於哪個伺服器大區：${choices}？`,
+      "zh-CN": (gameName, choices) => `请问您的《${gameName}》账号属于哪个服务器大区：${choices}？`,
+      en: (gameName, choices) => `Which server region is your ${gameName} account in: ${choices}?`,
+    };
+  } else if (game.id === "hok-cn") {
+    field = "devicePlatformId";
+    options = game.devicePlatforms;
+    replies = {
+      "zh-HK": (gameName, choices) => `請問你的《${gameName}》帳號使用哪個平台：${choices}？`,
+      "zh-CN": (gameName, choices) => `请问您的《${gameName}》账号使用哪个平台：${choices}？`,
+      en: (gameName, choices) => `Which device platform does your ${gameName} account use: ${choices}?`,
+    };
+  } else if (game.id === "aov" && serviceId === "hero-power") {
+    field = "heroPowerRegionId";
+    options = game.heroPowerRegions;
+    replies = {
+      "zh-HK": (_gameName, choices) => `請問你要查哪個英雄戰力地區：${choices}？`,
+      "zh-CN": (_gameName, choices) => `请问您要查询哪个英雄战力地区：${choices}？`,
+      en: (_gameName, choices) => `Which hero-power region do you need: ${choices}?`,
+    };
+  }
+
+  if (!field || quoteContext[field]) return null;
+  const matched = options.find((option) => includesLocalizedItem(input, option));
+  if (matched) {
+    return { patch: { ...patch, [field]: matched.id }, message: null };
+  }
+
+  const gameName = localizeGameValue(game.labels, locale);
+  const choices = joinChoices(options.map((option) => localizeGameValue(option.labels, locale)), locale);
+  const reply = localizedReply(locale, replies);
+  return { patch, message: reply(gameName, choices) };
+}
+
 /**
  * Handle a few high-confidence, incomplete Aurora intents locally so a weak or
  * overloaded provider cannot replace the required next question with a generic
@@ -393,6 +477,10 @@ export function buildDeterministicFollowUp(messages, quoteContext = {}, locale =
         return normalizedAlias && input.includes(normalizedAlias);
       })
     : null;
+  const explicitlyRequestedService = serviceDefinitions.find((service) => includesLocalizedItem(input, service));
+  if (explicitlyRequestedService && explicitlyRequestedService.id !== quoteContext.serviceId) {
+    patch.serviceId = explicitlyRequestedService.id;
+  }
 
   if (concreteMark || ambiguousMark) {
     patch.serviceId = "hero-power";
@@ -431,6 +519,15 @@ export function buildDeterministicFollowUp(messages, quoteContext = {}, locale =
     const gameName = localizeGameValue(game.labels, locale);
     const markName = localizeGameValue(concreteMark.labels, locale);
     const target = `${hero || ""}${markName}`;
+    const gameOptionFollowUp = gameBoundOptionFollowUp(
+      game,
+      "hero-power",
+      quoteContext,
+      input,
+      locale,
+      patch,
+    );
+    if (gameOptionFollowUp) return gameOptionFollowUp;
     if (!quoteContext.currentRankId) {
       return {
         patch,
@@ -460,6 +557,15 @@ export function buildDeterministicFollowUp(messages, quoteContext = {}, locale =
         }),
       };
     }
+    const gameOptionFollowUp = gameBoundOptionFollowUp(
+      game,
+      "duo",
+      quoteContext,
+      input,
+      locale,
+      patch,
+    );
+    if (gameOptionFollowUp) return gameOptionFollowUp;
     if (!quoteContext.duoMode) {
       const gameName = localizeGameValue(game.labels, locale);
       const modeNames = duo.modes.map((mode) => localizeGameValue(mode.labels, locale));
@@ -493,6 +599,16 @@ export function buildDeterministicFollowUp(messages, quoteContext = {}, locale =
       patch.currentRankId = currentRank.id;
       patch.targetRankId = targetRank.id;
 
+      const gameOptionFollowUp = gameBoundOptionFollowUp(
+        game,
+        "rank",
+        quoteContext,
+        input,
+        locale,
+        patch,
+      );
+      if (gameOptionFollowUp) return gameOptionFollowUp;
+
       if (currentRank.divisions.length && !quoteContext.currentDivision) {
         const gameName = localizeGameValue(game.labels, locale);
         const currentName = localizeGameValue(currentRank.labels, locale);
@@ -509,7 +625,20 @@ export function buildDeterministicFollowUp(messages, quoteContext = {}, locale =
     }
   }
 
-  return null;
+  const activeServiceId = patch.serviceId || quoteContext.serviceId;
+  if (game && activeServiceId) {
+    const followUp = gameBoundOptionFollowUp(
+      game,
+      activeServiceId,
+      { ...quoteContext, ...patch },
+      input,
+      locale,
+      patch,
+    );
+    if (followUp) return followUp;
+  }
+
+  return Object.keys(patch).length ? { patch, message: null } : null;
 }
 
 function validOptionsForGame(gameId, locale) {
@@ -521,6 +650,9 @@ function validOptionsForGame(gameId, locale) {
       id: mark.id,
       name: localizeGameValue(mark.labels, locale),
     })),
+    serverRegions: buildLocalizedOptions(game.serverRegions, locale),
+    devicePlatforms: buildLocalizedOptions(game.devicePlatforms, locale),
+    heroPowerRegions: buildLocalizedOptions(game.heroPowerRegions, locale),
   };
 }
 
@@ -585,10 +717,10 @@ export function buildSystemInstructions(locale, quoteContext, quoteResult, activ
     ? "English"
     : locale === "zh-CN"
       ? "Simplified Chinese"
-      : "formal written Traditional Chinese suitable for Hong Kong and Taiwan readers";
+      : "formal written Traditional Chinese suitable for Hong Kong, Taiwan and Macau readers";
   const context = {
     studio: "Aurora Esports Studio",
-    markets: ["Hong Kong", "Taiwan"],
+    markets: ["Hong Kong", "Taiwan", "Macau"],
     pricingVersion: activePricingCatalog.version || activePricingCatalog.revision,
     pricingConfigured: Boolean(activePricingCatalog.configured),
     games: buildGameContext(locale),
@@ -612,7 +744,8 @@ SCOPE:
 - Always respond to the latest customer request directly. Never replace an in-scope service or quotation question with a generic greeting.
 
 GAME DATA RULES:
-- Use only the supplied central game configuration. Never mix lanes, ranks, divisions, star ranges, or hero-power marks between games.
+- Use only the supplied central game configuration. Never mix lanes, ranks, divisions, star ranges, hero-power marks, server regions, device platforms, or hero-power regions between games.
+- For every HOK Global service, collect serverRegionId from that game's six supplied server regions. For every Honor of Kings China Server service, collect devicePlatformId (iOS or Android). For Arena of Valor hero-power service, collect heroPowerRegionId (Hong Kong, Taiwan or Macau). Never silently accept a value belonging to another game.
 - Treat common lane and mark aliases in the configuration as aliases only for their matching game.
 - Respect service voiceRequired metadata. If the customer says they do not want to use voice or a microphone, never select a service where voiceRequired is true; use the matching non-voice companion service instead.
 - For duo, collect duoMode first. Ranked duo also requires duoGuarantee (guaranteed target or standard win/loss charging). Then collect the appointment preferredStartTime plus that mode's other requiredFields. Do not ask for the appointment time before the customer has chosen a duo mode. For other, collect otherServiceType from the supplied options and use preferredStartTime for the appointment.
@@ -621,7 +754,7 @@ GAME DATA RULES:
 - If a customer chooses a mark or lane from the wrong game, explain the valid options for the selected game instead of silently accepting it.
 
 QUOTE AND PRICING RULES:
-- Extract game, service, duoMode, duoGuarantee or otherServiceType, rank/division/stars or points, current and target hero-power points, hero, lane, target mark, preferredStartTime for appointments, optional additional requirements, and display currency.
+- Extract game, service, serverRegionId, devicePlatformId, heroPowerRegionId, duoMode, duoGuarantee or otherServiceType, rank/division/stars or points, current and target hero-power points, hero, lane, target mark, preferredStartTime for appointments, optional additional requirements, and display currency.
 - Do not ask for additional requirements if the customer has none.
 - Once enough structured information is available, call calculate_quote. The function runs on Aurora's server.
 - Never invent, estimate, interpolate, or infer a price, discount, surcharge, completion time, success rate, or availability.
@@ -943,9 +1076,13 @@ export function createQuoteAiHandler({
 
     let quoteContext = cleanQuoteContext(body.quoteContext, locale);
     const inferredGameId = inferGameIdFromMessages(messages);
-    if (inferredGameId) quoteContext.gameId = inferredGameId;
+    if (inferredGameId) {
+      quoteContext = cleanQuoteContext({ ...quoteContext, gameId: inferredGameId }, locale);
+    }
     const deterministicFollowUp = buildDeterministicFollowUp(messages, quoteContext, locale);
-    if (deterministicFollowUp?.patch) Object.assign(quoteContext, deterministicFollowUp.patch);
+    if (deterministicFollowUp?.patch) {
+      quoteContext = cleanQuoteContext({ ...quoteContext, ...deterministicFollowUp.patch }, locale);
+    }
     let activePricingCatalog = pricingCatalog;
     try {
       activePricingCatalog = await createCatalogStore().read();
@@ -1052,14 +1189,19 @@ export function createQuoteAiHandler({
 
       if (functionCalls.length) {
         const toolResults = functionCalls.map((functionCall) => {
+          const rawContext = {
+            ...quoteContext,
+            ...(functionCall.args || {}),
+            locale,
+          };
           const context = cleanQuoteContext(
-            { ...quoteContext, ...(functionCall.args || {}) },
+            rawContext,
             locale,
           );
           const {
             output: result,
             internalReference,
-          } = calculateAuthoritativeQuoteProjection(context, {
+          } = calculateAuthoritativeQuoteProjection(rawContext, {
             calculateQuoteFn: calculateWithActiveCatalog,
             validateQuoteDraftFn: validateWithActiveCatalog,
           });

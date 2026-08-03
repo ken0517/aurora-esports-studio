@@ -25,6 +25,7 @@ test("conversation panel offers required filters, consent context and enquiry co
   assert.match(panel, /conversation\.messages/);
   assert.match(panel, /convert_enquiry/);
   assert.match(panel, /delete_conversation/);
+  assert.match(panel, /QuoteDraftDetails[\s\S]*draft=\{selected\.enquiry\.draft\}/);
 });
 
 test("orders panel covers all statuses, appointments, staff and conflict warnings", async () => {
@@ -48,6 +49,17 @@ test("orders panel covers all statuses, appointments, staff and conflict warning
   assert.match(panel, /action: "update_order"[\s\S]*staffId: draft\.staffId/);
   assert.doesNotMatch(panel, /await onAction\(\{ action: "assign_staff"/);
   assert.doesNotMatch(operations, /<OrdersPanel key=\{state\.revision\}/);
+  assert.match(panel, /selectedEnquiry[\s\S]*QuoteDraftDetails[\s\S]*draft=\{selected\.quoteDraft \|\| selectedEnquiry\?\.draft\}/);
+});
+
+test("admin quote details resolve regional account values through the central game configuration", async () => {
+  const details = await source("src/admin/QuoteDraftDetails.jsx");
+  for (const helper of ["getServerRegionLabel", "getDevicePlatformLabel", "getHeroPowerRegionLabel"]) {
+    assert.match(details, new RegExp(helper));
+  }
+  for (const copy of ["遊戲地區／伺服器大區", "手機系統", "戰力地區"]) {
+    assert.match(details, new RegExp(copy));
+  }
 });
 
 test("staff and business rules panel covers availability, closures, capacity and retention", async () => {

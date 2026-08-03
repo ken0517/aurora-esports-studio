@@ -6,6 +6,7 @@ import test from "node:test";
 import {
   DEFAULT_GEMINI_MODEL,
   buildGameContext,
+  buildDeterministicFollowUp,
   cleanQuoteContext,
   createQuoteAiHandler,
   inferGameIdFromMessages,
@@ -59,6 +60,149 @@ test("quote context keeps the five-service dependent fields and drops unknown in
 test("Gemini game context never asks for retired quote fields", () => {
   const context = JSON.stringify(buildGameContext("zh-HK"));
   assert.doesNotMatch(context, /completionTime|express|customSchedule|winRate70/);
+});
+
+test("quote context keeps only central options that belong to the selected game", () => {
+  assert.deepEqual(
+    cleanQuoteContext(
+      {
+        gameId: "aov",
+        serverRegionId: "americas",
+        devicePlatformId: "ios",
+        heroPowerRegionId: "taiwan",
+      },
+      "zh-HK",
+    ),
+    {
+      locale: "zh-HK",
+      gameId: "aov",
+      heroPowerRegionId: "taiwan",
+    },
+  );
+  assert.deepEqual(
+    cleanQuoteContext(
+      {
+        gameId: "hok-cn",
+        serverRegionId: "europe",
+        devicePlatformId: "android",
+        heroPowerRegionId: "macau",
+      },
+      "zh-HK",
+    ),
+    {
+      locale: "zh-HK",
+      gameId: "hok-cn",
+      devicePlatformId: "android",
+    },
+  );
+  assert.deepEqual(
+    cleanQuoteContext(
+      {
+        gameId: "hok-global",
+        serverRegionId: "southeast-asia",
+        devicePlatformId: "ios",
+        heroPowerRegionId: "hong-kong",
+      },
+      "zh-HK",
+    ),
+    {
+      locale: "zh-HK",
+      gameId: "hok-global",
+      serverRegionId: "southeast-asia",
+    },
+  );
+  assert.deepEqual(
+    cleanQuoteContext(
+      {
+        gameId: "hok-global",
+        serverRegionId: "made-up-region",
+      },
+      "zh-HK",
+    ),
+    {
+      locale: "zh-HK",
+      gameId: "hok-global",
+    },
+  );
+});
+
+test("central AI context exposes server, platform and hero-power region options without mixing games", () => {
+  const context = buildGameContext("en");
+  const aov = context.find((game) => game.id === "aov");
+  const china = context.find((game) => game.id === "hok-cn");
+  const global = context.find((game) => game.id === "hok-global");
+
+  assert.deepEqual(aov.heroPowerRegions.map((item) => item.id), ["hong-kong", "taiwan", "macau"]);
+  assert.deepEqual(aov.serverRegions, []);
+  assert.deepEqual(aov.devicePlatforms, []);
+  assert.deepEqual(china.devicePlatforms.map((item) => item.id), ["ios", "android"]);
+  assert.deepEqual(china.serverRegions, []);
+  assert.deepEqual(china.heroPowerRegions, []);
+  assert.deepEqual(global.serverRegions.map((item) => item.id), [
+    "americas",
+    "europe",
+    "middle-east-africa",
+    "pacific",
+    "southeast-asia",
+    "hk-mo-tw",
+  ]);
+  assert.deepEqual(global.devicePlatforms, []);
+  assert.deepEqual(global.heroPowerRegions, []);
+});
+
+test("deterministic follow-up collects the one missing game-bound option", () => {
+  const global = buildDeterministicFollowUp(
+    [{ role: "user", content: "I want a rank quote" }],
+    { gameId: "hok-global", serviceId: "rank" },
+    "en",
+  );
+  assert.match(global.message, /server region/i);
+  assert.match(global.message, /Americas/);
+
+  const china = buildDeterministicFollowUp(
+    [{ role: "user", content: "I want a rank quote" }],
+    { gameId: "hok-cn", serviceId: "rank" },
+    "en",
+  );
+  assert.match(china.message, /iOS.*Android/i);
+
+  const aov = buildDeterministicFollowUp(
+    [{ role: "user", content: "I want a hero-power quote" }],
+    { gameId: "aov", serviceId: "hero-power" },
+    "en",
+  );
+  assert.match(aov.message, /hero-power region/i);
+  assert.match(aov.message, /Hong Kong.*Taiwan.*Macau/i);
+
+  const detected = buildDeterministicFollowUp(
+    [{ role: "user", content: "Southeast Asia" }],
+    { gameId: "hok-global", serviceId: "rank" },
+    "en",
+  );
+  assert.equal(detected?.patch.serverRegionId, "southeast-asia");
+  assert.doesNotMatch(detected?.message || "", /which server region/i);
+});
+
+test("a new service request is handled before asking for a stale service-only field", () => {
+  const switched = buildDeterministicFollowUp(
+    [{ role: "user", content: "我想改做排位代打" }],
+    { gameId: "aov", serviceId: "hero-power", heroPowerRegionId: "taiwan" },
+    "zh-HK",
+  );
+
+  assert.equal(switched?.patch.serviceId, "rank");
+  assert.doesNotMatch(switched?.message || "", /英雄戰力地區|香港.*台灣.*澳門/u);
+  assert.equal(
+    cleanQuoteContext(
+      {
+        gameId: "aov",
+        serviceId: switched.patch.serviceId,
+        heroPowerRegionId: "taiwan",
+      },
+      "zh-HK",
+    ).heroPowerRegionId,
+    undefined,
+  );
 });
 
 async function withHttpServer(handler, callback) {
@@ -201,6 +345,7 @@ function responseWithText(text, overrides = {}) {
 function validChinaRankContext(overrides = {}) {
   return {
     gameId: "hok-cn",
+    devicePlatformId: "ios",
     serviceId: "rank",
     currentRankId: "diamond",
     currentDivision: "III",
@@ -217,6 +362,7 @@ function validChinaRankContext(overrides = {}) {
 function validChinaPeakContext(overrides = {}) {
   return {
     gameId: "hok-cn",
+    devicePlatformId: "ios",
     serviceId: "peak",
     currentPoints: 1350,
     targetPoints: 1500,
@@ -344,7 +490,7 @@ test("four common incomplete scope queries get one deterministic follow-up witho
     },
     {
       input: "我想做莉莉安紫标",
-      expected: /傳說對決.*莉莉安紫標.*段位/u,
+      expected: /英雄戰力地區.*香港.*台灣.*澳門/u,
     },
     {
       input: "HOK我要国标",
@@ -572,6 +718,20 @@ test("Gemini receives all three games from the shared central configuration", as
   assert.equal(declaration.parametersJsonSchema.properties.currentHeroPowerPoints.type, "number");
   assert.equal(declaration.parametersJsonSchema.properties.targetHeroPowerPoints.type, "number");
   assert.equal(declaration.parametersJsonSchema.properties.preferredStartTime.type, "string");
+  assert.deepEqual(declaration.parametersJsonSchema.properties.serverRegionId.enum, [
+    "americas",
+    "europe",
+    "middle-east-africa",
+    "pacific",
+    "southeast-asia",
+    "hk-mo-tw",
+  ]);
+  assert.deepEqual(declaration.parametersJsonSchema.properties.devicePlatformId.enum, ["ios", "android"]);
+  assert.deepEqual(declaration.parametersJsonSchema.properties.heroPowerRegionId.enum, [
+    "hong-kong",
+    "taiwan",
+    "macau",
+  ]);
 });
 
 test("customer-visible model text is presented only as Aurora customer service", async () => {
@@ -808,6 +968,48 @@ test("calculate_quote rejects a lane and hero-power mark from another game", asy
   );
   assert.ok(!functionResponse.response.output.validOptions.lanes.some((lane) => lane.id === "clash-lane"));
   assert.ok(!functionResponse.response.output.validOptions.heroPowerMarks.some((mark) => mark.id === "minor-national"));
+});
+
+test("calculate_quote rejects a platform from another game and returns only the selected game's regions", async () => {
+  let calculatorCalls = 0;
+  const { handler, fake } = createConfiguredHandler({
+    responses: [
+      functionCallResponse({
+        gameId: "hok-global",
+        serviceId: "rank",
+        serverRegionId: "southeast-asia",
+        devicePlatformId: "ios",
+        currentRankId: "diamond",
+        currentDivision: "III",
+        currentStars: 0,
+        targetRankId: "veteran",
+        targetDivision: "V",
+        targetStars: 0,
+      }),
+      responseWithText("Please select a supported HOK Global server region."),
+    ],
+    calculateQuoteFn() {
+      calculatorCalls += 1;
+      throw new Error("cross-game platform must not reach the price calculator");
+    },
+  });
+
+  await withHttpServer(handler, async (baseUrl) => {
+    const { response, payload } = await postJson(baseUrl, {
+      locale: "en",
+      messages: [{ role: "user", content: "HOK global rank quote" }],
+    });
+    assert.equal(response.status, 200);
+    assert.equal(payload.pricingStatus, "incomplete");
+  });
+
+  assert.equal(calculatorCalls, 0);
+  const functionResponse = fake.calls[1].contents.at(-1).parts[0].functionResponse;
+  assert.deepEqual(
+    functionResponse.response.output.validOptions.serverRegions.map((region) => region.id),
+    ["americas", "europe", "middle-east-africa", "pacific", "southeast-asia", "hk-mo-tw"],
+  );
+  assert.deepEqual(functionResponse.response.output.validOptions.devicePlatforms, []);
 });
 
 test("a quoted amount is rebuilt exclusively from the injected authoritative calculator", async () => {
