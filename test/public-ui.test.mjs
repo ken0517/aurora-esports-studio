@@ -22,6 +22,7 @@ test("manual quote exposes the approved game-specific selectors and result label
   const quote = await source("src/components/QuoteAssistant.jsx");
 
   for (const id of [
+    "manual-quote-server-country",
     "manual-quote-server-region",
     "manual-quote-device-platform",
     "manual-quote-hero-power-region",
@@ -30,6 +31,12 @@ test("manual quote exposes the approved game-specific selectors and result label
   }
 
   assert.match(quote, /getRequiredQuoteFieldsForGame/);
+  assert.match(quote, /getServerCountriesForGame/);
+  assert.match(quote, /getServerRegionForCountry/);
+  assert.match(quote, /draft\.serverCountryId === "other"/);
+  assert.match(quote, /updateServerCountry/);
+  assert.match(quote, /mergeDraftPatch\(current, payload\.quoteContext\)/);
+  assert.match(quote, /getServerCountryLabel\(draft\.gameId, draft\.serverCountryId, localeId\)/);
   assert.match(quote, /requiredGameFields\.includes\("serverRegionId"\)/);
   assert.match(quote, /requiredGameFields\.includes\("devicePlatformId"\)/);
   assert.match(quote, /requiredGameFields\.includes\("heroPowerRegionId"\)/);
@@ -37,6 +44,8 @@ test("manual quote exposes the approved game-specific selectors and result label
   assert.match(quote, /getDevicePlatformLabel\(draft\.gameId, draft\.devicePlatformId, localeId\)/);
   assert.match(quote, /getHeroPowerRegionLabel\(draft\.gameId, draft\.heroPowerRegionId, localeId\)/);
 
+  assert.match(quote, /const gameScopedDraftReset = \{[\s\S]*serverCountryId:\s*null[\s\S]*serverRegionId:\s*null/);
+  assert.match(quote, /serverCountryId:\s*null/);
   assert.match(quote, /serverRegionId:\s*null/);
   assert.match(quote, /devicePlatformId:\s*null/);
   assert.match(quote, /heroPowerRegionId:\s*null/);
@@ -86,7 +95,7 @@ test("quote assistant acknowledges service-data processing on active submission 
   assert.match(quote, /consent:\s*true/);
   assert.match(quote, /conversationConsent:\s*true/);
   assert.match(quote, /sessionId/);
-  assert.match(quote, /\/api\/enquiries/);
+  assert.match(quote, /const ENQUIRY_ENDPOINT = enquiryApiUrl\(\)/);
 });
 
 test("admin labels an enquiry with no recorded quote as not yet quoted", async () => {

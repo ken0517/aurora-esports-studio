@@ -54,9 +54,10 @@ test("orders panel covers all statuses, appointments, staff and conflict warning
 
 test("admin quote details resolve regional account values through the central game configuration", async () => {
   const details = await source("src/admin/QuoteDraftDetails.jsx");
-  for (const helper of ["getServerRegionLabel", "getDevicePlatformLabel", "getHeroPowerRegionLabel"]) {
+  for (const helper of ["getServerCountryLabel", "getServerRegionLabel", "getDevicePlatformLabel", "getHeroPowerRegionLabel"]) {
     assert.match(details, new RegExp(helper));
   }
+  assert.match(details, /所在國家／地區/);
   for (const copy of ["遊戲地區／伺服器大區", "手機系統", "戰力地區"]) {
     assert.match(details, new RegExp(copy));
   }
@@ -76,4 +77,18 @@ test("operations admin layout has a mobile single-column treatment", async () =>
   assert.match(styles, /\.admin-operations-layout/);
   assert.match(styles, /@media \(max-width: 820px\)[\s\S]*\.admin-operations-layout[^{]*\{[^}]*grid-template-columns:\s*1fr/);
   assert.match(styles, /\.admin-action-button/);
+});
+
+test("operations loading failure renders a visible recovery state instead of an endless spinner", async () => {
+  const operations = await source("src/admin/OperationsApp.jsx");
+  assert.match(operations, /status === "error"[\s\S]*無法開啟營運管理/);
+  assert.match(operations, /重新嘗試/);
+  assert.doesNotMatch(operations, /if \(!state \|\| status === "loading"\)/);
+});
+
+test("catalog loading failure renders a visible recovery state instead of an endless spinner", async () => {
+  const admin = await source("src/AdminApp.jsx");
+  assert.match(admin, /status === "error"[\s\S]*無法開啟價格管理/);
+  assert.match(admin, /重新嘗試/);
+  assert.doesNotMatch(admin, /if \(!catalog \|\| status === "loading"\)/);
 });

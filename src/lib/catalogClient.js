@@ -3,21 +3,58 @@ import {
   normalizeRuntimeCatalog,
 } from "../data/runtimeCatalog.js";
 
-function resolveApiBase() {
-  const configured = String(import.meta.env.VITE_AURORA_API_BASE_URL || "").replace(/\/$/, "");
-  if (configured) return configured;
-  const quoteEndpoint = String(import.meta.env.VITE_QUOTE_AI_ENDPOINT || "");
-  try {
-    return quoteEndpoint.startsWith("http") ? new URL(quoteEndpoint).origin : "";
-  } catch {
-    return "";
-  }
+const viteEnv = import.meta.env ?? {};
+
+function normalizeApiPath(path) {
+  const value = String(path || "/");
+  return value.startsWith("/") ? value : `/${value}`;
 }
 
-const apiBase = resolveApiBase();
+function resolveApiBase({ apiBaseUrl = "", quoteEndpoint = "", fallbackBaseUrl = "" } = {}) {
+  const configured = String(apiBaseUrl || "").trim().replace(/\/$/, "");
+  if (configured) return configured;
+  const quoteUrl = String(quoteEndpoint || "").trim();
+  try {
+    if (quoteUrl.startsWith("http")) return new URL(quoteUrl).origin;
+  } catch {
+    // Ignore an invalid optional endpoint and continue to the safe fallback.
+  }
+  return String(fallbackBaseUrl || "").trim().replace(/\/$/, "");
+}
+
+export function resolveAuroraApiUrl(path, options = {}) {
+  return `${resolveApiBase(options)}${normalizeApiPath(path)}`;
+}
+
+export function resolveEnquiryApiUrl({
+  explicitEndpoint = "",
+  apiBaseUrl = "",
+  quoteEndpoint = "",
+  isDev = false,
+} = {}) {
+  const override = String(explicitEndpoint || "").trim();
+  if (override) return override;
+  return resolveAuroraApiUrl("/api/enquiries", {
+    apiBaseUrl,
+    quoteEndpoint,
+    fallbackBaseUrl: isDev ? "http://localhost:8787" : "",
+  });
+}
 
 export function catalogApiUrl(path = "/api/catalog") {
-  return `${apiBase}${path}`;
+  return resolveAuroraApiUrl(path, {
+    apiBaseUrl: viteEnv.VITE_AURORA_API_BASE_URL,
+    quoteEndpoint: viteEnv.VITE_QUOTE_AI_ENDPOINT,
+  });
+}
+
+export function enquiryApiUrl() {
+  return resolveEnquiryApiUrl({
+    explicitEndpoint: viteEnv.VITE_ENQUIRY_ENDPOINT,
+    apiBaseUrl: viteEnv.VITE_AURORA_API_BASE_URL,
+    quoteEndpoint: viteEnv.VITE_QUOTE_AI_ENDPOINT,
+    isDev: Boolean(viteEnv.DEV),
+  });
 }
 
 export async function fetchRuntimeCatalog({ signal } = {}) {

@@ -21,7 +21,7 @@ const defaultLocalOrigins = new Set([
   "http://localhost:4826",
   "http://127.0.0.1:4826",
 ]);
-const gameBoundQuoteFields = ["serverRegionId", "devicePlatformId", "heroPowerRegionId"];
+const gameBoundQuoteFields = ["serverCountryId", "serverRegionId", "devicePlatformId", "heroPowerRegionId"];
 
 function hasInvalidGameBoundOption(rawDraft, normalizedDraft) {
   if (!rawDraft || typeof rawDraft !== "object") return false;

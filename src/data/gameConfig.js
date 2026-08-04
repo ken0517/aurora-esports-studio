@@ -131,6 +131,17 @@ const quoteOption = (id, traditionalChinese, english, simplifiedChinese = tradit
   labels: labels(traditionalChinese, english, simplifiedChinese),
 });
 
+const serverCountryOption = (
+  id,
+  traditionalChinese,
+  english,
+  simplifiedChinese = traditionalChinese,
+  serverRegionId = "southeast-asia",
+) => ({
+  ...quoteOption(id, traditionalChinese, english, simplifiedChinese),
+  serverRegionId,
+});
+
 const aovLanes = [
   lane("slayer-lane", "凱撒路", "Slayer lane", "凯撒路", ["凱撒", "凯撒"]),
   lane("jungle", "打野", "Jungle", "打野"),
@@ -190,6 +201,16 @@ const hokGlobalServerRegions = [
   ),
   quoteOption("southeast-asia", "東南亞", "Southeast Asia", "东南亚"),
   quoteOption("hk-mo-tw", "香港／澳門／台灣", "Hong Kong / Macau / Taiwan", "香港／澳门／台湾"),
+];
+
+const hokGlobalServerCountries = [
+  serverCountryOption("malaysia", "馬來西亞", "Malaysia", "马来西亚"),
+  serverCountryOption("singapore", "新加坡", "Singapore", "新加坡"),
+  serverCountryOption("indonesia", "印度尼西亞", "Indonesia", "印度尼西亚"),
+  serverCountryOption("philippines", "菲律賓", "Philippines", "菲律宾"),
+  serverCountryOption("thailand", "泰國", "Thailand", "泰国"),
+  serverCountryOption("vietnam", "越南", "Vietnam", "越南"),
+  serverCountryOption("other", "其他國家／地區", "Other country / region", "其他国家／地区", null),
 ];
 
 const hokChinaDevicePlatforms = [
@@ -322,6 +343,7 @@ function makeGameConfig({
   heroPowerMarks,
   heroPowerMarkAmbiguities = {},
   serverRegions = [],
+  serverCountries = [],
   devicePlatforms = [],
   heroPowerRegions = [],
   requiredQuoteFields = {},
@@ -347,6 +369,7 @@ function makeGameConfig({
     heroPowerMarks,
     heroPowerMarkAmbiguities,
     serverRegions,
+    serverCountries,
     devicePlatforms,
     heroPowerRegions,
     requiredQuoteFields: {
@@ -403,6 +426,7 @@ export const gameConfigs = {
     lanes: kingsLanes,
     heroPowerMarks: hokGlobalHeroPowerMarks,
     serverRegions: hokGlobalServerRegions,
+    serverCountries: hokGlobalServerCountries,
     requiredQuoteFields: {
       allServices: ["serverRegionId"],
     },
@@ -467,6 +491,23 @@ export function getServerRegionById(gameId, regionId) {
 
 export function getServerRegionLabel(gameId, regionId, locale = "zh-HK") {
   return localizeGameValue(getServerRegionById(gameId, regionId)?.labels, locale);
+}
+
+export function getServerCountriesForGame(gameId) {
+  return getGameConfig(gameId)?.serverCountries ?? [];
+}
+
+export function getServerCountryById(gameId, countryId) {
+  return getServerCountriesForGame(gameId).find((item) => item.id === countryId) ?? null;
+}
+
+export function getServerCountryLabel(gameId, countryId, locale = "zh-HK") {
+  return localizeGameValue(getServerCountryById(gameId, countryId)?.labels, locale);
+}
+
+export function getServerRegionForCountry(gameId, countryId) {
+  const country = getServerCountryById(gameId, countryId);
+  return country ? getServerRegionById(gameId, country.serverRegionId) : null;
 }
 
 export function getDevicePlatformsForGame(gameId) {

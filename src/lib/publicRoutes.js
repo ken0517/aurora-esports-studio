@@ -17,7 +17,7 @@ export function resolvePublicRoute(pathname = "/") {
   if (infoPage) return { type: "info", slug: infoPage.slug };
 
   const page = getGameLandingPageBySlug(cleanPath);
-  if (page) return { type: "game", gameId: page.gameId };
+  if (page) return { type: "game", gameId: page.gameId, slug: page.slug };
 
   return { type: "home" };
 }

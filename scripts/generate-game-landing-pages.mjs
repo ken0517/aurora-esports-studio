@@ -74,6 +74,8 @@ function replaceRootContent(source, content) {
 }
 
 function renderGameCrawlerContent(page) {
+  const ui = page.ui || {};
+  const details = ui.details || {};
   const cases = page.caseStudies?.length
     ? `<section><h2>${escapeHtml(page.caseStudySection.title)}</h2><p>${escapeHtml(page.caseStudySection.description)}</p>${page.caseStudies
         .map(
@@ -88,10 +90,10 @@ function renderGameCrawlerContent(page) {
     <article>
       <p>${escapeHtml(page.eyebrow)}</p><h1>${escapeHtml(page.title)}</h1><p>${escapeHtml(page.intro)}</p>
       <section><h2>${escapeHtml(page.searchGuide.title)}</h2>${page.searchGuide.paragraphs.map((text) => `<p>${escapeHtml(text)}</p>`).join("")}</section>
-      <section><h2>適用遊戲資料</h2><p>${escapeHtml(page.rankSummary)}</p><h3>指定位置／分路</h3>${renderTextList(page.lanes)}<h3>英雄戰力標</h3>${renderTextList(page.marks)}<p>${escapeHtml(page.priceNotice)}</p></section>
+      <section><h2>${escapeHtml(details.title || "適用遊戲資料")}</h2><p>${escapeHtml(page.rankSummary)}</p><h3>${escapeHtml(details.lanes || "指定位置／分路")}</h3>${renderTextList(page.lanes)}<h3>${escapeHtml(details.marks || "英雄戰力標")}</h3>${renderTextList(page.marks)}<p>${escapeHtml(page.priceNotice)}</p></section>
       ${cases}
-      <section><h2>常見問題</h2>${page.faqs.map((faq) => `<h3>${escapeHtml(faq.question)}</h3><p>${escapeHtml(faq.answer)}</p>`).join("")}</section>
-      <nav><a href="/klg-studio/">KLG Studio</a><a href="/about-aurora/">關於 Aurora</a><a href="/service-process-safety/">服務流程與安全</a><a href="/#ai-quote">填寫報價表</a></nav>
+      <section><h2>${escapeHtml(ui.faq?.title || "常見問題")}</h2>${page.faqs.map((faq) => `<h3>${escapeHtml(faq.question)}</h3><p>${escapeHtml(faq.answer)}</p>`).join("")}</section>
+      <nav><a href="/klg-studio/">KLG Studio</a><a href="/about-aurora/">Aurora Esports Studio</a><a href="/service-process-safety/">Service process</a><a href="/#ai-quote">${escapeHtml(ui.cta?.manual || "填寫報價表")}</a></nav>
     </article>
   </main>`;
 }
@@ -160,6 +162,31 @@ function replaceCanonical(source, canonical) {
     tagPattern,
     (tag) => tag.replace(/href="[^"]*"/i, `href="${escapeHtml(canonical)}"`),
     markers.canonical,
+  );
+}
+
+function replaceHtmlLanguage(source, language = "zh-Hant") {
+  return replaceRequired(
+    source,
+    /<html\s+[^>]*lang="[^"]*"[^>]*>/i,
+    (tag) => tag.replace(/lang="[^"]*"/i, `lang="${escapeHtml(language)}"`),
+    "html lang",
+  );
+}
+
+function insertAlternateLinks(source, alternates = []) {
+  if (!alternates.length) return source;
+  const links = alternates
+    .map(
+      ({ hreflang, href }) =>
+        `    <link rel="alternate" hreflang="${escapeHtml(hreflang)}" href="${escapeHtml(href)}" />`,
+    )
+    .join("\n");
+  return replaceRequired(
+    source,
+    /(<link\s+[^>]*rel="canonical"[^>]*>)/i,
+    `$1\n${links}`,
+    "canonical link for hreflang",
   );
 }
 
@@ -240,6 +267,8 @@ function makeBreadcrumbData(page) {
 }
 
 function makeStructuredData(page) {
+  const pageMarkets = page.serviceMarkets || serviceMarketNames;
+  const pageLanguages = page.language ? [page.language] : supportedLanguageIds;
   return {
     "@context": "https://schema.org",
     "@graph": [
@@ -253,9 +282,10 @@ function makeStructuredData(page) {
         url: page.canonical,
         image: `${officialOrigin}/${page.image}`,
         description: page.seoDescription,
-        areaServed: serviceMarketNames.map((name) => ({ "@type": "Country", name })),
-        availableLanguage: supportedLanguageIds,
-        serviceType: ["排位代打", "陪玩帶飛", "巔峰賽代打", "英雄戰力標", "遊戲教學"],
+        areaServed: pageMarkets.map((name) => ({ "@type": "Country", name })),
+        availableLanguage: pageLanguages,
+        serviceType: page.serviceCards?.map((service) => service.title)
+          || ["排位代打", "陪玩帶飛", "巔峰賽代打", "英雄戰力標", "遊戲教學"],
         audience: { "@type": "Audience", audienceType: page.audience },
         provider: { "@id": organizationId },
         brand: { "@id": brandId },
@@ -263,7 +293,7 @@ function makeStructuredData(page) {
           "@type": "ContactPoint",
           contactType: "customer service",
           url: "https://wa.me/447442619658",
-          availableLanguage: supportedLanguageIds,
+          availableLanguage: pageLanguages,
         },
       },
       {
@@ -274,7 +304,7 @@ function makeStructuredData(page) {
         description: page.seoDescription,
         isPartOf: { "@id": websiteId },
         about: { "@id": `${page.canonical}#service` },
-        inLanguage: "zh-Hant",
+        inLanguage: page.language || "zh-Hant",
       },
       makeFaqData(page),
       makeBreadcrumbData(page),
@@ -352,8 +382,10 @@ function renderLandingDocument(template, page) {
     `<title>${escapeHtml(page.seoTitle)}</title>`,
     "<title>",
   );
+  html = replaceHtmlLanguage(html, page.language || "zh-Hant");
   html = replaceMetaContent(html, markers.description, page.seoDescription);
   html = replaceCanonical(html, page.canonical);
+  html = insertAlternateLinks(html, page.alternates);
   html = replaceMetaContent(html, markers.ogTitle, page.seoTitle);
   html = replaceMetaContent(html, markers.ogDescription, page.seoDescription);
   html = replaceMetaContent(html, markers.ogUrl, page.canonical);

@@ -67,6 +67,7 @@ test("quote context keeps only central options that belong to the selected game"
     cleanQuoteContext(
       {
         gameId: "aov",
+        serverCountryId: "malaysia",
         serverRegionId: "americas",
         devicePlatformId: "ios",
         heroPowerRegionId: "taiwan",
@@ -99,6 +100,7 @@ test("quote context keeps only central options that belong to the selected game"
     cleanQuoteContext(
       {
         gameId: "hok-global",
+        serverCountryId: "malaysia",
         serverRegionId: "southeast-asia",
         devicePlatformId: "ios",
         heroPowerRegionId: "hong-kong",
@@ -108,6 +110,7 @@ test("quote context keeps only central options that belong to the selected game"
     {
       locale: "zh-HK",
       gameId: "hok-global",
+      serverCountryId: "malaysia",
       serverRegionId: "southeast-asia",
     },
   );
@@ -146,6 +149,16 @@ test("central AI context exposes server, platform and hero-power region options 
     "southeast-asia",
     "hk-mo-tw",
   ]);
+  assert.deepEqual(global.serverCountries.map((item) => [item.id, item.serverRegionId]), [
+    ["malaysia", "southeast-asia"],
+    ["singapore", "southeast-asia"],
+    ["indonesia", "southeast-asia"],
+    ["philippines", "southeast-asia"],
+    ["thailand", "southeast-asia"],
+    ["vietnam", "southeast-asia"],
+    ["other", null],
+  ]);
+  assert.deepEqual(aov.serverCountries, []);
   assert.deepEqual(global.devicePlatforms, []);
   assert.deepEqual(global.heroPowerRegions, []);
 });
@@ -156,8 +169,8 @@ test("deterministic follow-up collects the one missing game-bound option", () =>
     { gameId: "hok-global", serviceId: "rank" },
     "en",
   );
-  assert.match(global.message, /server region/i);
-  assert.match(global.message, /Americas/);
+  assert.match(global.message, /country|region/i);
+  assert.match(global.message, /Malaysia/);
 
   const china = buildDeterministicFollowUp(
     [{ role: "user", content: "I want a rank quote" }],
@@ -175,12 +188,22 @@ test("deterministic follow-up collects the one missing game-bound option", () =>
   assert.match(aov.message, /Hong Kong.*Taiwan.*Macau/i);
 
   const detected = buildDeterministicFollowUp(
-    [{ role: "user", content: "Southeast Asia" }],
+    [{ role: "user", content: "Malaysia" }],
     { gameId: "hok-global", serviceId: "rank" },
     "en",
   );
+  assert.equal(detected?.patch.serverCountryId, "malaysia");
   assert.equal(detected?.patch.serverRegionId, "southeast-asia");
-  assert.doesNotMatch(detected?.message || "", /which server region/i);
+  assert.doesNotMatch(detected?.message || "", /which country/i);
+
+  const other = buildDeterministicFollowUp(
+    [{ role: "user", content: "Other country / region" }],
+    { gameId: "hok-global", serviceId: "rank" },
+    "en",
+  );
+  assert.equal(other?.patch.serverCountryId, "other");
+  assert.match(other?.message || "", /server region/i);
+  assert.match(other?.message || "", /Americas/);
 });
 
 test("a new service request is handled before asking for a stale service-only field", () => {
@@ -550,6 +573,7 @@ test("normal chat preserves the frontend response shape and maps assistant histo
       responseId: "gemini-normal-chat-1",
       model: "gemini-3.1-flash-lite",
       pricingStatus: "incomplete",
+      quoteContext: { locale: "zh-HK", gameId: "hok-cn" },
     });
     assert.equal(fake.calls.length, 1);
     assert.deepEqual(
@@ -718,6 +742,15 @@ test("Gemini receives all three games from the shared central configuration", as
   assert.equal(declaration.parametersJsonSchema.properties.currentHeroPowerPoints.type, "number");
   assert.equal(declaration.parametersJsonSchema.properties.targetHeroPowerPoints.type, "number");
   assert.equal(declaration.parametersJsonSchema.properties.preferredStartTime.type, "string");
+  assert.deepEqual(declaration.parametersJsonSchema.properties.serverCountryId.enum, [
+    "malaysia",
+    "singapore",
+    "indonesia",
+    "philippines",
+    "thailand",
+    "vietnam",
+    "other",
+  ]);
   assert.deepEqual(declaration.parametersJsonSchema.properties.serverRegionId.enum, [
     "americas",
     "europe",
@@ -732,6 +765,24 @@ test("Gemini receives all three games from the shared central configuration", as
     "taiwan",
     "macau",
   ]);
+});
+
+test("AI responses return the cleaned country and derived server region for the next turn", async () => {
+  const { handler } = createConfiguredHandler({
+    responses: [responseWithText("What is your current rank?")],
+  });
+
+  await withHttpServer(handler, async (baseUrl) => {
+    const { response, payload } = await postJson(baseUrl, {
+      locale: "en",
+      messages: [{ role: "user", content: "Malaysia" }],
+      quoteContext: { gameId: "hok-global", serviceId: "rank" },
+    });
+
+    assert.equal(response.status, 200);
+    assert.equal(payload.quoteContext.serverCountryId, "malaysia");
+    assert.equal(payload.quoteContext.serverRegionId, "southeast-asia");
+  });
 });
 
 test("customer-visible model text is presented only as Aurora customer service", async () => {

@@ -1,7 +1,9 @@
 import {
   getDevicePlatformById,
   getHeroPowerRegionById,
+  getServerCountryById,
   getServerRegionById,
+  getServerRegionForCountry,
   serviceDefinitions,
   supportedGameIds,
 } from "../src/data/gameConfig.js";
@@ -23,7 +25,16 @@ const gameIds = new Set(supportedGameIds);
 const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const isoPattern = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{3})?Z$/;
 const locales = new Set(["zh-HK", "en", "zh-CN"]);
-const acquisitionChannels = new Set(["google", "carousell", "instagram", "direct", "other"]);
+const acquisitionChannels = new Set([
+  "google",
+  "carousell",
+  "instagram",
+  "whatsapp",
+  "line",
+  "discord",
+  "direct",
+  "other",
+]);
 
 function cleanString(value, maxLength = 500) {
   return typeof value === "string" ? value.trim().slice(0, maxLength) : "";
@@ -120,6 +131,7 @@ function normalizeAcquisitionTouch(input) {
     utmSource: cleanCampaignToken(input.utmSource),
     utmMedium: cleanCampaignToken(input.utmMedium),
     utmCampaign: cleanCampaignToken(input.utmCampaign),
+    utmContent: cleanCampaignToken(input.utmContent),
     capturedAt,
   };
 }
@@ -186,14 +198,20 @@ function normalizeConversation(input) {
 export function normalizeEnquiryDraft(input = {}) {
   const gameId = cleanGameId(input.gameId);
   const serviceId = cleanServiceId(input.serviceId);
+  const serverCountryId = cleanNullableString(input.serverCountryId, 40);
   const serverRegionId = cleanNullableString(input.serverRegionId, 40);
   const devicePlatformId = cleanNullableString(input.devicePlatformId, 40);
   const heroPowerRegionId = cleanNullableString(input.heroPowerRegionId, 40);
+  const serverCountry = getServerCountryById(gameId, serverCountryId);
+  const mappedServerRegion = serverCountry
+    ? getServerRegionForCountry(gameId, serverCountry.id)
+    : null;
   return {
     intent: cleanNullableString(input.intent, 40),
     gameId,
     serviceId,
-    serverRegionId: getServerRegionById(gameId, serverRegionId)?.id ?? null,
+    serverCountryId: serverCountry?.id ?? null,
+    serverRegionId: mappedServerRegion?.id ?? getServerRegionById(gameId, serverRegionId)?.id ?? null,
     devicePlatformId: getDevicePlatformById(gameId, devicePlatformId)?.id ?? null,
     heroPowerRegionId: serviceId === "hero-power"
       ? getHeroPowerRegionById(gameId, heroPowerRegionId)?.id ?? null

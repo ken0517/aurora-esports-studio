@@ -409,8 +409,20 @@ function Dashboard({ onLogout }) {
     onLogout();
   };
 
-  if (!catalog || status === "loading") {
+  if (!catalog && status === "loading") {
     return <div className="admin-loading"><LoaderCircle className="admin-spin" /><span>正在載入 Aurora 後台…</span></div>;
+  }
+
+  if (!catalog && status === "error") {
+    return (
+      <div className="admin-loading" role="alert">
+        <div>
+          <h1>無法開啟價格管理</h1>
+          <p>{message || "暫時無法載入中央價格資料，請檢查連線後重試。"}</p>
+          <button className="admin-primary" type="button" onClick={load}>重新嘗試</button>
+        </div>
+      </div>
+    );
   }
 
   return (

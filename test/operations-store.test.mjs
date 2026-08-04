@@ -81,10 +81,11 @@ test("normalization strips unknown fields and rejects invalid order statuses", (
       quote: { status: "manual_review", reason: "pricing-unconfigured" },
       acquisition: {
         firstTouch: {
-          channel: "google",
+          channel: "whatsapp",
           landingPath: "/hok-rank-boost/?query=drop",
-          referrerHost: "www.google.com/search/private",
+          referrerHost: "wa.me/send/private",
           utmCampaign: "campaign",
+          utmContent: "quote_share",
           capturedAt: "2026-07-16T10:00:00.000Z",
           clickId: "drop",
         },
@@ -105,12 +106,13 @@ test("normalization strips unknown fields and rejects invalid order statuses", (
   assert.equal(state.enquiries[0].extra, undefined);
   assert.equal(state.enquiries[0].quote.reason, "pricing-unconfigured");
   assert.deepEqual(state.enquiries[0].acquisition.firstTouch, {
-    channel: "google",
+    channel: "whatsapp",
     landingPath: "/hok-rank-boost/",
-    referrerHost: "www.google.com",
+    referrerHost: "wa.me",
     utmSource: null,
     utmMedium: null,
     utmCampaign: "campaign",
+    utmContent: "quote_share",
     capturedAt: "2026-07-16T10:00:00.000Z",
   });
   assert.equal(state.orders.length, 1);
@@ -137,10 +139,11 @@ test("enquiry draft normalization preserves only fields valid for the selected g
   const globalDraft = normalizeEnquiryDraft({
     gameId: "hok-global",
     serviceId: "hero-power",
-    serverRegionId: "southeast-asia",
+    serverCountryId: "malaysia",
     devicePlatformId: "ios",
     heroPowerRegionId: "hong-kong",
   });
+  assert.equal(globalDraft.serverCountryId, "malaysia");
   assert.equal(globalDraft.serverRegionId, "southeast-asia");
   assert.equal(globalDraft.devicePlatformId, null);
   assert.equal(globalDraft.heroPowerRegionId, null);
@@ -148,9 +151,11 @@ test("enquiry draft normalization preserves only fields valid for the selected g
   const chinaDraft = normalizeEnquiryDraft({
     gameId: "hok-cn",
     serviceId: "rank",
+    serverCountryId: "malaysia",
     serverRegionId: "southeast-asia",
     devicePlatformId: "ios",
   });
+  assert.equal(chinaDraft.serverCountryId, null);
   assert.equal(chinaDraft.serverRegionId, null);
   assert.equal(chinaDraft.devicePlatformId, "ios");
 
@@ -170,6 +175,11 @@ test("enquiry draft normalization preserves only fields valid for the selected g
 });
 
 test("enquiry draft normalization rejects unknown regional option ids", () => {
+  assert.equal(normalizeEnquiryDraft({
+    gameId: "hok-global",
+    serviceId: "rank",
+    serverCountryId: "unknown-country",
+  }).serverCountryId, null);
   assert.equal(normalizeEnquiryDraft({
     gameId: "hok-global",
     serviceId: "rank",

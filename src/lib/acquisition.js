@@ -1,7 +1,16 @@
 import { readPrivacyConsent } from "./privacyConsent.js";
 
 const STORAGE_KEY = "aurora:acquisition:v1";
-const CHANNELS = new Set(["google", "carousell", "instagram", "direct", "other"]);
+const CHANNELS = new Set([
+  "google",
+  "carousell",
+  "instagram",
+  "whatsapp",
+  "line",
+  "discord",
+  "direct",
+  "other",
+]);
 
 function safeUrl(value, base = "https://auroraesportstudio.com/") {
   try {
@@ -36,6 +45,9 @@ function channelFromSource(source) {
   if (!normalized) return null;
   if (normalized.includes("carousell")) return "carousell";
   if (normalized.includes("instagram") || normalized === "ig") return "instagram";
+  if (normalized.includes("whatsapp") || normalized === "wa" || normalized === "wa.me") return "whatsapp";
+  if (normalized === "line" || normalized === "line.me") return "line";
+  if (normalized.includes("discord")) return "discord";
   if (normalized.includes("google")) return "google";
   if (normalized === "direct") return "direct";
   return "other";
@@ -46,6 +58,9 @@ function channelFromHost(host, ownHost) {
   if (/(^|\.)google\./.test(host)) return "google";
   if (/(^|\.)carousell\./.test(host)) return "carousell";
   if (host === "instagram.com" || host.endsWith(".instagram.com")) return "instagram";
+  if (host === "wa.me" || host === "whatsapp.com" || host.endsWith(".whatsapp.com")) return "whatsapp";
+  if (host === "line.me" || host.endsWith(".line.me")) return "line";
+  if (host === "discord.gg" || host === "discord.com" || host.endsWith(".discord.com")) return "discord";
   return "other";
 }
 
@@ -63,6 +78,7 @@ function normalizeStoredTouch(input) {
     utmSource: cleanToken(input.utmSource),
     utmMedium: cleanToken(input.utmMedium),
     utmCampaign: cleanToken(input.utmCampaign),
+    utmContent: cleanToken(input.utmContent),
     capturedAt,
   };
 }
@@ -101,6 +117,7 @@ export function classifyAcquisition({
     utmSource,
     utmMedium: cleanToken(location?.searchParams.get("utm_medium")),
     utmCampaign: cleanToken(location?.searchParams.get("utm_campaign")),
+    utmContent: cleanToken(location?.searchParams.get("utm_content")),
     capturedAt: new Date(capturedAt).toISOString(),
   };
 }

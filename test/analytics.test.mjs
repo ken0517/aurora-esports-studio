@@ -133,3 +133,14 @@ test("analytics ignores unknown event names", async () => {
   assert.equal(trackEvent("send_customer_message", { game_id: "aov" }, harness), false);
   assert.equal(harness.windowObject.dataLayer.length, before);
 });
+
+test("a successfully stored enquiry can be marked as a safe conversion", async () => {
+  const { enableAnalytics, trackEnquirySubmitted } = await import(analyticsModuleUrl);
+  const harness = createBrowserHarness();
+  enableAnalytics("G-AURORA123", harness);
+
+  assert.equal(trackEnquirySubmitted({ gameId: "hok-global", serviceId: "duo", status: "quoted" }, harness), true);
+  const commands = harness.windowObject.dataLayer.map((args) => Array.from(args));
+  const event = commands.find((command) => command[0] === "event" && command[1] === "enquiry_submitted");
+  assert.deepEqual(event[2], { game_id: "hok-global", service_id: "duo", quote_status: "quoted" });
+});

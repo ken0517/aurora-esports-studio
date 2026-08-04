@@ -26,6 +26,66 @@ test("three indexable game landing pages use the approved clean routes", async (
   assert.match(routes, /export function buildQuoteEntryUrl/);
 });
 
+test("Malaysia-first HOK pages exist in Malay, English and Simplified Chinese", async () => {
+  const { gameLandingPages, getGameLandingPageBySlug } = await import("../src/data/gameLandingPages.js");
+  const expected = [
+    ["my/honor-of-kings", "ms-MY"],
+    ["my/en/honor-of-kings", "en-MY"],
+    ["my/zh-cn/honor-of-kings", "zh-Hans-MY"],
+  ];
+
+  for (const [slug, language] of expected) {
+    const page = getGameLandingPageBySlug(slug);
+    assert.ok(page, `${slug} is missing`);
+    assert.equal(page.gameId, "hok-global");
+    assert.equal(page.language, language);
+    assert.deepEqual(page.serviceMarkets, ["Malaysia"]);
+    assert.equal(page.canonical, `https://auroraesportstudio.com/${slug}/`);
+    assert.equal(page.alternates.length, 4);
+    assert.ok(page.ui?.navigation?.services);
+    assert.ok(page.ui?.cta?.support);
+    assert.ok(page.ui?.processSteps?.length >= 4);
+    assert.ok(page.serviceCards?.length >= 4);
+  }
+  assert.equal(gameLandingPages.length, 6);
+});
+
+test("Malaysia HOK copy focuses on safe support, coaching and review services", async () => {
+  const { getGameLandingPageBySlug } = await import("../src/data/gameLandingPages.js");
+  for (const slug of [
+    "my/honor-of-kings",
+    "my/en/honor-of-kings",
+    "my/zh-cn/honor-of-kings",
+  ]) {
+    const page = getGameLandingPageBySlug(slug);
+    const copy = JSON.stringify(page);
+    assert.match(copy, /coaching|陪玩|教學|教学|bimbingan/i);
+    assert.match(copy, /review|復盤|复盘|ulasan/i);
+    assert.doesNotMatch(`${page.seoTitle} ${page.title}`, /boost|代打|保證|保证/i);
+  }
+});
+
+test("localized HOK routes preserve their landing slug", async () => {
+  const { resolvePublicRoute } = await import("../src/lib/publicRoutes.js");
+  assert.deepEqual(resolvePublicRoute("/my/en/honor-of-kings/"), {
+    type: "game",
+    gameId: "hok-global",
+    slug: "my/en/honor-of-kings",
+  });
+});
+
+test("shared landing UI reads localized page labels and service cards", async () => {
+  const [rootApp, page] = await Promise.all([
+    source("src/RootApp.jsx"),
+    source("src/GameLandingPage.jsx"),
+  ]);
+  assert.match(rootApp, /pageSlug=\{route\.slug\}/);
+  assert.match(page, /getGameLandingPageBySlug\(pageSlug\)/);
+  assert.match(page, /page\.serviceCards \?\? services/);
+  assert.match(page, /page\.ui/);
+  assert.match(page, /ui\.cta\.support/);
+});
+
 test("landing page copy is formal Traditional Chinese and does not make unsupported claims", async () => {
   const data = await source("src/data/gameLandingPages.js");
 
@@ -44,9 +104,10 @@ test("landing page copy is formal Traditional Chinese and does not make unsuppor
 test("each game page has useful search guidance, expanded FAQs and internal discovery links", async () => {
   const { gameLandingPages } = await import("../src/data/gameLandingPages.js");
   const expectedIds = ["aov", "hok-cn", "hok-global"];
+  const corePages = gameLandingPages.filter((page) => !page.language);
 
-  assert.equal(gameLandingPages.length, 3);
-  for (const page of gameLandingPages) {
+  assert.equal(corePages.length, 3);
+  for (const page of corePages) {
     assert.match(`${page.seoDescription} ${page.audience} ${page.searchGuide.title}`, /澳門/);
     assert.match(page.searchGuide?.title || "", /香港|台灣/);
     assert.ok((page.searchGuide?.paragraphs || []).length >= 2);
@@ -193,8 +254,24 @@ test("landing pages and homepage share game-aware quote entry links", async () =
 
   assert.match(app, /quoteGame/);
   assert.match(app, /quotePane/);
+  const deepLinkStart = app.indexOf('const params = new URLSearchParams(window.location.search);');
+  const deepLinkEnd = app.indexOf('  }, [locale]);', deepLinkStart);
+  const deepLinkEffect = app.slice(deepLinkStart, deepLinkEnd);
+  assert.doesNotMatch(
+    deepLinkEffect,
+    /requestAnimationFrame|cancelAnimationFrame/,
+    "quote deep links must not be lost during React StrictMode effect replay",
+  );
   assert.match(deferred, /prefillRequest\?\.pane/);
   assert.match(quote, /prefillRequest\?\.gameId/);
+  const quotePrefillStart = quote.indexOf('const requestText = String(prefillRequest?.text ?? "").trim();');
+  const quotePrefillEnd = quote.indexOf('  }, [', quotePrefillStart);
+  const quotePrefillEffect = quote.slice(quotePrefillStart, quotePrefillEnd);
+  assert.doesNotMatch(
+    quotePrefillEffect,
+    /requestAnimationFrame|cancelAnimationFrame/,
+    "quote prefill must not be cancelled during React StrictMode effect replay",
+  );
 });
 
 test("home and game pages link to public Aurora trust pages", async () => {

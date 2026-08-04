@@ -13,6 +13,10 @@ import {
   getLanesForGame,
   getRanksForGameConfig,
   getRequiredQuoteFieldsForGame,
+  getServerCountriesForGame,
+  getServerCountryById,
+  getServerCountryLabel,
+  getServerRegionForCountry,
   getServerRegionById,
   getServerRegionLabel,
   getServerRegionsForGame,
@@ -33,6 +37,7 @@ test("each game exposes the complete central configuration shape", () => {
       "lanes",
       "heroPowerMarks",
       "serverRegions",
+      "serverCountries",
       "devicePlatforms",
       "heroPowerRegions",
       "requiredQuoteFields",
@@ -42,6 +47,33 @@ test("each game exposes the complete central configuration shape", () => {
     }
     assert.strictEqual(getRanksForGame(config.id), getRanksForGameConfig(config.id));
   }
+});
+
+test("HOK global central config maps the six priority Southeast Asian countries to one server region", () => {
+  const countries = getServerCountriesForGame("hok-global");
+
+  assert.deepEqual(countries.slice(0, 6).map((country) => country.id), [
+    "malaysia",
+    "singapore",
+    "indonesia",
+    "philippines",
+    "thailand",
+    "vietnam",
+  ]);
+  assert.deepEqual(countries.slice(0, 6).map((country) => country.serverRegionId), [
+    "southeast-asia",
+    "southeast-asia",
+    "southeast-asia",
+    "southeast-asia",
+    "southeast-asia",
+    "southeast-asia",
+  ]);
+  assert.equal(getServerCountryLabel("hok-global", "malaysia", "en"), "Malaysia");
+  assert.equal(getServerCountryLabel("hok-global", "other", "en"), "Other country / region");
+  assert.equal(getServerRegionForCountry("hok-global", "other"), null);
+  assert.equal(getServerCountryById("aov", "malaysia"), null);
+  assert.equal(getServerRegionForCountry("hok-global", "malaysia")?.id, "southeast-asia");
+  assert.equal(getServerRegionForCountry("hok-cn", "malaysia"), null);
 });
 
 test("server, device and hero-power regions are isolated by game", () => {

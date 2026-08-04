@@ -153,7 +153,43 @@ test("robots and sitemap advertise the official Aurora domain", async () => {
   assert.match(sitemap, new RegExp(`<loc>${officialOrigin}/honor-of-kings-cn-boosting/</loc>`));
   assert.match(sitemap, new RegExp(`<loc>${officialOrigin}/honor-of-kings-global-boosting/</loc>`));
   assert.match(sitemap, new RegExp(`<loc>${officialOrigin}/privacy/</loc>`));
+  for (const path of [
+    "my/honor-of-kings",
+    "my/en/honor-of-kings",
+    "my/zh-cn/honor-of-kings",
+  ]) {
+    assert.match(sitemap, new RegExp(`<loc>${officialOrigin}/${path}/</loc>`));
+  }
   assert.doesNotMatch(`${robots}\n${sitemap}`, /ken0517\.github\.io\/aurora-esports-studio/);
+});
+
+test("Malaysia HOK documents publish canonical, hreflang and Malaysia-specific schema", async () => {
+  for (const [slug, language] of [
+    ["my/honor-of-kings", "ms-MY"],
+    ["my/en/honor-of-kings", "en-MY"],
+    ["my/zh-cn/honor-of-kings", "zh-Hans-MY"],
+  ]) {
+    const html = await read(`dist/${slug}/index.html`);
+    assert.match(html, new RegExp(`<link rel="canonical" href="${officialOrigin}/${slug}/"`));
+    assert.match(html, new RegExp(`<html[^>]*lang="${language}"`));
+    assert.match(html, /hreflang="ms-MY"/);
+    assert.match(html, /hreflang="en-MY"/);
+    assert.match(html, /hreflang="zh-Hans-MY"/);
+    assert.match(html, /hreflang="x-default"/);
+
+    const graph = extractJsonLd(html).flatMap((item) => item["@graph"] ?? [item]);
+    const service = graph.find((item) => item["@type"] === "Service");
+    const webpage = graph.find((item) => item["@type"] === "WebPage");
+    assert.deepEqual(service.areaServed, [{ "@type": "Country", name: "Malaysia" }]);
+    assert.equal(webpage.inLanguage, language);
+  }
+});
+
+test("AI-readable public index includes all Malaysia HOK language pages", async () => {
+  const llms = await read("public/llms.txt");
+  assert.match(llms, /\/my\/honor-of-kings\//);
+  assert.match(llms, /\/my\/en\/honor-of-kings\//);
+  assert.match(llms, /\/my\/zh-cn\/honor-of-kings\//);
 });
 
 test("production output exposes a crawler-ready privacy policy", async () => {

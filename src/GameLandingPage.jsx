@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { ArrowLeft, ArrowRight, MessageCircle, ShieldCheck } from "lucide-react";
 import PrivacyFooterLinks from "./components/PrivacyFooterLinks.jsx";
 import { contactLinks } from "./data/content.js";
-import { getGameLandingPageById } from "./data/gameLandingPages.js";
+import { getGameLandingPageById, getGameLandingPageBySlug } from "./data/gameLandingPages.js";
 import {
   getEditorialServicesForGame,
   getServiceEditorialText,
@@ -12,21 +12,73 @@ import { buildGameLandingPath, buildQuoteEntryUrl } from "./lib/publicRoutes.js"
 import { publicAsset } from "./lib/publicAsset.js";
 import "./styles/game-landing.css";
 
-const processSteps = [
+const defaultProcessSteps = [
   ["01", "選擇服務", "確認遊戲、目前狀況與希望達成的目標。"],
   ["02", "整理報價", "系統採用 Aurora 已確認價格；特殊要求會交由客服確認。"],
   ["03", "確認安排", "透過 WhatsApp 或 LINE 確認資料、開始時間及服務安排。"],
   ["04", "跟進進度", "服務期間按已確認方式跟進，完成後整理所需資料。"],
 ];
 
+const defaultUi = {
+  navigation: {
+    label: "頁面導覽",
+    services: "服務",
+    records: "實際紀錄",
+    details: "遊戲資料",
+    faq: "常見問題",
+    quote: "填寫報價",
+    home: "返回三款遊戲",
+  },
+  services: {
+    eyebrow: "AURORA SERVICES",
+    title: "按你的目標選擇服務。",
+    description: "所有服務共用 Aurora 現有報價及客服流程，已確認的項目會計算暫估金額，其餘項目會清楚標示待人工確認。",
+    quote: "查詢報價",
+  },
+  guideCta: "整理遊戲資料並查詢報價",
+  details: {
+    eyebrow: "GAME DETAILS",
+    title: "只顯示這款遊戲適用的資料。",
+    lanes: "指定位置／分路",
+    marks: "英雄戰力標",
+  },
+  process: { eyebrow: "HOW IT WORKS", title: "由查詢到安排，每一步都清楚。" },
+  processSteps: defaultProcessSteps,
+  faq: { eyebrow: "FREQUENTLY ASKED", title: "查詢前常見問題。" },
+  related: {
+    eyebrow: "EXPLORE AURORA",
+    title: "查看其他遊戲服務。",
+    description: "每款遊戲使用獨立段位、分路及戰力標設定，切換頁面後不會混用資料。",
+    view: "查看服務",
+  },
+  cta: {
+    eyebrow: "PRIVATE QUOTATION",
+    title: "告訴 Aurora 你的目標。",
+    description: "先整理遊戲、段位與服務資料，再選擇 WhatsApp 或 LINE 確認安排。",
+    manual: "建立專屬報價",
+    support: "問 Aurora 客服",
+  },
+  footer: "香港、台灣及澳門手機 MOBA 遊戲服務",
+};
+
 function updateMeta(selector, attribute, value) {
   const element = document.querySelector(selector);
   if (element) element.setAttribute(attribute, value);
 }
 
-export default function GameLandingPage({ gameId }) {
-  const page = getGameLandingPageById(gameId);
+function updateDocumentTitle(value) {
+  document.title = value;
+}
+
+function updateDocumentLanguage(value) {
+  document.documentElement.setAttribute("lang", value);
+}
+
+export default function GameLandingPage({ gameId, pageSlug = null }) {
+  const page = getGameLandingPageBySlug(pageSlug) ?? getGameLandingPageById(gameId);
   const services = getEditorialServicesForGame(gameId);
+  const displayServices = page ? (page.serviceCards ?? services) : services;
+  const ui = page && page.ui ? page.ui : defaultUi;
   const [activeCaseStudy, setActiveCaseStudy] = useState(null);
   const [isLightboxClosing, setIsLightboxClosing] = useState(false);
   const closeButtonRef = useRef(null);
@@ -35,12 +87,22 @@ export default function GameLandingPage({ gameId }) {
 
   useEffect(() => {
     if (!page) return;
-    document.title = page.seoTitle;
+    updateDocumentTitle(page.seoTitle);
     updateMeta('meta[name="description"]', "content", page.seoDescription);
     updateMeta('link[rel="canonical"]', "href", page.canonical);
     updateMeta('meta[property="og:title"]', "content", page.seoTitle);
     updateMeta('meta[property="og:description"]', "content", page.seoDescription);
     updateMeta('meta[property="og:url"]', "content", page.canonical);
+    updateDocumentLanguage(page.language || "zh-Hant");
+    document.querySelectorAll('link[data-aurora-hreflang="true"]').forEach((link) => link.remove());
+    for (const alternate of page.alternates || []) {
+      const link = document.createElement("link");
+      link.rel = "alternate";
+      link.hreflang = alternate.hreflang;
+      link.href = alternate.href;
+      link.dataset.auroraHreflang = "true";
+      document.head.append(link);
+    }
   }, [page]);
 
   const closeLightbox = useCallback(() => {
@@ -112,16 +174,16 @@ export default function GameLandingPage({ gameId }) {
   return (
     <div className={`game-landing game-landing--${gameId}`}>
       <header className="game-landing__header">
-        <a className="game-landing__brand" href="/" aria-label="返回 Aurora Esports Studio 首頁">
+        <a className="game-landing__brand" href="/" aria-label={ui.navigation.home}>
           <span aria-hidden="true">A</span>
           <strong>Aurora Esports Studio</strong>
         </a>
-        <nav aria-label="頁面導覽">
-          <a href="#services">服務</a>
-          {page.caseStudies?.length ? <a href="#case-studies">實際紀錄</a> : null}
-          <a href="#details">遊戲資料</a>
-          <a href="#faq">常見問題</a>
-          <a className="game-landing__header-cta" href={buildQuoteEntryUrl(gameId, "manual")} onClick={() => handleQuoteClick("manual")}>填寫報價</a>
+        <nav aria-label={ui.navigation.label}>
+          <a href="#services">{ui.navigation.services}</a>
+          {page.caseStudies?.length ? <a href="#case-studies">{ui.navigation.records ?? defaultUi.navigation.records}</a> : null}
+          <a href="#details">{ui.navigation.details}</a>
+          <a href="#faq">{ui.navigation.faq}</a>
+          <a className="game-landing__header-cta" href={buildQuoteEntryUrl(gameId, "manual")} onClick={() => handleQuoteClick("manual")}>{ui.navigation.quote}</a>
         </nav>
       </header>
 
@@ -138,16 +200,16 @@ export default function GameLandingPage({ gameId }) {
           </div>
           <div className="game-landing-hero__overlay" />
           <div className="game-landing-hero__copy">
-            <a className="game-landing__back" href="/#games"><ArrowLeft size={16} />返回三款遊戲</a>
+            <a className="game-landing__back" href="/#games"><ArrowLeft size={16} />{ui.navigation.home}</a>
             <p className="game-landing__eyebrow">{page.eyebrow}</p>
             <h1 id="game-landing-title">{page.title}</h1>
             <p className="game-landing-hero__intro">{page.intro}</p>
             <div className="game-landing__actions">
               <a className="game-landing__button game-landing__button--light" href={buildQuoteEntryUrl(gameId, "manual")} onClick={() => handleQuoteClick("manual")}>
-                填寫報價表 <ArrowRight size={17} aria-hidden="true" />
+                {ui.cta.manual} <ArrowRight size={17} aria-hidden="true" />
               </a>
               <a className="game-landing__button game-landing__button--outline" href={buildQuoteEntryUrl(gameId, "ai")} onClick={() => handleQuoteClick("ai")}>
-                問 Aurora 客服 <MessageCircle size={17} aria-hidden="true" />
+                {ui.cta.support} <MessageCircle size={17} aria-hidden="true" />
               </a>
             </div>
           </div>
@@ -157,19 +219,19 @@ export default function GameLandingPage({ gameId }) {
         <section className="game-landing-section game-landing-services" id="services">
           <div className="game-landing-shell">
             <div className="game-landing-section__heading">
-              <p className="game-landing__eyebrow">AURORA SERVICES</p>
-              <h2>按你的目標選擇服務。</h2>
-              <p>所有服務共用 Aurora 現有報價及客服流程，已確認的項目會計算暫估金額，其餘項目會清楚標示待人工確認。</p>
+              <p className="game-landing__eyebrow">{ui.services.eyebrow}</p>
+              <h2>{ui.services.title}</h2>
+              <p>{ui.services.description}</p>
             </div>
             <div className="game-landing-services__grid">
-              {services.map((service, index) => (
-                <article className="game-landing-service" key={service.id}>
+              {displayServices.map((service, index) => (
+                <article className="game-landing-service" key={`${service.id}-${index}`}>
                   <span>0{index + 1}</span>
                   <small>{getServiceEditorialText(service.category, "zh-HK")}</small>
                   <h3>{getServiceEditorialText(service.title, "zh-HK")}</h3>
                   <p>{getServiceEditorialText(service.description, "zh-HK")}</p>
                   <a href={buildQuoteEntryUrl(gameId, "manual", service.id)} onClick={() => handleQuoteClick("manual", service.id)}>
-                    查詢報價 <ArrowRight size={15} aria-hidden="true" />
+                    {ui.services.quote} <ArrowRight size={15} aria-hidden="true" />
                   </a>
                 </article>
               ))}
@@ -180,13 +242,13 @@ export default function GameLandingPage({ gameId }) {
         <section className="game-landing-section game-landing-search-guide" aria-labelledby="search-guide-title">
           <div className="game-landing-shell game-landing-search-guide__layout">
             <div className="game-landing-section__heading">
-              <p className="game-landing__eyebrow">HONG KONG · TAIWAN</p>
+              <p className="game-landing__eyebrow">{ui.guideEyebrow ?? "HONG KONG · TAIWAN · MACAU"}</p>
               <h2 id="search-guide-title">{page.searchGuide.title}</h2>
             </div>
             <div className="game-landing-search-guide__copy">
               {page.searchGuide.paragraphs.map((paragraph) => <p key={paragraph}>{paragraph}</p>)}
               <a href={buildQuoteEntryUrl(gameId, "manual")} onClick={() => handleQuoteClick("manual")}>
-                整理遊戲資料並查詢報價 <ArrowRight size={16} aria-hidden="true" />
+                {ui.guideCta} <ArrowRight size={16} aria-hidden="true" />
               </a>
             </div>
           </div>
@@ -195,18 +257,18 @@ export default function GameLandingPage({ gameId }) {
         <section className="game-landing-section game-landing-details" id="details">
           <div className="game-landing-shell game-landing-details__layout">
             <div className="game-landing-section__heading">
-              <p className="game-landing__eyebrow">GAME DETAILS</p>
-              <h2>只顯示這款遊戲適用的資料。</h2>
+              <p className="game-landing__eyebrow">{ui.details.eyebrow}</p>
+              <h2>{ui.details.title}</h2>
               <p>{page.rankSummary}</p>
               <div className="game-landing__notice"><ShieldCheck size={18} aria-hidden="true" />{page.priceNotice}</div>
             </div>
             <div className="game-landing-details__lists">
               <div>
-                <small>指定位置／分路</small>
+                <small>{ui.details.lanes}</small>
                 <ul>{page.lanes.map((lane) => <li key={lane}>{lane}</li>)}</ul>
               </div>
               <div>
-                <small>英雄戰力標</small>
+                <small>{ui.details.marks}</small>
                 <ul>{page.marks.map((mark) => <li key={mark}>{mark}</li>)}</ul>
               </div>
             </div>
@@ -256,11 +318,11 @@ export default function GameLandingPage({ gameId }) {
         <section className="game-landing-section game-landing-process">
           <div className="game-landing-shell">
             <div className="game-landing-section__heading">
-              <p className="game-landing__eyebrow">HOW IT WORKS</p>
-              <h2>由查詢到安排，每一步都清楚。</h2>
+              <p className="game-landing__eyebrow">{ui.process.eyebrow}</p>
+              <h2>{ui.process.title}</h2>
             </div>
             <div className="game-landing-process__grid">
-              {processSteps.map(([number, title, body]) => (
+              {(ui.processSteps ?? defaultProcessSteps).map(([number, title, body]) => (
                 <article key={number}>
                   <span>{number}</span><h3>{title}</h3><p>{body}</p>
                 </article>
@@ -272,8 +334,8 @@ export default function GameLandingPage({ gameId }) {
         <section className="game-landing-section game-landing-faq" id="faq">
           <div className="game-landing-shell game-landing-faq__layout">
             <div className="game-landing-section__heading">
-              <p className="game-landing__eyebrow">FREQUENTLY ASKED</p>
-              <h2>查詢前常見問題。</h2>
+              <p className="game-landing__eyebrow">{ui.faq.eyebrow}</p>
+              <h2>{ui.faq.title}</h2>
             </div>
             <div className="game-landing-faq__list">
               {page.faqs.map((faq) => (
@@ -289,16 +351,16 @@ export default function GameLandingPage({ gameId }) {
         <section className="game-landing-section game-landing-related" aria-labelledby="related-games-title">
           <div className="game-landing-shell">
             <div className="game-landing-section__heading">
-              <p className="game-landing__eyebrow">EXPLORE AURORA</p>
-              <h2 id="related-games-title">查看其他遊戲服務。</h2>
-              <p>每款遊戲使用獨立段位、分路及戰力標設定，切換頁面後不會混用資料。</p>
+              <p className="game-landing__eyebrow">{ui.related.eyebrow}</p>
+              <h2 id="related-games-title">{ui.related.title}</h2>
+              <p>{ui.related.description}</p>
             </div>
             <div className="game-landing-related__grid">
               {relatedPages.map((relatedPage) => (
                 <a href={buildGameLandingPath(relatedPage.gameId)} key={relatedPage.gameId}>
                   <small>{relatedPage.eyebrow}</small>
                   <h3>{relatedPage.title}</h3>
-                  <span>查看服務 <ArrowRight size={15} aria-hidden="true" /></span>
+                  <span>{ui.related.view} <ArrowRight size={15} aria-hidden="true" /></span>
                 </a>
               ))}
             </div>
@@ -307,11 +369,11 @@ export default function GameLandingPage({ gameId }) {
 
         <section className="game-landing-cta">
           <div className="game-landing-shell">
-            <p className="game-landing__eyebrow">PRIVATE QUOTATION</p>
-            <h2>告訴 Aurora 你的目標。</h2>
-            <p>先整理遊戲、段位與服務資料，再選擇 WhatsApp 或 LINE 確認安排。</p>
+            <p className="game-landing__eyebrow">{ui.cta.eyebrow}</p>
+            <h2>{ui.cta.title}</h2>
+            <p>{ui.cta.description}</p>
             <div className="game-landing__actions">
-              <a className="game-landing__button game-landing__button--dark" href={buildQuoteEntryUrl(gameId, "manual")} onClick={() => handleQuoteClick("manual")}>建立專屬報價 <ArrowRight size={17} /></a>
+              <a className="game-landing__button game-landing__button--dark" href={buildQuoteEntryUrl(gameId, "manual")} onClick={() => handleQuoteClick("manual")}>{ui.cta.manual} <ArrowRight size={17} /></a>
               <a className="game-landing__text-link" href={contactLinks.whatsapp} target="_blank" rel="noreferrer" onClick={() => trackContactClick("whatsapp")}>WhatsApp</a>
               <a className="game-landing__text-link" href={contactLinks.line} target="_blank" rel="noreferrer" onClick={() => trackContactClick("line")}>LINE</a>
             </div>
@@ -357,7 +419,7 @@ export default function GameLandingPage({ gameId }) {
         <a href="/about-aurora/">關於 Aurora</a>
         <a href="/service-process-safety/">服務流程與安全</a>
         <PrivacyFooterLinks />
-        <span>香港、台灣及澳門手機 MOBA 遊戲服務</span>
+        <span>{ui.footer}</span>
       </footer>
     </div>
   );

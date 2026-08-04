@@ -34,8 +34,12 @@ import {
   getLaneLabel,
   getLanesForGame,
   getRequiredQuoteFieldsForGame,
+  getServerCountriesForGame,
+  getServerCountryById,
+  getServerCountryLabel,
   getServerRegionById,
   getServerRegionLabel,
+  getServerRegionForCountry,
   getServerRegionsForGame,
   getServicesForGame,
   getHeroPowerMarkById,
@@ -55,14 +59,13 @@ import {
   validateQuoteDraft,
 } from "../lib/quoteEngine";
 import { getAcquisitionContext } from "../lib/acquisition.js";
-import { trackContactClick, trackQuoteResult } from "../lib/analytics.js";
+import { trackContactClick, trackEnquirySubmitted, trackQuoteResult } from "../lib/analytics.js";
+import { enquiryApiUrl } from "../lib/catalogClient.js";
 
 const AI_ENDPOINT =
   import.meta.env.VITE_QUOTE_AI_ENDPOINT ||
   (import.meta.env.DEV ? "http://localhost:8787/api/quote-ai" : "/api/quote-ai");
-const ENQUIRY_ENDPOINT =
-  import.meta.env.VITE_ENQUIRY_ENDPOINT ||
-  (import.meta.env.DEV ? "http://localhost:8787/api/enquiries" : "/api/enquiries");
+const ENQUIRY_ENDPOINT = enquiryApiUrl();
 
 const copyByLocale = {
   "zh-HK": {
@@ -252,6 +255,7 @@ const copyByLocale = {
 
 const translationKeys = {
   game: "quote.fields.game",
+  serverCountry: "quote.fields.serverCountry",
   serverRegion: "quote.fields.serverRegion",
   devicePlatform: "quote.fields.devicePlatform",
   heroPowerRegion: "quote.fields.heroPowerRegion",
@@ -319,6 +323,7 @@ function makeDraft(locale) {
     preferredHero: "",
     preferredRole: "",
     heroPowerMarkId: null,
+    serverCountryId: null,
     serverRegionId: null,
     devicePlatformId: null,
     heroPowerRegionId: null,
@@ -346,6 +351,7 @@ const gameScopedDraftReset = {
   preferredHero: "",
   preferredRole: "",
   heroPowerMarkId: null,
+  serverCountryId: null,
   serverRegionId: null,
   devicePlatformId: null,
   heroPowerRegionId: null,
@@ -483,6 +489,13 @@ function mergeDraftPatch(current, patch) {
     if (next.heroPowerMarkId && !getHeroPowerMarkById(next.gameId, next.heroPowerMarkId)) {
       next.heroPowerMarkId = null;
     }
+    if (next.serverCountryId && !getServerCountryById(next.gameId, next.serverCountryId)) {
+      next.serverCountryId = null;
+    }
+    const mappedServerRegion = next.serverCountryId
+      ? getServerRegionForCountry(next.gameId, next.serverCountryId)
+      : null;
+    if (mappedServerRegion) next.serverRegionId = mappedServerRegion.id;
     if (next.serverRegionId && !getServerRegionById(next.gameId, next.serverRegionId)) {
       next.serverRegionId = null;
     }
@@ -493,6 +506,7 @@ function mergeDraftPatch(current, patch) {
       next.heroPowerRegionId = null;
     }
   } else {
+    next.serverCountryId = null;
     next.serverRegionId = null;
     next.devicePlatformId = null;
     next.heroPowerRegionId = null;
@@ -729,7 +743,7 @@ export function QuoteAssistant({
     }
 
     lastPrefillRequestRef.current = { id: requestKey, text: requestText };
-    const frame = window.requestAnimationFrame(() => {
+    window.queueMicrotask(() => {
       if (gameId || serviceId) {
         setDraft((current) =>
           mergeDraftPatch(current, {
@@ -752,8 +766,6 @@ export function QuoteAssistant({
       }
       setOpenState(true);
     });
-
-    return () => window.cancelAnimationFrame(frame);
   }, [
     prefillRequest?.gameId,
     prefillRequest?.id,
@@ -916,6 +928,10 @@ export function QuoteAssistant({
     () => getServerRegionsForGame(draft.gameId),
     [draft.gameId],
   );
+  const serverCountries = useMemo(
+    () => getServerCountriesForGame(draft.gameId),
+    [draft.gameId],
+  );
   const devicePlatforms = useMemo(
     () => getDevicePlatformsForGame(draft.gameId),
     [draft.gameId],
@@ -976,6 +992,15 @@ export function QuoteAssistant({
     setFormError("");
   }, []);
 
+  const updateServerCountry = useCallback((countryId) => {
+    setDraft((current) => mergeDraftPatch(current, {
+      serverCountryId: countryId,
+      serverRegionId: getServerRegionForCountry(current.gameId, countryId)?.id ?? null,
+    }));
+    setQuote(null);
+    setFormError("");
+  }, []);
+
   const resetForm = useCallback(() => {
     setDraft(makeDraft(localeId));
     setQuote(null);
@@ -1009,7 +1034,7 @@ export function QuoteAssistant({
     if (!result) return;
     const { reference: _reference, referenceNumber: _referenceNumber, ...customerQuote } = result;
     try {
-      await fetch(ENQUIRY_ENDPOINT, {
+      const response = await fetch(ENQUIRY_ENDPOINT, {
         method: "POST",
         headers: { "Content-Type": "application/json", Accept: "application/json" },
         body: JSON.stringify({
@@ -1023,6 +1048,13 @@ export function QuoteAssistant({
           acquisition: getAcquisitionContext(),
         }),
       });
+      if (response.ok) {
+        trackEnquirySubmitted({
+          gameId: draft.gameId,
+          serviceId: draft.serviceId,
+          status: customerQuote.status || (customerQuote.requiresManualReview ? "manual_review" : "quoted"),
+        });
+      }
     } catch {
       // A storage outage must not block the customer from viewing a quote.
     }
@@ -1180,6 +1212,9 @@ export function QuoteAssistant({
           ...current,
           { role: "assistant", content: payload.message.trim(), id: payload.responseId || `ai-${Date.now()}` },
         ]);
+        if (payload.quoteContext && typeof payload.quoteContext === "object") {
+          setDraft((current) => mergeDraftPatch(current, payload.quoteContext));
+        }
       } catch (error) {
         if (error.name !== "AbortError") setAiError(ui.aiError);
       } finally {
@@ -1285,7 +1320,24 @@ export function QuoteAssistant({
             </Select>
           </Field>
 
-          {requiredGameFields.includes("serverRegionId") ? (
+          {serverCountries.length ? (
+            <Field label={text("serverCountry", "所在國家／地區")}>
+              <Select
+                id="manual-quote-server-country"
+                value={draft.serverCountryId}
+                onChange={(event) => updateServerCountry(event.target.value || null)}
+                required
+                placeholder={ui.select}
+              >
+                {serverCountries.map((country) => (
+                  <option key={country.id} value={country.id}>{localizeGameValue(country.labels, localeId)}</option>
+                ))}
+              </Select>
+            </Field>
+          ) : null}
+
+          {requiredGameFields.includes("serverRegionId") &&
+          (!serverCountries.length || draft.serverCountryId === "other") ? (
             <Field label={text("serverRegion", "遊戲地區／伺服器大區")}>
               <Select
                 id="manual-quote-server-region"
@@ -1589,6 +1641,9 @@ export function QuoteAssistant({
     const rows = [
       [text("game", "遊戲"), selectedGame ? gameName(selectedGame) : "—"],
       [text("service", "服務"), selectedService ? serviceName(selectedService) : "—"],
+      ...(draft.serverCountryId
+        ? [[text("serverCountry", "所在國家／地區"), getServerCountryLabel(draft.gameId, draft.serverCountryId, localeId) || "—"]]
+        : []),
       ...(draft.serverRegionId
         ? [[text("serverRegion", "遊戲地區／伺服器大區"), getServerRegionLabel(draft.gameId, draft.serverRegionId, localeId) || "—"]]
         : []),

@@ -41,6 +41,7 @@ test("quote results and outbound quote actions record IDs and status only", asyn
   assert.match(quote, /trackContactClick\("whatsapp"\)/);
   assert.match(quote, /trackContactClick\("line"\)/);
   assert.doesNotMatch(quote, /trackQuoteResult\([\s\S]{0,250}(?:aiInput|quoteText|additionalRequirements)/);
+  assert.match(quote, /response\.ok[\s\S]{0,350}trackEnquirySubmitted/);
 });
 
 test("game landing page tracks quote method, service ID and contact channel", async () => {

@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 
 import {
   calculateQuote,
+  createQuoteDraft,
   formatLineMessage,
   formatWhatsAppMessage,
   validateQuoteDraft,
@@ -242,6 +243,34 @@ test("game-specific server, device and hero-power regions are required without c
     devicePlatformId: null,
     heroPowerRegionId: "hong-kong",
   }).invalidFields.includes("heroPowerRegionId"));
+});
+
+test("HOK country attribution is optional for legacy drafts but rejects cross-game and mismatched values", () => {
+  assert.equal(createQuoteDraft().serverCountryId, null);
+
+  const malaysiaDraft = {
+    ...rankDraft,
+    gameId: "hok-global",
+    ...gameRequirements["hok-global"],
+    serverCountryId: "malaysia",
+  };
+  assert.equal(validateQuoteDraft(malaysiaDraft).valid, true);
+  assert.equal(validateQuoteDraft({ ...malaysiaDraft, serverCountryId: null }).valid, true);
+  assert.ok(validateQuoteDraft({
+    ...rankDraft,
+    gameId: "aov",
+    devicePlatformId: null,
+    serverCountryId: "malaysia",
+  }).invalidFields.includes("serverCountryId"));
+  assert.ok(validateQuoteDraft({
+    ...malaysiaDraft,
+    serverRegionId: "americas",
+  }).invalidFields.includes("serverRegionId"));
+  assert.equal(validateQuoteDraft({
+    ...malaysiaDraft,
+    serverCountryId: "other",
+    serverRegionId: "europe",
+  }).valid, true);
 });
 
 test("each service rejects every missing field from its active field set", () => {
@@ -601,6 +630,24 @@ test("contact summaries localize service-specific field labels", () => {
     "zh-HK",
   );
   assert.match(aovHeroMessage, /戰力地區: 香港/);
+});
+
+test("HOK country attribution appears in both WhatsApp and LINE summaries before the server region", () => {
+  const quote = calculateQuote({
+    ...rankDraft,
+    gameId: "hok-global",
+    ...gameRequirements["hok-global"],
+    serverCountryId: "malaysia",
+  });
+  const whatsapp = formatWhatsAppMessage(quote, "en");
+  const line = formatLineMessage(quote, "en");
+
+  assert.equal(line, whatsapp);
+  assert.match(whatsapp, /Country \/ region: Malaysia/);
+  assert.match(whatsapp, /Game region \/ server region: Southeast Asia/);
+  assert.ok(
+    whatsapp.indexOf("Country / region: Malaysia") < whatsapp.indexOf("Game region / server region: Southeast Asia"),
+  );
 });
 
 test("approved AOV rank pricing accumulates divisions, star bands and minimum order after surcharges", () => {

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { BarChart3, CalendarDays, LoaderCircle, MessageSquareText, RefreshCw, Users } from "lucide-react";
+import { AlertTriangle, BarChart3, CalendarDays, LoaderCircle, MessageSquareText, RefreshCw, Users } from "lucide-react";
 
 import ConversationsPanel from "./ConversationsPanel.jsx";
 import OrdersPanel from "./OrdersPanel.jsx";
@@ -59,7 +59,22 @@ export default function OperationsApp({ onUnauthorized }) {
     }
   };
 
-  if (!state || status === "loading") return <main className="admin-main"><div className="admin-loading admin-loading--inline"><LoaderCircle className="admin-spin" /><span>正在載入營運資料…</span></div></main>;
+  if (!state && status === "loading") return <main className="admin-main"><div className="admin-loading admin-loading--inline"><LoaderCircle className="admin-spin" /><span>正在載入營運資料…</span></div></main>;
+
+  if (!state && status === "error") {
+    return (
+      <main className="admin-main">
+        <section className="admin-empty admin-operations-error" role="alert">
+          <AlertTriangle />
+          <h1>無法開啟營運管理</h1>
+          <p>{message || "營運資料暫時無法讀取，價格管理仍可正常使用。"}</p>
+          <button className="admin-action-button" type="button" onClick={load}>
+            <RefreshCw size={16} /> 重新嘗試
+          </button>
+        </section>
+      </main>
+    );
+  }
 
   return (
     <main className="admin-main admin-main--operations">

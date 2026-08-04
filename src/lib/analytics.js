@@ -6,6 +6,7 @@ const allowedEvents = new Set([
   "quote_entry",
   "service_quote",
   "quote_result",
+  "enquiry_submitted",
   "contact_click",
 ]);
 
@@ -183,6 +184,14 @@ export function trackServiceQuote({ gameId, serviceId } = {}, harness) {
 export function trackQuoteResult({ gameId, serviceId, status } = {}, harness) {
   return trackEvent(
     "quote_result",
+    { game_id: gameId, service_id: serviceId, quote_status: status },
+    harness,
+  );
+}
+
+export function trackEnquirySubmitted({ gameId, serviceId, status } = {}, harness) {
+  return trackEvent(
+    "enquiry_submitted",
     { game_id: gameId, service_id: serviceId, quote_status: status },
     harness,
   );

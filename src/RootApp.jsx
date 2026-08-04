@@ -8,7 +8,7 @@ const PublicInfoPage = lazy(() => import("./PublicInfoPage.jsx"));
 const PrivacyPolicyPage = lazy(() => import("./PrivacyPolicyPage.jsx"));
 
 function renderPublicRoute(route) {
-  if (route.type === "game") return <GameLandingPage gameId={route.gameId} />;
+  if (route.type === "game") return <GameLandingPage gameId={route.gameId} pageSlug={route.slug} />;
   if (route.type === "info") return <PublicInfoPage slug={route.slug} />;
   if (route.type === "privacy") return <PrivacyPolicyPage />;
   return <App />;

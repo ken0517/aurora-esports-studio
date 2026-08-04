@@ -10,6 +10,8 @@ import { FunctionCallingConfigMode, GoogleGenAI } from "@google/genai";
 import {
   gameConfigs,
   getRequiredQuoteFieldsForGame,
+  getServerCountryById,
+  getServerRegionForCountry,
   localizeGameValue,
   serviceDefinitions,
   supportedGameIds,
@@ -59,6 +61,7 @@ const quoteFields = new Set([
   "preferredHero",
   "preferredRole",
   "heroPowerMarkId",
+  "serverCountryId",
   "serverRegionId",
   "devicePlatformId",
   "heroPowerRegionId",
@@ -82,6 +85,7 @@ const uniqueGameOptionIds = (property) => [
   ...new Set(Object.values(gameConfigs).flatMap((game) => (game[property] || []).map((option) => option.id))),
 ];
 const serverRegionIds = uniqueGameOptionIds("serverRegions");
+const serverCountryIds = uniqueGameOptionIds("serverCountries");
 const devicePlatformIds = uniqueGameOptionIds("devicePlatforms");
 const heroPowerRegionIds = uniqueGameOptionIds("heroPowerRegions");
 
@@ -111,6 +115,7 @@ const calculateQuoteDeclaration = {
       preferredHero: { type: "string" },
       preferredRole: { type: "string" },
       heroPowerMarkId: { type: "string" },
+      serverCountryId: { type: "string", enum: serverCountryIds },
       serverRegionId: { type: "string", enum: serverRegionIds },
       devicePlatformId: { type: "string", enum: devicePlatformIds },
       heroPowerRegionId: { type: "string", enum: heroPowerRegionIds },
@@ -151,6 +156,14 @@ function sendJson(res, status, payload, extraHeaders = {}) {
     ...extraHeaders,
   });
   res.end(body);
+}
+
+function quoteContextPayload(quoteContext) {
+  if (!quoteContext || typeof quoteContext !== "object") return {};
+  const hasStructuredValue = Object.entries(quoteContext).some(
+    ([key, value]) => key !== "locale" && value !== null && value !== undefined && value !== "",
+  );
+  return hasStructuredValue ? { quoteContext } : {};
 }
 
 function clientKey(req, trustProxy) {
@@ -223,6 +236,7 @@ export function cleanQuoteContext(value, locale) {
   }
   const game = gameConfigs[result.gameId];
   for (const [field, collection] of [
+    ["serverCountryId", "serverCountries"],
     ["serverRegionId", "serverRegions"],
     ["devicePlatformId", "devicePlatforms"],
     ["heroPowerRegionId", "heroPowerRegions"],
@@ -231,6 +245,11 @@ export function cleanQuoteContext(value, locale) {
       delete result[field];
     }
   }
+  const serverCountry = getServerCountryById(result.gameId, result.serverCountryId);
+  const mappedServerRegion = serverCountry
+    ? getServerRegionForCountry(result.gameId, serverCountry.id)
+    : null;
+  if (mappedServerRegion) result.serverRegionId = mappedServerRegion.id;
   const requiredGameFields = new Set(
     getRequiredQuoteFieldsForGame(result.gameId, result.serviceId),
   );
@@ -275,6 +294,10 @@ export function buildGameContext(locale) {
       aliases: mark.aliases || [],
     })),
     heroPowerMarkAmbiguities: game.heroPowerMarkAmbiguities,
+    serverCountries: buildLocalizedOptions(game.serverCountries, locale).map((country, index) => ({
+      ...country,
+      serverRegionId: game.serverCountries[index]?.serverRegionId ?? null,
+    })),
     serverRegions: buildLocalizedOptions(game.serverRegions, locale),
     devicePlatforms: buildLocalizedOptions(game.devicePlatforms, locale),
     heroPowerRegions: buildLocalizedOptions(game.heroPowerRegions, locale),
@@ -406,6 +429,42 @@ function gameBoundOptionFollowUp(game, serviceId, quoteContext, input, locale, p
   let replies = null;
 
   if (game.id === "hok-global") {
+    const countryOptions = game.serverCountries || [];
+    let serverCountryId = quoteContext.serverCountryId || patch.serverCountryId || null;
+    if (!serverCountryId) {
+      const matchedCountry = countryOptions.find((option) => includesLocalizedItem(input, option));
+      if (!matchedCountry) {
+        const gameName = localizeGameValue(game.labels, locale);
+        const choices = joinChoices(
+          countryOptions.map((option) => localizeGameValue(option.labels, locale)),
+          locale,
+        );
+        const reply = localizedReply(locale, {
+          "zh-HK": (name, values) => `請問你的《${name}》帳號所在國家／地區是：${values}？`,
+          "zh-CN": (name, values) => `请问您的《${name}》账号所在国家／地区是：${values}？`,
+          en: (name, values) => `Which country or region is your ${name} account in: ${values}?`,
+        });
+        return { patch, message: reply(gameName, choices) };
+      }
+
+      serverCountryId = matchedCountry.id;
+      patch.serverCountryId = matchedCountry.id;
+      const mappedRegion = getServerRegionForCountry(game.id, matchedCountry.id);
+      if (mappedRegion) {
+        patch.serverRegionId = mappedRegion.id;
+        return { patch, message: null };
+      }
+    }
+
+    if (serverCountryId !== "other") {
+      const mappedRegion = getServerRegionForCountry(game.id, serverCountryId);
+      if (mappedRegion && !quoteContext.serverRegionId && !patch.serverRegionId) {
+        patch.serverRegionId = mappedRegion.id;
+        return { patch, message: null };
+      }
+      return null;
+    }
+
     field = "serverRegionId";
     options = game.serverRegions;
     replies = {
@@ -431,7 +490,7 @@ function gameBoundOptionFollowUp(game, serviceId, quoteContext, input, locale, p
     };
   }
 
-  if (!field || quoteContext[field]) return null;
+  if (!field || quoteContext[field] || patch[field]) return null;
   const matched = options.find((option) => includesLocalizedItem(input, option));
   if (matched) {
     return { patch: { ...patch, [field]: matched.id }, message: null };
@@ -650,6 +709,7 @@ function validOptionsForGame(gameId, locale) {
       id: mark.id,
       name: localizeGameValue(mark.labels, locale),
     })),
+    serverCountries: buildLocalizedOptions(game.serverCountries, locale),
     serverRegions: buildLocalizedOptions(game.serverRegions, locale),
     devicePlatforms: buildLocalizedOptions(game.devicePlatforms, locale),
     heroPowerRegions: buildLocalizedOptions(game.heroPowerRegions, locale),
@@ -745,7 +805,7 @@ SCOPE:
 
 GAME DATA RULES:
 - Use only the supplied central game configuration. Never mix lanes, ranks, divisions, star ranges, hero-power marks, server regions, device platforms, or hero-power regions between games.
-- For every HOK Global service, collect serverRegionId from that game's six supplied server regions. For every Honor of Kings China Server service, collect devicePlatformId (iOS or Android). For Arena of Valor hero-power service, collect heroPowerRegionId (Hong Kong, Taiwan or Macau). Never silently accept a value belonging to another game.
+- For every HOK Global service, collect serverCountryId first. Malaysia, Singapore, Indonesia, Philippines, Thailand and Vietnam map to serverRegionId=southeast-asia; only "other" requires choosing from the six supplied server regions. For every Honor of Kings China Server service, collect devicePlatformId (iOS or Android). For Arena of Valor hero-power service, collect heroPowerRegionId (Hong Kong, Taiwan or Macau). Never silently accept a value belonging to another game.
 - Treat common lane and mark aliases in the configuration as aliases only for their matching game.
 - Respect service voiceRequired metadata. If the customer says they do not want to use voice or a microphone, never select a service where voiceRequired is true; use the matching non-voice companion service instead.
 - For duo, collect duoMode first. Ranked duo also requires duoGuarantee (guaranteed target or standard win/loss charging). Then collect the appointment preferredStartTime plus that mode's other requiredFields. Do not ask for the appointment time before the customer has chosen a duo mode. For other, collect otherServiceType from the supplied options and use preferredStartTime for the appointment.
@@ -754,7 +814,7 @@ GAME DATA RULES:
 - If a customer chooses a mark or lane from the wrong game, explain the valid options for the selected game instead of silently accepting it.
 
 QUOTE AND PRICING RULES:
-- Extract game, service, serverRegionId, devicePlatformId, heroPowerRegionId, duoMode, duoGuarantee or otherServiceType, rank/division/stars or points, current and target hero-power points, hero, lane, target mark, preferredStartTime for appointments, optional additional requirements, and display currency.
+- Extract game, service, serverCountryId, serverRegionId, devicePlatformId, heroPowerRegionId, duoMode, duoGuarantee or otherServiceType, rank/division/stars or points, current and target hero-power points, hero, lane, target mark, preferredStartTime for appointments, optional additional requirements, and display currency.
 - Do not ask for additional requirements if the customer has none.
 - Once enough structured information is available, call calculate_quote. The function runs on Aurora's server.
 - Never invent, estimate, interpolate, or infer a price, discount, surcharge, completion time, success rate, or availability.
@@ -1134,6 +1194,7 @@ export function createQuoteAiHandler({
           responseId: null,
           model: settings.model,
           pricingStatus: quoteResult.status,
+          ...quoteContextPayload(quoteContext),
         },
         cors,
       );
@@ -1150,6 +1211,7 @@ export function createQuoteAiHandler({
           responseId: null,
           model: settings.model,
           pricingStatus: quoteResult.status,
+          ...quoteContextPayload(quoteContext),
         },
         cors,
       );
@@ -1198,10 +1260,17 @@ export function createQuoteAiHandler({
             rawContext,
             locale,
           );
+          const calculationContext = (
+            context.serverCountryId === rawContext.serverCountryId &&
+            context.serverRegionId &&
+            !rawContext.serverRegionId
+          )
+            ? { ...rawContext, serverRegionId: context.serverRegionId }
+            : rawContext;
           const {
             output: result,
             internalReference,
-          } = calculateAuthoritativeQuoteProjection(rawContext, {
+          } = calculateAuthoritativeQuoteProjection(calculationContext, {
             calculateQuoteFn: calculateWithActiveCatalog,
             validateQuoteDraftFn: validateWithActiveCatalog,
           });
@@ -1280,6 +1349,7 @@ export function createQuoteAiHandler({
           responseId: responseId(finalResponse),
           model: modelVersion(finalResponse, settings.model),
           pricingStatus: quoteResult.status,
+          ...quoteContextPayload(quoteContext),
         },
         cors,
       );

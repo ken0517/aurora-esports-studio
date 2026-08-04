@@ -326,7 +326,7 @@ export default function App() {
       `${window.location.pathname}${remainingSearch ? `?${remainingSearch}` : ""}${window.location.hash}`,
     );
 
-    const frame = window.requestAnimationFrame(() => {
+    window.queueMicrotask(() => {
       trackQuoteEntry({ method: quotePane, gameId: game.id, serviceId: service?.id });
       setActiveGameId(game.id);
       serviceQuoteRequestId.current += 1;
@@ -338,8 +338,6 @@ export default function App() {
         text: quotePane === "ai" ? question : "",
       });
     });
-
-    return () => window.cancelAnimationFrame(frame);
   }, [locale]);
 
   useEffect(

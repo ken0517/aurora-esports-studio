@@ -2,6 +2,21 @@ import { publicBrandIdentity } from "./publicBrand.js";
 
 const brandRelationship = publicBrandIdentity.relationshipStatement;
 
+const malaysiaHokAlternates = Object.freeze([
+  { hreflang: "ms-MY", href: "https://auroraesportstudio.com/my/honor-of-kings/" },
+  { hreflang: "en-MY", href: "https://auroraesportstudio.com/my/en/honor-of-kings/" },
+  { hreflang: "zh-Hans-MY", href: "https://auroraesportstudio.com/my/zh-cn/honor-of-kings/" },
+  { hreflang: "x-default", href: "https://auroraesportstudio.com/honor-of-kings-global-boosting/" },
+]);
+
+const malaysiaHokShared = {
+  gameId: "hok-global",
+  image: "assets/cases/hok-global-battle-zone-top10-04.jpg",
+  serviceMarkets: ["Malaysia"],
+  relatedGameIds: ["aov", "hok-cn", "hok-global"],
+  alternates: malaysiaHokAlternates,
+};
+
 export const gameLandingPages = Object.freeze([
   {
     gameId: "aov",
@@ -220,6 +235,182 @@ export const gameLandingPages = Object.freeze([
         answer: "可以。陪玩帶飛可按排位或 5V5 匹配整理需求；第一視角教學及復盤可在其他服務中選擇。",
       },
     ],
+  },
+  {
+    ...malaysiaHokShared,
+    slug: "my/honor-of-kings",
+    canonical: "https://auroraesportstudio.com/my/honor-of-kings/",
+    language: "ms-MY",
+    seoTitle: "KLG Studio HOK Malaysia: Teman Bermain, Bimbingan & Ulasan | Aurora",
+    seoDescription:
+      "KLG Studio oleh Aurora Esports Studio menyediakan sesi teman bermain, bimbingan hero, ulasan perlawanan dan bimbingan sudut pandang pertama untuk pemain Honor of Kings di Malaysia.",
+    eyebrow: "HONOR OF KINGS · MALAYSIA",
+    title: "Sokongan permainan Honor of Kings untuk pemain Malaysia",
+    intro:
+      "Pilih sesi teman bermain, bimbingan atau ulasan perlawanan mengikut matlamat anda. Aurora akan menyusun keperluan anda sebelum pengesahan melalui WhatsApp.",
+    imageAlt: "Rekod Top 10 zon pertempuran Honor of Kings oleh Aurora Esports Studio",
+    audience: "Pemain Honor of Kings di Malaysia",
+    searchGuide: {
+      title: "Teman bermain, bimbingan dan ulasan HOK Malaysia",
+      paragraphs: [
+        "Aurora Esports Studio mengendalikan laman rasmi KLG untuk perkhidmatan permainan mudah alih. Halaman Malaysia ini menerangkan sokongan Honor of Kings dalam Bahasa Melayu.",
+        "Pemain boleh meminta sesi duo, bimbingan ranked, ulasan perlawanan, bimbingan sudut pandang pertama atau bimbingan hero. Setiap permintaan disemak berdasarkan rank, server Asia Tenggara, hero dan masa yang sesuai.",
+        "Kami tidak menjanjikan kemenangan, kadar kemenangan atau kedudukan tertentu. Harga yang belum mempunyai peraturan rasmi akan ditandakan untuk pengesahan manusia dan tidak akan direka oleh sistem.",
+      ],
+    },
+    serviceCards: [
+      { id: "duo", category: "Teman bermain", title: "Sesi duo", description: "Main bersama pemain berpengalaman untuk komunikasi dan pengalaman permainan yang lebih teratur." },
+      { id: "other", category: "Bimbingan", title: "Bimbingan ranked", description: "Bincangkan makro, pemilihan hero, lane dan keputusan semasa perlawanan." },
+      { id: "other", category: "Ulasan", title: "Ulasan perlawanan", description: "Semak rakaman atau perlawanan anda dan kenal pasti perkara yang boleh diperbaiki." },
+      { id: "other", category: "Bimbingan", title: "Bimbingan sudut pandang pertama", description: "Lihat cara permainan secara langsung sambil menerima penerangan tentang keputusan penting." },
+      { id: "other", category: "Hero", title: "Bimbingan hero", description: "Latihan khusus mengikut hero, lane dan tahap permainan semasa anda." },
+    ],
+    rankSummary: "Menyokong rank HOK Global daripada Bronze hingga Legendary King mengikut konfigurasi pusat Aurora.",
+    lanes: ["Clash Lane", "Jungle", "Mid Lane", "Farm Lane", "Roamer"],
+    marks: ["Bronze", "Silver", "Gold", "Minor National", "Major National", "Red"],
+    priceNotice: "Permintaan khas dan harga yang belum disahkan akan dihantar kepada Aurora Support untuk semakan manusia.",
+    faqs: [
+      { question: "Adakah Malaysia berada dalam server Asia Tenggara?", answer: "Ya. Malaysia dipetakan kepada rantau server Asia Tenggara dalam borang Aurora." },
+      { question: "Apakah jenis sokongan HOK yang tersedia?", answer: "Anda boleh bertanya tentang sesi duo, bimbingan ranked, ulasan perlawanan, sudut pandang pertama dan bimbingan hero." },
+      { question: "Adakah hasil atau kemenangan dijamin?", answer: "Tidak. Keputusan permainan bergantung pada matchmaking, rank, hero dan keadaan perlawanan." },
+      { question: "Bagaimanakah harga disahkan?", answer: "Sistem hanya menggunakan peraturan harga Aurora yang telah diluluskan. Permintaan lain akan ditandakan untuk pengesahan manusia." },
+      { question: "Bagaimanakah pemain Malaysia menghubungi Aurora?", answer: "Lengkapkan borang pertanyaan dan sahkan butiran melalui WhatsApp." },
+    ],
+    ui: {
+      navigation: { label: "Navigasi halaman", services: "Perkhidmatan", details: "Butiran permainan", faq: "Soalan lazim", quote: "Minta sebut harga", home: "Kembali ke permainan" },
+      services: { eyebrow: "PERKHIDMATAN AURORA", title: "Pilih sokongan mengikut matlamat anda.", description: "Setiap permintaan disusun dahulu; harga yang belum disahkan akan dirujuk kepada manusia.", quote: "Minta sebut harga" },
+      guideEyebrow: "MALAYSIA",
+      guideCta: "Susun butiran dan minta sebut harga",
+      details: { eyebrow: "BUTIRAN PERMAINAN", title: "Maklumat khusus untuk HOK Global.", lanes: "Lane", marks: "Tanda kuasa hero" },
+      process: { eyebrow: "CARA IA BERFUNGSI", title: "Proses yang jelas dari pertanyaan hingga pengesahan." },
+      processSteps: [
+        ["01", "Pilih sokongan", "Beritahu kami permainan, rank, server dan matlamat anda."],
+        ["02", "Susun permintaan", "Aurora menyemak butiran dan peraturan harga yang tersedia."],
+        ["03", "Sahkan melalui WhatsApp", "Sahkan masa, keperluan dan sebut harga sebelum bermula."],
+        ["04", "Terima susulan", "Ikuti aturan yang telah dipersetujui dan simpan maklumat penting."],
+      ],
+      faq: { eyebrow: "SOALAN LAZIM", title: "Perkara yang perlu diketahui sebelum bertanya." },
+      related: { eyebrow: "TEROKAI AURORA", title: "Lihat halaman permainan lain.", description: "Setiap permainan menggunakan rank, lane dan tanda yang berasingan.", view: "Lihat halaman" },
+      cta: { eyebrow: "PERTANYAAN PERIBADI", title: "Beritahu Aurora matlamat anda.", description: "Susun maklumat anda dahulu, kemudian sahkan melalui WhatsApp.", manual: "Minta sebut harga", support: "Tanya Aurora Support" },
+      footer: "Perkhidmatan permainan mudah alih untuk Malaysia, Hong Kong, Taiwan dan Macau",
+    },
+  },
+  {
+    ...malaysiaHokShared,
+    slug: "my/en/honor-of-kings",
+    canonical: "https://auroraesportstudio.com/my/en/honor-of-kings/",
+    language: "en-MY",
+    seoTitle: "KLG Studio HOK Malaysia: Duo Play, Coaching & Match Review | Aurora",
+    seoDescription:
+      "KLG Studio by Aurora Esports Studio offers Honor of Kings duo play, hero coaching, match review and first-person coaching enquiries for players in Malaysia.",
+    eyebrow: "HONOR OF KINGS · MALAYSIA",
+    title: "Honor of Kings support for players in Malaysia",
+    intro:
+      "Choose duo play, coaching or match review around your goals. Aurora organises your requirements before confirmation through WhatsApp.",
+    imageAlt: "Honor of Kings battle-zone Top 10 record from Aurora Esports Studio",
+    audience: "Honor of Kings players in Malaysia",
+    searchGuide: {
+      title: "HOK Malaysia duo play, coaching and match review",
+      paragraphs: [
+        "Aurora Esports Studio operates the official KLG gaming service website. This Malaysia page explains Honor of Kings support in English.",
+        "Players can enquire about duo sessions, ranked coaching, match review, first-person coaching or hero coaching. Each request is organised around your rank, Southeast Asia server, hero and preferred schedule.",
+        "We do not promise wins, fixed win rates or a particular rank result. Any service without an approved price rule is sent for human confirmation instead of being estimated by the system.",
+      ],
+    },
+    serviceCards: [
+      { id: "duo", category: "Companion", title: "Duo play", description: "Play alongside an experienced player with clear communication and a structured session." },
+      { id: "other", category: "Coaching", title: "Ranked coaching", description: "Discuss macro play, hero selection, lanes and in-match decision making." },
+      { id: "other", category: "Review", title: "Match review", description: "Review your match or recording and identify practical areas to improve." },
+      { id: "other", category: "Coaching", title: "First-person coaching", description: "Watch live first-person play with explanations of key decisions." },
+      { id: "other", category: "Hero", title: "Hero coaching", description: "Focused guidance based on your hero, lane and current level." },
+    ],
+    rankSummary: "Supports HOK Global ranks from Bronze to Legendary King through Aurora's central game configuration.",
+    lanes: ["Clash Lane", "Jungle", "Mid Lane", "Farm Lane", "Roamer"],
+    marks: ["Bronze", "Silver", "Gold", "Minor National", "Major National", "Red"],
+    priceNotice: "Special requests and services without an approved price rule are sent to Aurora Support for human confirmation.",
+    faqs: [
+      { question: "Is Malaysia in the Southeast Asia server region?", answer: "Yes. Aurora maps Malaysia to the Southeast Asia server region." },
+      { question: "Which HOK support sessions are available?", answer: "You can enquire about duo play, ranked coaching, match review, first-person coaching and hero coaching." },
+      { question: "Do you guarantee wins or results?", answer: "No. Results depend on matchmaking, rank, heroes and match conditions." },
+      { question: "How are prices confirmed?", answer: "The site only uses Aurora's approved pricing rules. Other requests are marked for human confirmation." },
+      { question: "How can Malaysian players contact Aurora?", answer: "Complete the enquiry form and confirm the details through WhatsApp." },
+    ],
+    ui: {
+      navigation: { label: "Page navigation", services: "Services", details: "Game details", faq: "FAQ", quote: "Request a quote", home: "Back to games" },
+      services: { eyebrow: "AURORA SERVICES", title: "Choose support around your goals.", description: "Each request is organised first; unconfirmed pricing is referred to a person.", quote: "Request a quote" },
+      guideEyebrow: "MALAYSIA",
+      guideCta: "Organise details and request a quote",
+      details: { eyebrow: "GAME DETAILS", title: "Information specific to HOK Global.", lanes: "Lanes", marks: "Hero power marks" },
+      process: { eyebrow: "HOW IT WORKS", title: "A clear process from enquiry to confirmation." },
+      processSteps: [
+        ["01", "Choose support", "Tell us your game, rank, server and goal."],
+        ["02", "Organise the request", "Aurora checks your details and any available pricing rules."],
+        ["03", "Confirm on WhatsApp", "Confirm timing, requirements and the quote before starting."],
+        ["04", "Receive follow-up", "Continue under the agreed arrangement and keep important updates."],
+      ],
+      faq: { eyebrow: "FREQUENTLY ASKED", title: "What to know before you enquire." },
+      related: { eyebrow: "EXPLORE AURORA", title: "View other game pages.", description: "Each game keeps its own ranks, lanes and marks.", view: "View page" },
+      cta: { eyebrow: "PRIVATE ENQUIRY", title: "Tell Aurora your goal.", description: "Organise your game details, then confirm through WhatsApp.", manual: "Request a quote", support: "Ask Aurora Support" },
+      footer: "Mobile game services for Malaysia, Hong Kong, Taiwan and Macau",
+    },
+  },
+  {
+    ...malaysiaHokShared,
+    slug: "my/zh-cn/honor-of-kings",
+    canonical: "https://auroraesportstudio.com/my/zh-cn/honor-of-kings/",
+    language: "zh-Hans-MY",
+    seoTitle: "KLG Studio 马来西亚 HOK 陪玩、教学与复盘｜Aurora",
+    seoDescription:
+      "KLG Studio 是 Aurora Esports Studio 的游戏服务品牌，为马来西亚玩家提供 Honor of Kings 陪玩、英雄教学、对局复盘及第一视角教学查询。",
+    eyebrow: "HONOR OF KINGS · 马来西亚",
+    title: "面向马来西亚玩家的 Honor of Kings 游戏服务",
+    intro: "按你的目标选择陪玩、教学或复盘。Aurora 会先整理需求，再通过 WhatsApp 确认安排。",
+    imageAlt: "Aurora Esports Studio 的 Honor of Kings 战区前十记录",
+    audience: "马来西亚 Honor of Kings 玩家",
+    searchGuide: {
+      title: "马来西亚 HOK 陪玩、教学及对局复盘",
+      paragraphs: [
+        "Aurora Esports Studio 运营 KLG 游戏服务官方网站。本页面以简体中文说明马来西亚 Honor of Kings 服务。",
+        "玩家可以查询双排陪玩、排位教学、对局复盘、第一视角教学或英雄教学。每项需求会按当前段位、东南亚服务器、英雄和合适时间整理。",
+        "我们不会保证胜利、固定胜率或指定排名结果。没有正式价格规则的服务会交由真人确认，系统不会自行生成金额。",
+      ],
+    },
+    serviceCards: [
+      { id: "duo", category: "陪玩", title: "双排陪玩", description: "与有经验的玩家一起游戏，获得清楚沟通及有规划的游戏体验。" },
+      { id: "other", category: "教学", title: "排位教学", description: "了解地图观念、英雄选择、分路及对局决策。" },
+      { id: "other", category: "复盘", title: "对局复盘", description: "查看你的对局或录像，找出可以实际改善的地方。" },
+      { id: "other", category: "教学", title: "第一视角教学", description: "观看第一视角游戏过程，并听取关键决策说明。" },
+      { id: "other", category: "英雄", title: "英雄教学", description: "按指定英雄、分路和目前水平提供针对性指导。" },
+    ],
+    rankSummary: "通过 Aurora 中央游戏配置支持 HOK 国际服从青铜至传奇王者段位。",
+    lanes: ["对抗路", "打野", "中路", "发育路", "辅助"],
+    marks: ["铜标", "银标", "金标", "小国标", "大国标", "红标"],
+    priceNotice: "特殊要求及没有正式价格规则的服务会交由 Aurora 客服真人确认。",
+    faqs: [
+      { question: "马来西亚属于东南亚服务器吗？", answer: "是。Aurora 表单会把马来西亚归入东南亚服务器大区。" },
+      { question: "可以查询哪些 HOK 服务？", answer: "你可以查询双排陪玩、排位教学、对局复盘、第一视角教学及英雄教学。" },
+      { question: "服务会保证胜利或结果吗？", answer: "不会。结果会受匹配、段位、英雄及对局情况影响。" },
+      { question: "价格如何确认？", answer: "网站只使用 Aurora 已批准的价格规则，其他需求会显示等待真人确认。" },
+      { question: "马来西亚玩家怎样联络 Aurora？", answer: "填写查询表后，可以通过 WhatsApp 确认资料。" },
+    ],
+    ui: {
+      navigation: { label: "页面导航", services: "服务", details: "游戏资料", faq: "常见问题", quote: "查询报价", home: "返回游戏列表" },
+      services: { eyebrow: "AURORA 服务", title: "按你的目标选择服务。", description: "网站会先整理需求；尚未确认的价格会交由真人处理。", quote: "查询报价" },
+      guideEyebrow: "马来西亚",
+      guideCta: "整理游戏资料并查询报价",
+      details: { eyebrow: "游戏资料", title: "只显示 HOK 国际服适用的资料。", lanes: "指定位置／分路", marks: "英雄战力标" },
+      process: { eyebrow: "查询流程", title: "从查询到确认，每一步都清楚。" },
+      processSteps: [
+        ["01", "选择服务", "填写游戏、段位、服务器和目标。"],
+        ["02", "整理需求", "Aurora 会检查资料和现有价格规则。"],
+        ["03", "WhatsApp 确认", "开始前确认时间、要求和报价。"],
+        ["04", "跟进安排", "按已确认方式进行，并保留重要进度。"],
+      ],
+      faq: { eyebrow: "常见问题", title: "查询前需要了解的内容。" },
+      related: { eyebrow: "探索 AURORA", title: "查看其他游戏页面。", description: "每款游戏使用独立段位、分路及战力标。", view: "查看页面" },
+      cta: { eyebrow: "专属查询", title: "告诉 Aurora 你的目标。", description: "先整理游戏资料，再通过 WhatsApp 确认。", manual: "查询报价", support: "询问 Aurora 客服" },
+      footer: "服务马来西亚、香港、台湾及澳门的手机游戏玩家",
+    },
   },
 ]);
 

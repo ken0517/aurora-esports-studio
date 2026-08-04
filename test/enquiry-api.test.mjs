@@ -90,6 +90,69 @@ test("public enquiry rejects a game-bound option that belongs to another game", 
   });
 });
 
+test("public enquiry rejects a country that belongs to another game", async () => {
+  const store = createMemoryStore();
+  await withServer(store, async (origin) => {
+    const response = await fetch(`${origin}/api/enquiries`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        sessionId,
+        consent: true,
+        source: "manual_quote",
+        locale: "en",
+        draft: {
+          gameId: "aov",
+          serviceId: "rank",
+          serverCountryId: "malaysia",
+          currentRankId: "bronze",
+          currentDivision: "III",
+          currentStars: 0,
+          targetRankId: "bronze",
+          targetDivision: "II",
+          targetStars: 0,
+        },
+      }),
+    });
+
+    assert.equal(response.status, 400);
+    assert.equal((await response.json()).error, "invalid-game-option");
+    assert.equal(store.writes, 0);
+  });
+});
+
+test("public enquiry normalizes an HOK priority country into its server region and stores both", async () => {
+  const store = createMemoryStore();
+  await withServer(store, async (origin) => {
+    const response = await fetch(`${origin}/api/enquiries`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        sessionId,
+        consent: true,
+        source: "manual_quote",
+        locale: "en",
+        draft: {
+          gameId: "hok-global",
+          serviceId: "rank",
+          serverCountryId: "malaysia",
+          currentRankId: "diamond",
+          currentDivision: "III",
+          currentStars: 0,
+          targetRankId: "veteran",
+          targetDivision: "V",
+          targetStars: 0,
+        },
+      }),
+    });
+
+    assert.equal(response.status, 201);
+    const state = await store.read();
+    assert.equal(state.enquiries[0].draft.serverCountryId, "malaysia");
+    assert.equal(state.enquiries[0].draft.serverRegionId, "southeast-asia");
+  });
+});
+
 test("a consented completed quote creates a redacted enquiry and never an order", async () => {
   const store = createMemoryStore();
   await withServer(store, async (origin) => {

@@ -24,8 +24,11 @@ import {
   getLaneById,
   getLaneLabel,
   getRequiredQuoteFieldsForGame,
+  getServerCountryById,
+  getServerCountryLabel,
   getServerRegionById,
   getServerRegionLabel,
+  getServerRegionForCountry,
 } from "../data/gameConfig.js";
 import {
   defaultLocale,
@@ -59,6 +62,7 @@ const draftDefaults = {
   preferredHero: "",
   preferredRole: "",
   heroPowerMarkId: null,
+  serverCountryId: null,
   serverRegionId: null,
   devicePlatformId: null,
   heroPowerRegionId: null,
@@ -241,6 +245,19 @@ function validateOptionalLane(result, draft) {
 
 function validateGameSpecificQuoteFields(result, draft, game) {
   if (!game) return;
+  const serverCountry = draft.serverCountryId
+    ? getServerCountryById(draft.gameId, draft.serverCountryId)
+    : null;
+  if (draft.serverCountryId && !serverCountry) {
+    addError(result, "serverCountryId", "invalidServerCountry");
+  }
+  const mappedServerRegion = serverCountry
+    ? getServerRegionForCountry(draft.gameId, serverCountry.id)
+    : null;
+  if (mappedServerRegion && draft.serverRegionId !== mappedServerRegion.id) {
+    addError(result, "serverRegionId", "invalidServerRegion");
+  }
+
   const requiredFields = new Set(getRequiredQuoteFieldsForGame(draft.gameId, draft.serviceId));
   for (const field of requiredFields) {
     if (!draft[field]) {
@@ -729,6 +746,7 @@ function baseQuoteResult(draft, validation, options = {}) {
     preferredHero: draft.preferredHero,
     preferredRole: draft.preferredRole,
     heroPowerMarkId: draft.heroPowerMarkId,
+    serverCountryId: draft.serverCountryId,
     serverRegionId: draft.serverRegionId,
     devicePlatformId: draft.devicePlatformId,
     heroPowerRegionId: draft.heroPowerRegionId,
@@ -898,6 +916,11 @@ export function formatQuoteText(quoteOrDraft, locale = null) {
   const isOther = draft.serviceId === "other";
   const detailRows = [];
 
+  if (draft.serverCountryId) {
+    detailRows.push(
+      `${translate(resolvedLocale, "quote.fields.serverCountry")}: ${getServerCountryLabel(draft.gameId, draft.serverCountryId, resolvedLocale) || "—"}`,
+    );
+  }
   if (draft.serverRegionId) {
     detailRows.push(
       `${translate(resolvedLocale, "quote.fields.serverRegion")}: ${getServerRegionLabel(draft.gameId, draft.serverRegionId, resolvedLocale) || "—"}`,

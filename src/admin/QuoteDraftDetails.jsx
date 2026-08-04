@@ -1,10 +1,16 @@
 import {
   getDevicePlatformLabel,
   getHeroPowerRegionLabel,
+  getServerCountryLabel,
   getServerRegionLabel,
 } from "../data/gameConfig.js";
 
 const regionalFields = [
+  {
+    id: "serverCountryId",
+    label: "所在國家／地區",
+    getLabel: getServerCountryLabel,
+  },
   {
     id: "serverRegionId",
     label: "遊戲地區／伺服器大區",

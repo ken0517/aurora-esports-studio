@@ -143,6 +143,7 @@ test("converting an enquiry keeps an immutable normalized quote draft snapshot o
   sourceEnquiry.draft = {
     gameId: "hok-global",
     serviceId: "duo",
+    serverCountryId: "malaysia",
     serverRegionId: "southeast-asia",
     duoMode: "match-5v5",
     quantity: 3,
@@ -160,6 +161,7 @@ test("converting an enquiry keeps an immutable normalized quote draft snapshot o
 
     assert.equal(conversion.response.status, 200, JSON.stringify(conversion.payload));
     assert.deepEqual(conversion.payload.order.quoteDraft, conversion.payload.state.enquiries[0].draft);
+    assert.equal(conversion.payload.order.quoteDraft.serverCountryId, "malaysia");
     assert.equal(conversion.payload.order.quoteDraft.serverRegionId, "southeast-asia");
     assert.equal(conversion.payload.order.quoteDraft.additionalRequirements, "Please keep this complete context.");
     assert.equal(conversion.payload.order.quoteDraft.displayCurrency, "TWD");
