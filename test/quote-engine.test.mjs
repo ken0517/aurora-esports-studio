@@ -650,6 +650,23 @@ test("HOK country attribution appears in both WhatsApp and LINE summaries before
   );
 });
 
+test("AOV Diamond III 0 stars to Battlefield Legend 0 stars keeps the approved automatic quote", () => {
+  const quote = calculateQuote({
+    locale: "zh-HK",
+    gameId: "aov",
+    serviceId: "rank",
+    currentRankId: "diamond",
+    currentDivision: "III",
+    currentStars: 0,
+    targetRankId: "battlefield-legend",
+    targetStars: 0,
+  });
+
+  assert.equal(quote.status, "quoted");
+  assert.equal(quote.basePrice, 675);
+  assert.equal(quote.finalTotal, 573.75);
+});
+
 test("approved AOV rank pricing accumulates divisions, star bands and minimum order after surcharges", () => {
   const oneDivision = calculateQuote({
     locale: "zh-HK",

@@ -275,6 +275,7 @@ export function buildGameContext(locale) {
     ranks: game.ranks.map((rank) => ({
       id: rank.id,
       name: localizeGameValue(rank.labels, locale),
+      aliases: rank.aliases || [],
       divisions: rank.divisions,
       measurement: rank.measurement,
       minStars: rank.minStars,
@@ -359,12 +360,26 @@ export function inferGameIdFromMessages(messages) {
   }
 
   matches.sort((left, right) => right.length - left.length);
-  if (!matches.length) return null;
-  const strongest = matches[0];
-  if (matches.some((match) => match.length === strongest.length && match.gameId !== strongest.gameId)) {
-    return null;
+  if (matches.length) {
+    const strongest = matches[0];
+    if (matches.some((match) => match.length === strongest.length && match.gameId !== strongest.gameId)) {
+      return null;
+    }
+    return strongest.gameId;
   }
-  return strongest.gameId;
+
+  const rankAliasGameIds = new Set();
+  for (const game of Object.values(gameConfigs)) {
+    for (const rank of game.ranks) {
+      if ((rank.aliases || []).some((alias) => {
+        const normalizedAlias = normalizeGameAlias(alias);
+        return normalizedAlias.length >= 2 && input.includes(normalizedAlias);
+      })) {
+        rankAliasGameIds.add(game.id);
+      }
+    }
+  }
+  return rankAliasGameIds.size === 1 ? [...rankAliasGameIds][0] : null;
 }
 
 function latestUserMessage(messages) {
@@ -421,6 +436,169 @@ function joinChoices(values, locale) {
   }
   if (values.length < 2) return values[0] || "";
   return `${values.slice(0, -1).join("、")}，還是${values.at(-1)}`;
+}
+
+const divisionTokens = Object.freeze({
+  i: "I",
+  ii: "II",
+  iii: "III",
+  iv: "IV",
+  v: "V",
+  一: "I",
+  二: "II",
+  三: "III",
+  四: "IV",
+  五: "V",
+});
+
+function rankMentionsForGame(input, game) {
+  const matches = [];
+  for (const rank of game.ranks) {
+    for (const alias of localizedAliases(rank)) {
+      const normalizedAlias = normalizedSearchText(alias);
+      if (normalizedAlias.length < 2) continue;
+      let position = input.indexOf(normalizedAlias);
+      while (position >= 0) {
+        matches.push({ rank, position, length: normalizedAlias.length });
+        position = input.indexOf(normalizedAlias, position + normalizedAlias.length);
+      }
+    }
+  }
+
+  const uniqueMatches = new Map();
+  for (const match of matches) {
+    const key = `${match.rank.id}:${match.position}`;
+    const existing = uniqueMatches.get(key);
+    if (!existing || match.length > existing.length) uniqueMatches.set(key, match);
+  }
+  return [...uniqueMatches.values()]
+    .sort((left, right) => left.position - right.position || right.length - left.length);
+}
+
+function divisionAfterRankMention(input, mention) {
+  const suffix = input.slice(mention.position + mention.length);
+  const match = suffix.match(/^(iii|ii|iv|v|i)(?=to|[^a-z星]|$)|^([一二三四五])(?![a-z星])/iu);
+  if (!match) return null;
+  const token = match[1] || match[2];
+  const division = divisionTokens[token.toLocaleLowerCase()] || divisionTokens[token];
+  return mention.rank.divisions.includes(division) ? division : null;
+}
+
+function firstMissingField(validation, fields) {
+  return (validation?.missingFields || []).find((field) => fields.includes(field)) || null;
+}
+
+function applyAnchoredDivisions(input, game, context, patch, mentions) {
+  let merged = { ...context, ...patch };
+  let validation = validateQuoteDraft(merged);
+
+  for (const mention of mentions) {
+    const division = divisionAfterRankMention(input, mention);
+    if (!division) continue;
+    const candidateFields = [];
+    if (mention.rank.id === merged.currentRankId) candidateFields.push("currentDivision");
+    if (mention.rank.id === merged.targetRankId) candidateFields.push("targetDivision");
+    const field = firstMissingField(validation, candidateFields);
+    if (!field) continue;
+    patch[field] = division;
+    merged = { ...context, ...patch };
+    validation = validateQuoteDraft(merged);
+  }
+}
+
+function starsFitSelectedRank(game, merged, field, stars) {
+  const rankId = field === "currentStars" ? merged.currentRankId : merged.targetRankId;
+  const rank = game.ranks.find((item) => item.id === rankId);
+  if (!rank) return false;
+  if (Number.isFinite(rank.minStars) && stars < rank.minStars) return false;
+  if (Number.isFinite(rank.maxStars) && stars > rank.maxStars) return false;
+  return true;
+}
+
+function applyLabeledStars(input, game, context, patch, mentions) {
+  let merged = { ...context, ...patch };
+  let validation = validateQuoteDraft(merged);
+  const starPattern = /(\d+)星/giu;
+
+  for (const match of input.matchAll(starPattern)) {
+    const stars = Number(match[1]);
+    if (!Number.isFinite(stars) || stars < 0) continue;
+    const starPosition = match.index ?? -1;
+    const precedingMention = [...mentions]
+      .filter((mention) => mention.position + mention.length <= starPosition)
+      .sort((left, right) => (
+        right.position + right.length - (left.position + left.length)
+      ))[0];
+    const anchoredFields = [];
+    if (precedingMention?.rank.id === merged.currentRankId) anchoredFields.push("currentStars");
+    if (precedingMention?.rank.id === merged.targetRankId) anchoredFields.push("targetStars");
+    const field = firstMissingField(validation, anchoredFields)
+      || firstMissingField(validation, ["currentStars", "targetStars"]);
+    if (!field || !starsFitSelectedRank(game, merged, field, stars)) continue;
+    patch[field] = stars;
+    merged = { ...context, ...patch };
+    validation = validateQuoteDraft(merged);
+  }
+}
+
+function nextMissingQuoteQuestion(quoteContext, locale, missingFields) {
+  const field = (missingFields || [])[0];
+  if (!field) return null;
+  const game = gameConfigs[quoteContext.gameId];
+  const currentRank = game?.ranks.find((rank) => rank.id === quoteContext.currentRankId);
+  const targetRank = game?.ranks.find((rank) => rank.id === quoteContext.targetRankId);
+  const currentRankName = localizeGameValue(currentRank?.labels, locale);
+  const targetRankName = localizeGameValue(targetRank?.labels, locale);
+
+  const questions = {
+    gameId: {
+      "zh-HK": `請問你玩哪款遊戲：${joinChoices(Object.values(gameConfigs).map((item) => localizeGameValue(item.labels, locale)), locale)}？`,
+      "zh-CN": `请问您玩哪款游戏：${joinChoices(Object.values(gameConfigs).map((item) => localizeGameValue(item.labels, locale)), locale)}？`,
+      en: `Which game do you play: ${joinChoices(Object.values(gameConfigs).map((item) => localizeGameValue(item.labels, locale)), locale)}?`,
+    },
+    serviceId: {
+      "zh-HK": "請問你想查哪一項服務？",
+      "zh-CN": "请问您想查询哪一项服务？",
+      en: "Which service would you like a quotation for?",
+    },
+    currentRankId: {
+      "zh-HK": "請問你目前是哪個段位？",
+      "zh-CN": "请问您目前是什么段位？",
+      en: "What is your current rank?",
+    },
+    targetRankId: {
+      "zh-HK": "請問你的目標段位是哪個？",
+      "zh-CN": "请问您的目标段位是什么？",
+      en: "What is your target rank?",
+    },
+    currentDivision: {
+      "zh-HK": `收到，你想查《${localizeGameValue(game?.labels, locale)}》由${currentRankName}升${targetRankName}。請問你目前是${currentRankName} ${joinChoices(currentRank?.divisions || [], locale)}？`,
+      "zh-CN": `收到，您想查询《${localizeGameValue(game?.labels, locale)}》从${currentRankName}升到${targetRankName}。请问您目前是${currentRankName} ${joinChoices(currentRank?.divisions || [], locale)}？`,
+      en: `Understood — you want to progress from ${currentRankName} to ${targetRankName} in ${localizeGameValue(game?.labels, locale)}. Which ${currentRankName} division are you currently in: ${joinChoices(currentRank?.divisions || [], locale)}?`,
+    },
+    currentStars: {
+      "zh-HK": "請問你目前的星數（目前星數）是多少？",
+      "zh-CN": "请问您目前的星数（当前星数）是多少？",
+      en: "How many current stars do you have?",
+    },
+    targetDivision: {
+      "zh-HK": `請問你的目標是${targetRankName} ${joinChoices(targetRank?.divisions || [], locale)}？`,
+      "zh-CN": `请问您的目标是${targetRankName} ${joinChoices(targetRank?.divisions || [], locale)}？`,
+      en: `Which target ${targetRankName} division do you need: ${joinChoices(targetRank?.divisions || [], locale)}?`,
+    },
+    targetStars: {
+      "zh-HK": "請問你的目標星數是多少？",
+      "zh-CN": "请问您的目标星数是多少？",
+      en: "How many target stars do you need?",
+    },
+  };
+  const question = questions[field];
+  if (question) return localizedReply(locale, question);
+  return localizedReply(locale, {
+    "zh-HK": "請再提供一項完成報價所需的資料？",
+    "zh-CN": "请再提供一项完成报价所需的资料？",
+    en: "Could you provide the next detail needed to complete the quotation?",
+  });
 }
 
 function gameBoundOptionFollowUp(game, serviceId, quoteContext, input, locale, patch) {
@@ -639,48 +817,75 @@ export function buildDeterministicFollowUp(messages, quoteContext = {}, locale =
     }
   }
 
-  if (game && /(?:升|上到|升到|衝|冲|to)/iu.test(input)) {
-    const rankMentions = game.ranks
-      .map((rank) => {
-        const positions = localizedAliases(rank)
-          .map((alias) => input.indexOf(normalizedSearchText(alias)))
-          .filter((position) => position >= 0);
-        return positions.length ? { rank, position: Math.min(...positions) } : null;
-      })
-      .filter(Boolean)
-      .sort((left, right) => left.position - right.position);
+  const rankMentions = game ? rankMentionsForGame(input, game) : [];
+  const selectedServiceId = patch.serviceId || quoteContext.serviceId;
+  const selectedDuoMode = patch.duoMode || quoteContext.duoMode;
+  const isRankedDuo = selectedServiceId === "duo" && selectedDuoMode === "ranked";
+  const canStartRankJourney = !selectedServiceId || selectedServiceId === "rank" || isRankedDuo;
+  const hasRankConnector = /(?:升到|上到|升|上|衝|冲|到|to)/iu.test(input);
 
-    if (rankMentions.length >= 2) {
-      const currentRank = rankMentions[0].rank;
-      const targetRank = rankMentions.at(-1).rank;
-      patch.gameId = game.id;
-      patch.serviceId = "rank";
-      patch.currentRankId = currentRank.id;
-      patch.targetRankId = targetRank.id;
+  if (game && canStartRankJourney && hasRankConnector && rankMentions.length >= 2) {
+    const nextCurrentRankId = rankMentions[0].rank.id;
+    const nextTargetRankId = rankMentions.at(-1).rank.id;
+    const replacesExistingJourney = [
+      "currentRankId",
+      "currentDivision",
+      "currentStars",
+      "targetRankId",
+      "targetDivision",
+      "targetStars",
+    ].some((field) => quoteContext[field] !== undefined && quoteContext[field] !== null);
+    patch.gameId = game.id;
+    if (!selectedServiceId) patch.serviceId = "rank";
+    patch.currentRankId = nextCurrentRankId;
+    patch.targetRankId = nextTargetRankId;
+    if (replacesExistingJourney) {
+      patch.currentDivision = null;
+      patch.currentStars = null;
+      patch.targetDivision = null;
+      patch.targetStars = null;
+    }
+  }
 
-      const gameOptionFollowUp = gameBoundOptionFollowUp(
-        game,
-        "rank",
-        quoteContext,
-        input,
-        locale,
+  const mergedRankContext = { ...quoteContext, ...patch, locale };
+  const activeRankServiceId = mergedRankContext.serviceId;
+  const activeRankProgress = activeRankServiceId === "rank"
+    || (activeRankServiceId === "duo" && mergedRankContext.duoMode === "ranked");
+
+  if (
+    game
+    && activeRankProgress
+    && mergedRankContext.currentRankId
+    && mergedRankContext.targetRankId
+  ) {
+    applyAnchoredDivisions(input, game, quoteContext, patch, rankMentions);
+    applyLabeledStars(input, game, quoteContext, patch, rankMentions);
+    const merged = { ...quoteContext, ...patch, locale };
+
+    const gameOptionFollowUp = gameBoundOptionFollowUp(
+      game,
+      activeRankServiceId,
+      merged,
+      input,
+      locale,
+      patch,
+    );
+    if (gameOptionFollowUp) return gameOptionFollowUp;
+
+    const validation = validateQuoteDraft(merged);
+    const nextRankField = (validation.missingFields || []).find((field) => [
+      "currentRankId",
+      "currentDivision",
+      "currentStars",
+      "targetRankId",
+      "targetDivision",
+      "targetStars",
+    ].includes(field));
+    if (nextRankField) {
+      return {
         patch,
-      );
-      if (gameOptionFollowUp) return gameOptionFollowUp;
-
-      if (currentRank.divisions.length && !quoteContext.currentDivision) {
-        const gameName = localizeGameValue(game.labels, locale);
-        const currentName = localizeGameValue(currentRank.labels, locale);
-        const targetName = localizeGameValue(targetRank.labels, locale);
-        return {
-          patch,
-          message: localizedReply(locale, {
-            "zh-HK": `收到，你想查《${gameName}》由${currentName}升${targetName}。請問你目前是${currentName} ${joinChoices(currentRank.divisions, locale)}？`,
-            "zh-CN": `收到，您想查询《${gameName}》从${currentName}升到${targetName}。请问您目前是${currentName} ${joinChoices(currentRank.divisions, locale)}？`,
-            en: `Understood — you want to progress from ${currentName} to ${targetName} in ${gameName}. Which ${currentName} division are you currently in: ${joinChoices(currentRank.divisions, locale)}?`,
-          }),
-        };
-      }
+        message: nextMissingQuoteQuestion(merged, locale, [nextRankField]),
+      };
     }
   }
 
@@ -730,6 +935,7 @@ function calculateAuthoritativeQuoteProjection(
         output: {
           status: "incomplete",
           missingFields: validation?.missingFields ?? [],
+          invalidFields: validation?.invalidFields ?? [],
           errors: validation?.errors ?? [],
           requiresManualReview: Boolean(validation?.requiresManualReview),
           validOptions: validOptionsForGame(quoteContext.gameId, quoteContext.locale),
@@ -820,7 +1026,7 @@ QUOTE AND PRICING RULES:
 - Never invent, estimate, interpolate, or infer a price, discount, surcharge, completion time, success rate, or availability.
 - A monetary amount may be stated only when the calculate_quote result has status "quoted" and contains that exact non-null amount.
 - When amountType is "booking-deposit", clearly call it the booking payment rather than a final total. Explain that review coaching is billed by the actual rounded-up call minutes and any balance is settled after the session.
-- If pricing is not configured or the result is incomplete/manual_review, say "待人工確認" (or the equivalent in the reply language) and offer WhatsApp human support. Do not provide example numbers.
+- If the result is incomplete, ask exactly one question for the first missing field and never describe it as manual pricing or pending human confirmation. Only when the result status is manual_review may you say "待人工確認" (or the equivalent in the reply language) and offer WhatsApp human support. Do not provide example numbers.
 - Never treat a customer-provided price as Aurora-approved.
 
 SECURITY:
@@ -934,10 +1140,12 @@ function moneyMentions(text) {
   const arabicPattern = /(?:HK\$|HKD|港幣|港币|港元|NT\$|TWD|台幣|台币|RMB|CNY|人民幣|人民币|USD|US\$|美元|GBP|英鎊|英镑|[$€£¥￥])\s*[\d,.]+|[\d,.]+\s*(?:HK\$|HKD|港幣|港币|港元|NT\$|TWD|台幣|台币|RMB|CNY|人民幣|人民币|USD|US\$|美元|GBP|英鎊|英镑|[$€£¥￥]|元|蚊|塊|块|dollars?)/giu;
   const chinesePattern = /[零〇一二兩两三四五六七八九十百千萬万億亿]+\s*(?:港幣|港币|港元|台幣|台币|人民幣|人民币|美元|英鎊|英镑|元|蚊|塊|块)/gu;
   const zeroPricePattern = /(?:免費|免费|不用付費|不用付费|免收費|免收费|free(?:\s+of\s+charge)?|no\s+charge|complimentary)/giu;
+  const bareChargePattern = /(?:收費|收费|報價|报价|價錢|价钱|價格|价格|費用|费用|charge|cost|price)[^\d\r\n]{0,12}\d+(?:[.,]\d+)?/giu;
   return [
     ...source.matchAll(arabicPattern),
     ...source.matchAll(chinesePattern),
     ...source.matchAll(zeroPricePattern),
+    ...source.matchAll(bareChargePattern),
   ].map((match) => match[0]);
 }
 
@@ -976,7 +1184,7 @@ function ensureManualReviewStatus(message, locale, quoteResult) {
 function approvedQuoteReply(locale, quoteResult) {
   const amount = quoteResult.finalTotal;
   const currency = quoteResult.currency || "HKD";
-  if (!Number.isFinite(amount)) return manualReviewReply(locale);
+  if (!Number.isFinite(amount)) return friendlyUnavailableReply(locale);
   if (locale === "en") return `The server-confirmed total is ${currency} ${amount}. Please confirm the quotation details with Aurora support before ordering.`;
   if (locale === "zh-CN") return `服务器确认的总额为 ${currency} ${amount}。下单前请与 Aurora 客服确认报价资料。`;
   return `伺服器確認的總額為 ${currency} ${amount}。下單前請與 Aurora 客服確認報價資料。`;
@@ -1324,12 +1532,23 @@ export function createQuoteAiHandler({
         sendJson(res, 502, { error: "empty-ai-response", message: friendlyUnavailableReply(locale) }, cors);
         return;
       }
-      if (containsUnverifiedMoney(message, quoteResult)) {
-        message = quoteResult.status === "quoted"
-          ? approvedQuoteReply(locale, quoteResult)
-          : manualReviewReply(locale);
+      if (quoteResult.status === "quoted") {
+        message = approvedQuoteReply(locale, quoteResult);
+      } else if (quoteResult.status === "manual_review") {
+        if (containsUnverifiedMoney(message, quoteResult)) message = manualReviewReply(locale);
+        message = ensureManualReviewStatus(message, locale, quoteResult);
+      } else if (
+        quoteResult.status === "incomplete"
+        && quoteContext.serviceId
+        && quoteResult.missingFields?.length
+        && !quoteResult.invalidFields?.length
+      ) {
+        message = nextMissingQuoteQuestion(
+          quoteContext,
+          locale,
+          quoteResult.missingFields,
+        ) || friendlyUnavailableReply(locale);
       }
-      message = ensureManualReviewStatus(message, locale, quoteResult);
       message = enforceCustomerServiceIdentity(message, locale);
       message = removeInternalReferences(message);
       if (!message) {

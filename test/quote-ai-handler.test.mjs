@@ -8,6 +8,7 @@ import {
   buildGameContext,
   buildDeterministicFollowUp,
   cleanQuoteContext,
+  containsUnverifiedMoney,
   createQuoteAiHandler,
   inferGameIdFromMessages,
 } from "../server/quote-ai-handler.mjs";
@@ -545,6 +546,298 @@ test("four common incomplete scope queries get one deterministic follow-up witho
 
   assert.equal(fake.calls.length, 0);
   assert.equal(clientFactoryCalls.length, 0);
+});
+
+test("AOV shorthand infers Diamond IV to Battlefield Legend and asks only for current stars", () => {
+  const followUp = buildDeterministicFollowUp(
+    [{ role: "user", content: "钻石四到战场多少钱" }],
+    {},
+    "zh-CN",
+  );
+
+  assert.deepEqual(followUp?.patch, {
+    gameId: "aov",
+    serviceId: "rank",
+    currentRankId: "diamond",
+    currentDivision: "IV",
+    targetRankId: "battlefield-legend",
+  });
+  assert.match(followUp?.message || "", /当前星数/u);
+  assert.doesNotMatch(followUp?.message || "", /目标星数/u);
+  assert.equal(((followUp?.message || "").match(/[？?]/gu) || []).length, 1);
+});
+
+test("AOV rank guidance preserves Diamond-to-Battlefield context across one-field replies", () => {
+  let quoteContext = {};
+
+  const divisionStep = buildDeterministicFollowUp(
+    [{ role: "user", content: "钻石升战场多少钱" }],
+    quoteContext,
+    "zh-CN",
+  );
+  quoteContext = { ...quoteContext, ...divisionStep?.patch };
+  assert.deepEqual(quoteContext, {
+    gameId: "aov",
+    serviceId: "rank",
+    currentRankId: "diamond",
+    targetRankId: "battlefield-legend",
+  });
+  assert.match(divisionStep?.message || "", /钻石.*分级|钻石.*(?:V|IV|III|II|I)/u);
+  assert.equal(((divisionStep?.message || "").match(/[？?]/gu) || []).length, 1);
+
+  const currentDivisionStep = buildDeterministicFollowUp(
+    [{ role: "user", content: "钻石III" }],
+    quoteContext,
+    "zh-CN",
+  );
+  quoteContext = { ...quoteContext, ...currentDivisionStep?.patch };
+  assert.equal(quoteContext.currentDivision, "III");
+  assert.match(currentDivisionStep?.message || "", /当前星数/u);
+  assert.equal(((currentDivisionStep?.message || "").match(/[？?]/gu) || []).length, 1);
+
+  const currentStarsStep = buildDeterministicFollowUp(
+    [{ role: "user", content: "0星" }],
+    quoteContext,
+    "zh-CN",
+  );
+  quoteContext = { ...quoteContext, ...currentStarsStep?.patch };
+  assert.equal(quoteContext.currentStars, 0);
+  assert.match(currentStarsStep?.message || "", /目标星数/u);
+  assert.equal(((currentStarsStep?.message || "").match(/[？?]/gu) || []).length, 1);
+
+  const targetStarsStep = buildDeterministicFollowUp(
+    [{ role: "user", content: "战场0星" }],
+    quoteContext,
+    "zh-CN",
+  );
+  quoteContext = { ...quoteContext, ...targetStarsStep?.patch };
+  assert.equal(quoteContext.targetStars, 0);
+  assert.equal(targetStarsStep?.message ?? null, null);
+  assert.deepEqual(
+    {
+      gameId: quoteContext.gameId,
+      serviceId: quoteContext.serviceId,
+      currentRankId: quoteContext.currentRankId,
+      currentDivision: quoteContext.currentDivision,
+      currentStars: quoteContext.currentStars,
+      targetRankId: quoteContext.targetRankId,
+      targetStars: quoteContext.targetStars,
+    },
+    {
+      gameId: "aov",
+      serviceId: "rank",
+      currentRankId: "diamond",
+      currentDivision: "III",
+      currentStars: 0,
+      targetRankId: "battlefield-legend",
+      targetStars: 0,
+    },
+  );
+});
+
+test("an incomplete authoritative result overrides invented model money with the next missing field", async () => {
+  const { handler } = createConfiguredHandler({
+    responses: [responseWithText("模型估算总价是 HKD 999。")],
+    validateQuoteDraftFn() {
+      return {
+        valid: false,
+        missingFields: ["currentStars"],
+        errors: ["currentStars is required"],
+        requiresManualReview: false,
+      };
+    },
+    calculateQuoteFn() {
+      throw new Error("an incomplete draft must not reach the calculator");
+    },
+  });
+
+  await withHttpServer(handler, async (baseUrl) => {
+    const { response, payload } = await postJson(baseUrl, {
+      locale: "zh-CN",
+      messages: [{ role: "user", content: "请继续这个报价" }],
+      quoteContext: validChinaRankContext(),
+    });
+
+    assert.equal(response.status, 200);
+    assert.equal(payload.pricingStatus, "incomplete");
+    assert.match(payload.message, /当前星数/u);
+    assert.equal((payload.message.match(/[？?]/gu) || []).length, 1);
+    assert.doesNotMatch(payload.message, /待人工确认|人工报价|999/u);
+  });
+});
+
+test("a quoted authoritative result overrides provider wording that asks for human confirmation", async () => {
+  const authoritativeTotal = 987;
+  const { handler } = createConfiguredHandler({
+    responses: [responseWithText("这个订单需要人工确认，暂时不能报价。")],
+    validateQuoteDraftFn() {
+      return { valid: true, missingFields: [], errors: [], requiresManualReview: false };
+    },
+    calculateQuoteFn() {
+      return {
+        status: "quoted",
+        requiresManualReview: false,
+        basePrice: 987,
+        optionalCharges: 0,
+        discount: 0,
+        finalTotal: authoritativeTotal,
+        currency: "HKD",
+        estimatedCompletionTime: null,
+        referenceNumber: "AUR-QUOTED-WORDING-GUARD",
+      };
+    },
+  });
+
+  await withHttpServer(handler, async (baseUrl) => {
+    const { response, payload } = await postJson(baseUrl, {
+      locale: "zh-CN",
+      messages: [{ role: "user", content: "资料已经完整，请报价" }],
+      quoteContext: validChinaRankContext(),
+    });
+
+    assert.equal(response.status, 200);
+    assert.equal(payload.pricingStatus, "quoted");
+    assert.match(payload.message, /HKD 987/u);
+    assert.doesNotMatch(payload.message, /待人工确认|需要人工确认|暂时不能报价/u);
+  });
+});
+
+test("a new AOV rank journey clears stale rank progress before asking the first missing field", () => {
+  const followUp = buildDeterministicFollowUp(
+    [{ role: "user", content: "钻石到战场多少钱" }],
+    {
+      gameId: "aov",
+      serviceId: "rank",
+      currentRankId: "diamond",
+      currentDivision: "III",
+      currentStars: 0,
+      targetRankId: "veteran",
+      targetDivision: "V",
+      targetStars: 4,
+    },
+    "zh-CN",
+  );
+
+  assert.equal(followUp?.patch.gameId, "aov");
+  assert.equal(followUp?.patch.currentRankId, "diamond");
+  assert.equal(followUp?.patch.targetRankId, "battlefield-legend");
+  assert.equal(followUp?.patch.currentDivision, null);
+  assert.equal(followUp?.patch.currentStars, null);
+  assert.equal(followUp?.patch.targetDivision, null);
+  assert.equal(followUp?.patch.targetStars, null);
+  assert.match(followUp?.message || "", /钻石.*(?:V|IV|III|II|I)/u);
+  assert.equal(((followUp?.message || "").match(/[？?]/gu) || []).length, 1);
+});
+
+test("an explicit same-rank journey replaces stale divisions and stars", () => {
+  const followUp = buildDeterministicFollowUp(
+    [{ role: "user", content: "Diamond V to Diamond IV" }],
+    {
+      gameId: "aov",
+      serviceId: "rank",
+      currentRankId: "diamond",
+      currentDivision: "III",
+      currentStars: 0,
+      targetRankId: "diamond",
+      targetDivision: "II",
+      targetStars: 4,
+    },
+    "en",
+  );
+
+  assert.equal(followUp?.patch.currentRankId, "diamond");
+  assert.equal(followUp?.patch.targetRankId, "diamond");
+  assert.equal(followUp?.patch.currentDivision, "V");
+  assert.equal(followUp?.patch.targetDivision, "IV");
+  assert.equal(followUp?.patch.currentStars, null);
+  assert.equal(followUp?.patch.targetStars, null);
+  assert.match(followUp?.message || "", /current stars/iu);
+});
+
+test("an ordinary provider acknowledgement cannot replace the next incomplete quote question", async () => {
+  const { handler } = createConfiguredHandler({
+    responses: [responseWithText("好的，资料已收到。")],
+    validateQuoteDraftFn() {
+      return {
+        valid: false,
+        missingFields: ["currentStars"],
+        errors: ["currentStars is required"],
+        requiresManualReview: false,
+      };
+    },
+    calculateQuoteFn() {
+      throw new Error("an incomplete draft must not reach the calculator");
+    },
+  });
+
+  await withHttpServer(handler, async (baseUrl) => {
+    const { response, payload } = await postJson(baseUrl, {
+      locale: "zh-CN",
+      messages: [{ role: "user", content: "请继续这个报价" }],
+      quoteContext: validChinaRankContext(),
+    });
+
+    assert.equal(response.status, 200);
+    assert.equal(payload.pricingStatus, "incomplete");
+    assert.match(payload.message, /当前星数/u);
+    assert.equal((payload.message.match(/[？?]/gu) || []).length, 1);
+    assert.doesNotMatch(payload.message, /好的，资料已收到/u);
+  });
+});
+
+test("an out-of-range Battlefield star value is rejected and a later valid value can replace it", () => {
+  let quoteContext = {
+    gameId: "aov",
+    serviceId: "rank",
+    currentRankId: "diamond",
+    currentDivision: "III",
+    currentStars: 0,
+    targetRankId: "battlefield-legend",
+  };
+
+  const invalidStep = buildDeterministicFollowUp(
+    [{ role: "user", content: "战场99星" }],
+    quoteContext,
+    "zh-CN",
+  );
+  assert.equal(Object.hasOwn(invalidStep?.patch || {}, "targetStars"), false);
+  assert.match(invalidStep?.message || "", /目标星数/u);
+  quoteContext = { ...quoteContext, ...invalidStep?.patch };
+
+  const correctedStep = buildDeterministicFollowUp(
+    [{ role: "user", content: "战场0星" }],
+    quoteContext,
+    "zh-CN",
+  );
+  assert.equal(correctedStep?.patch.targetStars, 0);
+  assert.equal(correctedStep?.message ?? null, null);
+});
+
+test("same-rank AOV shorthand parses both Diamond divisions and asks only for current stars", () => {
+  const followUp = buildDeterministicFollowUp(
+    [{ role: "user", content: "传说对决钻石III到钻石II多少钱" }],
+    {},
+    "zh-CN",
+  );
+
+  assert.deepEqual(followUp?.patch, {
+    gameId: "aov",
+    serviceId: "rank",
+    currentRankId: "diamond",
+    targetRankId: "diamond",
+    currentDivision: "III",
+    targetDivision: "II",
+  });
+  assert.match(followUp?.message || "", /当前星数/u);
+  assert.doesNotMatch(followUp?.message || "", /目标星数/u);
+  assert.equal(((followUp?.message || "").match(/[？?]/gu) || []).length, 1);
+});
+
+test("money guard rejects a bare amount introduced as a charge", () => {
+  assert.equal(
+    containsUnverifiedMoney("收费大约100", { status: "manual_review" }),
+    true,
+  );
 });
 
 test("normal chat preserves the frontend response shape and maps assistant history to Gemini model role", async () => {
